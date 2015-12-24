@@ -1,0 +1,12 @@
+{
+	"gateway": {
+		"advertisement": {
+			"actions": [
+				{
+					"action": "POST",
+					"url": "https://emoncms.lab11.eecs.umich.edu/input/post.json"
+				}
+			]
+		}
+	}
+}

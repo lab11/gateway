@@ -2,7 +2,7 @@
 
 var parse_advertisement = function (advertisement) {
 
-	if (advertisement.localName === 'BLEES') {
+    if (advertisement.localName === 'BLEES') {
         var service_uuid = advertisement.serviceData[0].uuid;
         var service_data = advertisement.serviceData[0].data;
 
@@ -20,23 +20,24 @@ var parse_advertisement = function (advertisement) {
             var min_accel = ((accel & 0x0F) != 0);
 
             var out = {
-            	pressure_pascals: pressure,
-            	humidity_percent: humidity,
-            	temperature_celcius: temp,
-            	light_lux: light,
-            	acceleration_advertisement: imm_accel,
-            	acceleration_interval: min_accel
+                device: 'BLEES',
+                pressure_pascals: pressure,
+                humidity_percent: humidity,
+                temperature_celcius: temp,
+                light_lux: light,
+                acceleration_advertisement: imm_accel,
+                acceleration_interval: min_accel
             };
 
             return out;
         }
     }
 
-	return null;
+    return null;
 }
 
 
 
 module.exports = {
-	parse_advertisement: parse_advertisement
+    parse_advertisement: parse_advertisement
 };
