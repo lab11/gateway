@@ -1,0 +1,18 @@
+{
+  "name": "advertisement-parse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "advertisement-parse.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "eddystone-beacon-scanner": "^3.0.0",
+    "expand-url": "^0.1.3",
+    "lodash": "^3.10.1",
+    "noble": "^1.2.1",
+    "request": "^2.67.0"
+  }
+}
