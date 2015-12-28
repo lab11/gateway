@@ -37,6 +37,7 @@ var FILENAME_PARSE = 'parse.js'
 
 
 var BleGateway = function () {
+    console.log('new gateway')
     this._device_to_data = {};
 
     noble.on('discover', this.on_discover.bind(this));
@@ -92,7 +93,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                     // Call the device specific advertisement parse function.
                     // Give it the done callback.
-                    device.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done);
+                    device.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
                     
 
                     // // Check if we have a meta file that describes what we should
@@ -123,7 +124,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                     // After device-specific code is done, disconnect and handle
                     // returned object.
-                    peripheral.disconnect(function (disconnect_error) {
+                    peripheral.disconnect((disconnect_error) => {
                         if (!disconnect_error) {
                             // Broadcast this on "data"
                             this.emit('data', data_obj);
@@ -140,11 +141,11 @@ BleGateway.prototype.on_discover = function (peripheral) {
                 // Check if we have some code to connect
                 if (device.parser && device.parser.parseServices) {
                     // Use noble to connect to the BLE device
-                    peripheral.connect(function (connect_error) {
+                    peripheral.connect((connect_error) => {
                         if (!connect_error) {
                             // After a successful connection, let the
                             // device specific code read services and whatnot.
-                            device.parser.parseServices(peripheral, parse_services_done);
+                            device.parser.parseServices(peripheral, parse_services_done.bind(this));
                         }
                     });
                 }
@@ -187,12 +188,61 @@ BleGateway.prototype.get_base_url = function (full_url) {
 // Callback when an eddystone beacon is found.
 // EddystoneBeaconScanner.on('found', function (beacon) {
 BleGateway.prototype.on_beacon = function (beacon) {
+    // var self = this;
+
     if (beacon.type == 'url') {
         console.log('Found eddystone: ' + beacon.id + ' ' + beacon.url);
 
+        // // Expand the URL and save it
+        // urlExpander.expand(beacon.url, function (err, full_url) {
+        //     if (!err) {
+        //         // console.log(this)
+
+        //         // Create space if this is a new beacon
+        //         if (!(beacon.id in self._device_to_data)) {
+        //             self._device_to_data[beacon.id] = {};
+        //         }
+
+        //         // Get only the base (not index.html, for instance)
+        //         var base_url = self.get_base_url(full_url);
+        //         console.log(base_url);
+
+        //         // Store that
+        //         self._device_to_data[beacon.id]['url'] = base_url;
+
+        //         // Now see if we can get parse.js
+        //         request(base_url + FILENAME_PARSE, function (req_parse_err, response, body) {
+        //             if (!req_parse_err && response.statusCode == 200) {
+        //                 console.log('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url);
+        //                 self._device_to_data[beacon.id]['parse.js'] = body;
+
+        //                 try {
+        //                     var parser = self.require_from_string(body, base_url + FILENAME_PARSE);
+        //                     self._device_to_data[beacon.id].parser = parser;
+        //                 } catch (e) {}
+
+        //             }
+        //         });
+
+        //         // // And meta.json
+        //         // request(base_url + FILENAME_META, function (meta_parse_err, response, body) {
+        //         //     if (!meta_parse_err && response.statusCode == 200) {
+        //         //         console.log('Fetching and parsing ' + FILENAME_META + ' for ' + full_url);
+
+        //         //         try {
+        //         //             var meta = JSON.parse(body);
+        //         //             this._device_to_data[beacon.id].meta = meta;
+        //         //         } catch (e) {}
+        //         //     }
+        //         // });
+        //     }
+        // });
+
         // Expand the URL and save it
-        urlExpander.expand(beacon.url, function (err, full_url) {
+        urlExpander.expand(beacon.url, (err, full_url) => {
             if (!err) {
+                // console.log(this)
+
                 // Create space if this is a new beacon
                 if (!(beacon.id in this._device_to_data)) {
                     this._device_to_data[beacon.id] = {};
@@ -206,7 +256,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
                 this._device_to_data[beacon.id]['url'] = base_url;
 
                 // Now see if we can get parse.js
-                request(base_url + FILENAME_PARSE, function (req_parse_err, response, body) {
+                request(base_url + FILENAME_PARSE, (req_parse_err, response, body) => {
                     if (!req_parse_err && response.statusCode == 200) {
                         console.log('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url);
                         this._device_to_data[beacon.id]['parse.js'] = body;
@@ -214,6 +264,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
                         try {
                             var parser = this.require_from_string(body, base_url + FILENAME_PARSE);
                             this._device_to_data[beacon.id].parser = parser;
+                            parser.parseAdvertisement();
                         } catch (e) {}
 
                     }
@@ -241,6 +292,11 @@ BleGateway.prototype.on_beacon = function (beacon) {
 // start the gateway.
 if (require.main === module) {
     new BleGateway().start();
+
+    // var a = new BleGateway();
+    // // a.start();
+    // a.on_beacon({id: 'c098e5400001', type:'url', url: 'https://raw.githubusercontent.com/lab11/gateway/master/devices/test/'})
+
 }
 
 module.exports = BleGateway;
