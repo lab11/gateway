@@ -1,6 +1,6 @@
 /* Parse BLEES advertisements */
 
-var parse_advertisement = function (advertisement) {
+var parse_advertisement = function (advertisement, cb) {
 
     if (advertisement.localName === 'BLEES') {
         var service_uuid = advertisement.serviceData[0].uuid;
@@ -29,13 +29,13 @@ var parse_advertisement = function (advertisement) {
                 acceleration_interval: min_accel
             };
 
-            return out;
+            cb(out);
+            return;
         }
     }
 
-    return null;
+    cb(null);
 }
-
 
 
 module.exports = {
