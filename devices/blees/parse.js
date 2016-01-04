@@ -39,5 +39,5 @@ var parse_advertisement = function (advertisement) {
 
 
 module.exports = {
-    parse_advertisement: parse_advertisement
+    parseAdvertisement: parse_advertisement
 };
