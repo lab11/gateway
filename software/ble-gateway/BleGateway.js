@@ -9,6 +9,7 @@ var request = require('request');
 var EddystoneBeaconScanner = require('eddystone-beacon-scanner');
 var urlExpander = require('expand-url');
 var _ = require('lodash');
+var debug = require('debug')('BleGateway');
 
 var argv = require('yargs')
     .help('h')
@@ -32,12 +33,14 @@ var FILENAME_PARSE = 'parse.js'
 // var FILENAME_META = 'meta.json'
 
 
+// console.log(EddystoneBeaconScanner)
+
 // Store know things about each BLE device
 // var beaconid_to_data = {};
 
 
 var BleGateway = function () {
-    console.log('new gateway')
+    debug('Creating a new gateway');
     this._device_to_data = {};
 
     noble.on('discover', this.on_discover.bind(this));
@@ -67,7 +70,6 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
         // We have seen an eddystone packet from the same address
         if (peripheral.id in this._device_to_data) {
-            console.log('Recognized device: ' + peripheral.id);
 
             var device = this._device_to_data[peripheral.id];
 
@@ -79,7 +81,6 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                     var parse_advertisement_done = function (adv_obj) {
                         adv_obj.id = peripheral.id;
-                        console.log(adv_obj);
 
                         // We broadcast on "advertisement"
                         this.emit('advertisement', adv_obj);
@@ -94,7 +95,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
                     // Call the device specific advertisement parse function.
                     // Give it the done callback.
                     device.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
-                    
+
 
                     // // Check if we have a meta file that describes what we should
                     // // do with the data once we get it.
@@ -120,7 +121,6 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                 var parse_services_done = function (data_obj) {
                     data_obj.id = peripheral.id;
-                    console.log(data_obj);
 
                     // After device-specific code is done, disconnect and handle
                     // returned object.
@@ -153,7 +153,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
         }
     } else {
-        console.log('Not interested: ' + peripheral.id);
+        debug('Not interested: ' + peripheral.id);
     }
 };
 
@@ -191,7 +191,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
     // var self = this;
 
     if (beacon.type == 'url') {
-        console.log('Found eddystone: ' + beacon.id + ' ' + beacon.url);
+        debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
 
         // // Expand the URL and save it
         // urlExpander.expand(beacon.url, function (err, full_url) {
@@ -250,7 +250,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
 
                 // Get only the base (not index.html, for instance)
                 var base_url = this.get_base_url(full_url);
-                console.log(base_url);
+                // console.log(base_url);
 
                 // Store that
                 this._device_to_data[beacon.id]['url'] = base_url;
@@ -258,7 +258,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
                 // Now see if we can get parse.js
                 request(base_url + FILENAME_PARSE, (req_parse_err, response, body) => {
                     if (!req_parse_err && response.statusCode == 200) {
-                        console.log('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url);
+                        debug('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url);
                         this._device_to_data[beacon.id]['parse.js'] = body;
 
                         try {
@@ -288,15 +288,15 @@ BleGateway.prototype.on_beacon = function (beacon) {
 };
 
 
-// If this is true, we are running this file directly and should
-// start the gateway.
-if (require.main === module) {
-    new BleGateway().start();
+// // If this is true, we are running this file directly and should
+// // start the gateway.
+// if (require.main === module) {
+//     new BleGateway().start();
 
-    // var a = new BleGateway();
-    // // a.start();
-    // a.on_beacon({id: 'c098e5400001', type:'url', url: 'https://raw.githubusercontent.com/lab11/gateway/master/devices/test/'})
+//     // var a = new BleGateway();
+//     // // a.start();
+//     // a.on_beacon({id: 'c098e5400001', type:'url', url: 'https://raw.githubusercontent.com/lab11/gateway/master/devices/test/'})
 
-}
+// }
 
 module.exports = BleGateway;

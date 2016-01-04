@@ -1,14 +1,15 @@
 {
-  "name": "advertisement-parse",
+  "name": "BleGateway",
   "version": "1.0.0",
   "description": "",
-  "main": "advertisement-parse.js",
+  "main": "BleGateway.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "debug": "^2.2.0",
     "eddystone-beacon-scanner": "^3.0.0",
     "expand-url": "^0.1.3",
     "lodash": "^3.10.1",

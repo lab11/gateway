@@ -101,7 +101,7 @@ var BleGateway = require('BleGateway');
 
 // Receive formatted advertisement data objects.
 // adv_obj.id will be the peripheral id that it was captured from.
-BleGateway.on('advertisements', function (adv_obj) {
+BleGateway.on('advertisement', function (adv_obj) {
 	...
 });
 
