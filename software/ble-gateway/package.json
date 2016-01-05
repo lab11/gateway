@@ -1,13 +1,20 @@
 {
   "name": "BleGateway",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "BleGateway.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lab11/gateway.git"
+  },
+  "author": {
+    "name": "Brad Campbell",
+    "email": "bradjc@umich.edu"
+  },
+  "license": "MIT",
   "dependencies": {
     "debug": "^2.2.0",
     "eddystone-beacon-scanner": "^3.0.0",
