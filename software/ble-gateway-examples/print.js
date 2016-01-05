@@ -4,7 +4,7 @@
  * Print formatted advertisement packets to the console.
  ******************************************************************************/
 
-var BleGateway = require('BleGateway');
+var BleGateway = require('ble-gateway');
 var bleg = new BleGateway();
 
 console.log(bleg)

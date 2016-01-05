@@ -97,7 +97,7 @@ of another tool.
 
 ```js
 
-var BleGateway = require('BleGateway');
+var BleGateway = require('ble-gateway');
 
 // Receive formatted advertisement data objects.
 // adv_obj.id will be the peripheral id that it was captured from.
@@ -121,7 +121,7 @@ Gateway Usage
 
 ```
 npm install
-./advertisement-parse.js
+./ble-gateway.js
 ```
 
 Questions

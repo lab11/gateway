@@ -9,7 +9,7 @@ var request = require('request');
 var EddystoneBeaconScanner = require('eddystone-beacon-scanner');
 var urlExpander = require('expand-url');
 var _ = require('lodash');
-var debug = require('debug')('BleGateway');
+var debug = require('debug')('ble-gateway');
 
 var argv = require('yargs')
     .help('h')
