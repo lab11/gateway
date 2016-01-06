@@ -22,7 +22,7 @@ for the BBB. I used:
 5. Install some useful packages.
 
         sudo apt-get update
-        sudo apt-get install vim git lsb-release tcpdump
+        sudo apt-get install vim git lsb-release tcpdump pkg-config libnl-3-dev libnl-genl-3-dev
 
 5. Disable root SSH.
 
@@ -48,13 +48,12 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
 
     That puts the compiled overlay in the correct place, now we need to tell the BBB to use it at boot.
 
-        vim /boot/uEnv.txt
+        sudo vim /boot/uEnv.txt
         # Edit that line that looks like this to include the reference to GAP
         cape_enable=bone_capemgr.enable_partno=BB-GAP
 
 8. Install the wpan-tools to configure all of the 15.4 devices.
 
-        sudo apt-get install pkg-config libnl-3-dev libnl-genl-3-dev
         wget http://wpan.cakelab.org/releases/wpan-tools-0.5.tar.gz
         tar xf wpan-tools-0.5.tar.gz
         cd wpan-tools-0.5
