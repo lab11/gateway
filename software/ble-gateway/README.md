@@ -97,7 +97,8 @@ of another tool.
 
 ```js
 
-var BleGateway = require('ble-gateway');
+var bg = require('ble-gateway');
+var BleGateway = new bg();
 
 // Receive formatted advertisement data objects.
 // adv_obj.id will be the peripheral id that it was captured from.
@@ -131,5 +132,8 @@ Questions
 Likely that a device will want to be able to use a common gateway function.
 
 - Is there anyway to make downloading and running arbitrary JavaScript safe?
+- How to specify what to do with the data?
+- How to securely get a key off of the device to publish the data with?
+- How to match formatted output data with a website publishing script?
 
 
