@@ -4,8 +4,7 @@ MAINTAINER https://github.com/lab11
 ENV DEBIAN_FRONTEND noninteractive
 
 # Install needed packages
-RUN apt-get update
-RUN apt-get install -y python3 python3-pip supervisor vim
+RUN apt-get update && apt-get install -y python3 python3-pip supervisor vim
 
 # Need pip dependencies
 RUN pip3 install flask
