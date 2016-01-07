@@ -10,8 +10,8 @@ client.on('listening', function () {
 
 // On each message, print to the terminal
 client.on('message', function (message, remote) {
-	var msg = message.toString();
-    console.log(msg);
+	var adv_out = JSON.parse(message.toString());
+    console.log(adv_out);
 });
 
 client.bind(PORT);
