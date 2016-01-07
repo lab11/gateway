@@ -148,3 +148,63 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
 
         Packet data from nearby devices should be displayed
 
+Optional: Install Node-RED
+==================================
+
+1. Make sure npm version is at least 2.x.
+
+        sudo npm i -g npm@2.x
+
+2. Install Node-RED.
+
+        sudo npm install -g --unsafe-perm  node-red
+    
+    At this point, Node-RED is installed and ready to run. However, we want to run Node-RED as a system service so that it starts on boot and restarts automatically after encountering issues.
+
+3. Create a user to run the Node-RED service.
+
+        sudo adduser node-red
+      When prompted, provide a password (the same password as the default debian user suffices) and then just hit enter for all the user info.
+
+4.  Run commands as the node-red user.
+
+        su node-red
+
+5. Install BBB-specific Node-RED libraries. (GPIO pin access, etc.)
+
+        mkdir -p ~/.node-red
+        cd ~/.node-red
+        npm install node-red-node-beaglebone
+
+6. Stop running commands as the node-red user with `exit`.
+
+7. Configure Node-RED to run as a service. Create the file  `/etc/systemd/system/node-red.service` with the following contents:
+
+        [Unit]
+        Description=Node-RED
+
+        [Service]
+        ExecStart=/usr/bin/node-red-pi --max-old-space-size=128 --userDir /home/node-red/.node-red
+        Restart=always
+        StandardOutput=syslog
+        StandardError=syslog
+        SyslogIdentifier=node-red
+        User=node-red
+
+        [Install]
+        WantedBy=multi-user.target
+
+    Then:
+
+        sudo systemctl daemon-reload
+        sudo systemctl enable node-red
+
+6. Start the Node-RED service.
+
+        sudo systemctl start node-red
+
+    Test that Node-RED is running by navigating to `http://<Beaglebone IP>:1880`. 
+    
+9. 
+    You can password-protect your Node-RED instance, add HTTPS support, and make other configuration changes by modifying `/home/node-red/.node-red/settings.js` and restarting the service with `sudo systemctl restart node-red`. 
+
