@@ -81,4 +81,8 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         make
         sudo make install
         sudo ldconfig
+        sudo cp service/upstart/mosquitto.conf /etc/init/
+        sudo cp /etc/mosquitto/mosquitto.conf.example /etc/mosquitto/mosquitto.conf
+        sudo sed -i 's/#listener/listener 9001\nprotocol websockets/g' /etc/mosquitto/mosquitto.conf
+        sudo sed -i 's/#port 1883/listener 1883/g' /etc/mosquitto/mosquitto.conf
 
