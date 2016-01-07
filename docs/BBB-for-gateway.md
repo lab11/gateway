@@ -84,6 +84,31 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         sudo sed -i 's/#listener/listener 9001\nprotocol websockets/g' /etc/mosquitto/mosquitto.conf
         sudo sed -i 's/#port 1883/listener 1883/g' /etc/mosquitto/mosquitto.conf
 
+12. Setup MQTT. Create `/etc/systemd/system/mosquitto.service` with the following contents:
+
+        [Unit]
+        Description=Mosquitto MQTT Broker daemon
+        ConditionPathExists=/etc/mosquitto/mosquitto.conf
+        Requires=network.target
+
+        [Service]
+        Type=simple
+        User=mosquitto
+        ExecStartPre=/bin/rm -f /var/run/mosquitto.pid
+        ExecStart=/usr/local/sbin/mosquitto -v -c /etc/mosquitto/mosquitto.conf
+        ExecReload=/bin/kill -HUP $MAINPID
+        PIDFile=/var/run/mosquitto.pid
+        Restart=on-failure
+
+        [Install]
+        WantedBy=multi-user.target
+        
+    Then:
+    
+        sudo useradd mosquitto
+        sudo systemctl daemon-reload
+        sudo systemctl enable mosquitto
+
 13. Install Node.js.
 
         curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
