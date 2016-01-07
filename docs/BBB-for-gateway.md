@@ -24,21 +24,21 @@ for the BBB. I used:
         sudo apt-get update
         sudo apt-get install vim git lsb-release tcpdump pkg-config libnl-3-dev libnl-genl-3-dev libc-ares-dev libwrap0-dev cmake zlib1g-dev libssl-dev uuid-dev
 
-5. Disable root SSH.
+6. Disable root SSH.
 
         # Edit /etc/ssh/sshd_config
         # Change PermitRootLogin to no
         PermitRootLogin no
 
-5. Change the `debian` account password.
+7. Change the `debian` account password.
 
         passwd
 
-6. Upgrade the kernel
+8. Upgrade the kernel
 
         sudo /opt/scripts/tools/update_kernel.sh --beta --bone-channel
 
-7. Now we have to setup the device tree overlay to let Linux know that the the radios exist.
+9. Now we have to setup the device tree overlay to let Linux know that the the radios exist.
 The GAP overlay and others are setup in a repository also maintained by RCN.
 
         git clone https://github.com/lab11/bb.org-overlays
@@ -52,7 +52,7 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         # Edit that line that looks like this to include the reference to GAP
         cape_enable=bone_capemgr.enable_partno=BB-GAP
 
-8. Install the wpan-tools to configure all of the 15.4 devices.
+10. Install the wpan-tools to configure all of the 15.4 devices.
 
         wget http://wpan.cakelab.org/releases/wpan-tools-0.5.tar.gz
         tar xf wpan-tools-0.5.tar.gz
@@ -61,7 +61,7 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         make
         sudo make install
 
-9. Install libwebsockets for MQTT
+11. Install libwebsockets for MQTT
 
         wget http://git.warmcat.com/cgi-bin/cgit/libwebsockets/snapshot/libwebsockets-1.5-chrome47-firefox41.tar.gz
         tar xf libwebsockets-1.5-chrome47-firefox41.tar.gz
@@ -72,7 +72,7 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         make
         sudo make install
 
-10. Install MQTT
+12. Install MQTT
 
         wget http://mosquitto.org/files/source/mosquitto-1.4.5.tar.gz
         tar xf mosquitto-1.4.5.tar.gz
@@ -85,4 +85,53 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         sudo cp /etc/mosquitto/mosquitto.conf.example /etc/mosquitto/mosquitto.conf
         sudo sed -i 's/#listener/listener 9001\nprotocol websockets/g' /etc/mosquitto/mosquitto.conf
         sudo sed -i 's/#port 1883/listener 1883/g' /etc/mosquitto/mosquitto.conf
+
+13. Install Node.js
+
+        sudo apt-get install curl
+        curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+
+14. Install bluetooth libraries, usb libraries, and enable node privileged access to BLE
+
+        sudo apt-get install bluetooth bluez bluez-hcidump libbluetooth-dev libudev-dev libusb-1.0-0 libusb-1.0-0-dev
+        sudo setcap cap_net_raw+eip $(eval readlink -f `which node`)
+
+15. Install python
+
+        sudo apt-get install python3 python-pip python3-pip
+
+16. Install NTP
+
+        sudo apt-get install ntp
+
+17. Get rid of locale warnings
+
+        sudo apt-get install locales
+        sudo locale-gen en_us.UTF-8
+        sudo dpkg-reconfigure locales
+            Select "en_US.UTF-8 UTF-8" from list and hit enter
+            Select "en_US.UTF-8" and hit enter
+
+18. Add user to dialout (for serial permissions)
+
+        usermod -a -G dialout debian
+
+19. Clean up home directory
+
+        rm -rf /home/debian/*
+
+20. Clone gateway github repository
+
+        git clone https://github.com/lab11/gateway.git
+
+21. Test functionality
+
+        Ensure USB BLE dongle is attached
+
+        cd ~/gateway/software/ble-gateway
+        npm install
+        ./ble-gateway.js
+
+        Packet data from nearby devices should be displayed
 
