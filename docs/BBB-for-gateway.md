@@ -22,7 +22,7 @@ for the BBB. I used:
 5. Install some useful packages.
 
         sudo apt-get update
-        sudo apt-get install vim git lsb-release tcpdump pkg-config libnl-3-dev libnl-genl-3-dev libc-ares-dev libwrap0-dev cmake zlib1g-dev libssl-dev uuid-dev screen
+        sudo apt-get install vim git lsb-release tcpdump pkg-config libnl-3-dev libnl-genl-3-dev libc-ares-dev libwrap0-dev cmake zlib1g-dev libssl-dev uuid-dev screen curl bluetooth bluez bluez-hcidump libbluetooth-dev libudev-dev libusb-1.0-0 libusb-1.0-0-dev python3 python-pip python3-pip ntp
 
 6. Disable root SSH.
 
@@ -61,7 +61,7 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         make
         sudo make install
 
-11. Install libwebsockets for MQTT
+11. Install libwebsockets for MQTT.
 
         wget http://git.warmcat.com/cgi-bin/cgit/libwebsockets/snapshot/libwebsockets-1.5-chrome47-firefox41.tar.gz
         tar xf libwebsockets-1.5-chrome47-firefox41.tar.gz
@@ -72,7 +72,7 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         make
         sudo make install
 
-12. Install MQTT
+12. Install MQTT.
 
         wget http://mosquitto.org/files/source/mosquitto-1.4.5.tar.gz
         tar xf mosquitto-1.4.5.tar.gz
@@ -86,24 +86,14 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         sudo sed -i 's/#listener/listener 9001\nprotocol websockets/g' /etc/mosquitto/mosquitto.conf
         sudo sed -i 's/#port 1883/listener 1883/g' /etc/mosquitto/mosquitto.conf
 
-13. Install Node.js
+13. Install Node.js.
 
-        sudo apt-get install curl
         curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         sudo apt-get install -y nodejs
 
-14. Install bluetooth libraries, usb libraries, and enable node privileged access to BLE
+14. Enable Node privileged access to BLE so it doesn't need sudo.
 
-        sudo apt-get install bluetooth bluez bluez-hcidump libbluetooth-dev libudev-dev libusb-1.0-0 libusb-1.0-0-dev
         sudo setcap cap_net_raw+eip $(eval readlink -f `which node`)
-
-15. Install python
-
-        sudo apt-get install python3 python-pip python3-pip
-
-16. Install NTP
-
-        sudo apt-get install ntp
 
 17. Get rid of locale warnings
 
