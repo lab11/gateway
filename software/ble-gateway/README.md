@@ -17,22 +17,29 @@ Quick Overview
 This script:
 
 1. Listens for Eddystone BLE advertisements.
+2. Upon finding an Eddystone packet, it pulls out the embedded URL and uses
+it to fetch a `parse.js` file at `<URL>/parse.js`. If the URL already specifies
+a particular file, it removes the filename and uses just the base. For example,
+if the Eddystone URL is:
 
-2. Upon finding one, pulls out the URL and tries to fetch `<URL>/parse.js`.
+        http://example.com/folder/index.html
 
-3. If that exists, it uses the resulting JS file to parse other advertisements
-the device sends in the future.
+    the gateway will use just `http://example.com/folder/` and look for `parse.js` at:
+
+        http://example.com/folder/parse.js
+3. If that `parse.js` file exists, the gateway will use the contained JavaScript functions
+to parse other advertisements the device sends in the future.
 
 
 To use this gateway with your BLE device
 ------------------------------------
 
-1. Configure your device to advertise two different advertisements.
+1. Configure your device to advertise (at least) two different advertisements.
 One should be an Eddystone URL packet. The URL should point to a webserver
 path where you can host the needed JavaScript code. For example, the Eddystone
 URL should be a shortened version of something like:
 
-        https://github.com/org/project/device/
+        https://rawgit.com/org/project/device/
 
     The second advertisement can be completely device specific. It can contain
     data or not. The second advertisement is what the gateway will use
@@ -53,11 +60,14 @@ Eddystone URL. For example:
 `parse.js`
 ----------
 
-To create a `parse.js` file you simply implement the functions you wish to
-support. The basic template looks like:
+A `parse.js` file contains one or several functions that process advertisements
+and devices that the gateway sees. When creating a `parse.js` file, you only
+need to implement and export the functions you wish to support. The gateway
+will ignore missing functions.
+
+The template of a `parse.js` file looks like:
 
 ```js
-
 // This function is called by the gateway when a non-Eddystone advertisement
 // is received. The function should take the noble formatted advertisement,
 // parse it into a JavaScript object, and call done() with that object.
@@ -87,16 +97,42 @@ module.exports = {
 };
 ```
 
+The `advertisement` and `peripheral` parameters are objects
+from the [noble](https://github.com/sandeepmistry/noble) BLE
+library. For more information on how those objects are structured,
+see the noble documentation.
+
+One simple example of a `parse.js` file might look like:
+
+```js
+var parse_advertisement = function (advertisement, cb) {
+
+    var name = advertisement.localName;
+    var service_uuid = parseInt(advertisement.serviceData[0].uuid, 16);
+    
+    var out = {
+        name: name,
+        uuid: service_uuid
+    };
+    cb(out);
+}
+
+module.exports = {
+    parseAdvertisement: parse_advertisement
+};
+```
+
 
 Extending the Gateway
 ---------------------
 
 This gateway can run as a standalone application or as a module inside
-of another tool.
+of another tool. When running as a embedded module, it follows the
+`EventEmitter` pattern allowing you to register callbacks for various
+events.
 
 
 ```js
-
 var bg = require('ble-gateway');
 var BleGateway = new bg();
 
