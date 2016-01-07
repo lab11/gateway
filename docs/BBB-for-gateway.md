@@ -22,7 +22,7 @@ for the BBB. I used:
 5. Install some useful packages.
 
         sudo apt-get update
-        sudo apt-get install vim git lsb-release tcpdump pkg-config libnl-3-dev libnl-genl-3-dev
+        sudo apt-get install vim git lsb-release tcpdump pkg-config libnl-3-dev libnl-genl-3-dev libc-ares-dev libwrap0-dev
 
 5. Disable root SSH.
 
@@ -61,5 +61,24 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
         make
         sudo make install
 
+9. Install libwebsockets for MQTT
 
+        wget http://git.warmcat.com/cgi-bin/cgit/libwebsockets/snapshot/libwebsockets-1.5-chrome47-firefox41.tar.gz
+        tar xf libwebsockets-1.5-chrome47-firefox41.tar.gz
+        cd libwebsockets-1.5-chrome47-firefox41
+        mkdir build
+        cd build
+        cmake ..
+        make
+        sudo make install
+
+10. Install MQTT
+
+        wget http://mosquitto.org/files/source/mosquitto-1.4.5.tar.gz
+        tar xf mosquitto-1.4.5.tar.gz
+        cd mosquitto-1.4.5
+        sed -i s/WITH_WEBSOCKETS:=no/WITH_WEBSOCKETS:=yes/g config.mk
+        make
+        sudo make install
+        sudo ldconfig
 
