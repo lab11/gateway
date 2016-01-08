@@ -1,0 +1,18 @@
+{
+  "name": "adv-gateway-ip",
+  "version": "1.0.0",
+  "description": "Advertise local IP address over BLE",
+  "main": "adv-gateway-ip.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lab11/gateway"
+  },
+  "author": "Branden Ghena",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway",
+  "dependencies": {
+    "eddystone-beacon": "^1.0.5",
+  }
+}
