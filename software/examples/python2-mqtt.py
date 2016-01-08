@@ -1,6 +1,12 @@
 import json
 
-import paho.mqtt.client
+try:
+	import paho.mqtt.client
+except ImportError as e:
+	print('Need Paho MQTT package.')
+	print('')
+	print('    sudo pip install paho-mqtt')
+	quit()
 
 HOST = '127.0.0.1'
 

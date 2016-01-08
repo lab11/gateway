@@ -1,7 +1,15 @@
 import asyncio
 import json
 
-import hbmqtt.client
+try:
+	import hbmqtt.client
+except ImportError as e:
+	print('Need hbmqtt package.')
+	print('')
+	print('    sudo pip3 install hbmqtt')
+	print('')
+	print('Be sure you are on python 3.5+')
+	quit()
 
 HOST = '127.0.0.1'
 

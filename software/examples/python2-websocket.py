@@ -1,6 +1,12 @@
 import json
 
-import websocket
+try:
+	import websocket
+except ImportError as e:
+	print('Need websocket package.')
+	print('')
+	print('    sudo pip install websocket')
+	quit()
 
 HOST = '127.0.0.1';
 PORT = 3001

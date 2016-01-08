@@ -1,7 +1,16 @@
 import asyncio
 import json
 
-import websockets
+try:
+	import websockets
+except ImportError as e:
+	print('Need websockets package.')
+	print('')
+	print('    sudo pip3 install websockets')
+	print('')
+	print('Be sure you are on python 3.5+')
+	quit()
+
 
 HOST = '127.0.0.1'
 PORT = 3001
