@@ -51,8 +51,8 @@ folder.
 - [Use the BBB gateway](https://github.com/lab11/gateway/blob/master/docs/BBB-for-gateway-usage.md)
 
 
-Projects
---------
+Related Projects
+----------------
 
 - **[IoT Gateway](https://github.com/lab11/iot-gateway)**: Leverage
 smartphones to forward BLE advertisements.
