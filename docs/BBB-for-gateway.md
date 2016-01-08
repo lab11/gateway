@@ -151,10 +151,6 @@ The GAP overlay and others are setup in a repository also maintained by RCN.
 Optional: Install Node-RED
 ==================================
 
-1. Make sure npm version is at least 2.x.
-
-        sudo npm i -g npm@2.x
-
 2. Install Node-RED.
 
         sudo npm install -g --unsafe-perm  node-red
@@ -205,6 +201,5 @@ Optional: Install Node-RED
 
     Test that Node-RED is running by navigating to `http://<Beaglebone IP>:1880`. 
     
-9. 
-    You can password-protect your Node-RED instance, add HTTPS support, and make other configuration changes by modifying `/home/node-red/.node-red/settings.js` and restarting the service with `sudo systemctl restart node-red`. 
+9. You can password-protect your Node-RED instance, add HTTPS support, and make other configuration changes by modifying `/home/node-red/.node-red/settings.js` and restarting the service with `sudo systemctl restart node-red`. 
 
