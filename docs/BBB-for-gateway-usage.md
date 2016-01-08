@@ -58,7 +58,7 @@ LAN). For code examples, look
 
         To get packets from the gateway to Ptolemy, add a `WebSocketClient`
         accessor with the IP address of the BBB as the `server` field and
-        3001 as the `port` field.
+        3001 as the `port` field. See an example in the `ptolemy` folder.
 
 - **MQTT**
 
@@ -71,4 +71,25 @@ LAN). For code examples, look
     Packets are sent as JSON encoded strings in UDP packets to the broadcast
     address `255.255.255.255` on port `3002`.
 
+
+Hacking the Gateway
+-------------------
+
+The above protocols and the examples in the `software/examples` folder can also
+run directly on the gateway. To connect:
+
+    ssh debian@<ip address of BBB>
+
+In the `$HOME` folder is this repository. Running `git pull` in that folder
+will update the code to the latest version.
+
+Each service, both gateway and IP advertisement are run at boot in...
+
+
+### 802.15.4 Interface
+
+The [GAP](https://github.com/lab11/gap) cape for the BBB provides two 802.15.4 radios
+fully supported by the Linux kernel.
+
+For instructions, see the [GAP Readme](https://github.com/lab11/gap#sniffing-154-packets).
 
