@@ -13,6 +13,6 @@
   },
   "homepage": "https://github.com/lab11/gateway",
   "dependencies": {
-    "eddystone-beacon": "^1.0.5",
+    "eddystone-beacon": "^1.0.5"
   }
 }
