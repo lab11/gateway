@@ -6,7 +6,7 @@ import websockets
 HOST = '127.0.0.1'
 PORT = 3001
 
-async def recv():
+async def recv ():
 	async with websockets.connect('ws://{}:{}'.format(HOST, PORT)) as websocket:
 
 		while True:
