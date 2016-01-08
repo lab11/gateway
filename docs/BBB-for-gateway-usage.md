@@ -36,39 +36,39 @@ the IP address of the BBB gateway (or if you are on the same
 LAN). For code examples, look
 [here](https://github.com/lab11/gateway/tree/master/software/examples).
 
-### Quick View
+- **Quick View**
 
-To view a very simple UI with the recent data, go to:
+    To view a very simple UI with the recent data, go to:
 
-    http://<ip address of the BBB>
+        http://<ip address of the BBB>
     
-This will display all of the devices the gateway has seen and their
-last ten packets.
+    This will display all of the devices the gateway has seen and their
+    last ten packets.
 
-### WebSockets
+- **WebSockets**
 
-To retreive as a websocket stream, connect a websocket client to
+    To retreive as a websocket stream, connect a websocket client to
 
-    ws://<ip address of the BBB>:3001
+        ws://<ip address of the BBB>:3001
     
-All packets the gateway sees will be sent to each client connected
-via websockets.
+    All packets the gateway sees will be sent to each client connected
+    via websockets.
 
-#### Ptolemy
+    - **Ptolemy**
 
-To get packets from the gateway to Ptolemy, add a `WebSocketClient`
-accessor with the IP address of the BBB as the `server` field and
-3001 as the `port` field.
+        To get packets from the gateway to Ptolemy, add a `WebSocketClient`
+        accessor with the IP address of the BBB as the `server` field and
+        3001 as the `port` field.
 
-### MQTT
+- **MQTT**
 
-To retreive data from a MQTT topic, install MQTT and run:
+    To retreive data from a MQTT topic, install MQTT and run:
 
-    mosquitto_sub -h <ip address of the BBB> -t ble-gateway-advertisements
+        mosquitto_sub -h <ip address of the BBB> -t ble-gateway-advertisements
 
-### UDP Broadcast
+- **UDP Broadcast**
 
-Packets are sent as JSON encoded strings in UDP packets to the broadcast
-address `255.255.255.255` on port `3002`.
+    Packets are sent as JSON encoded strings in UDP packets to the broadcast
+    address `255.255.255.255` on port `3002`.
 
 
