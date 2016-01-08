@@ -16,6 +16,7 @@
     "url": "https://github.com/lab11/gateway/issues"
   },
   "dependencies": {
+    "mqtt": "^1.6.3",
     "ws": "^1.0.1"
   }
 }

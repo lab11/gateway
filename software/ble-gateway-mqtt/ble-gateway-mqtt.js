@@ -8,11 +8,12 @@ var BleGateway = require('ble-gateway');
 var mqtt       = require('mqtt');
 
 
+var HOST = '127.0.0.1';
 var MQTT_TOPIC_NAME = 'ble-gateway-advertisements';
 
 
 var bleg   = new BleGateway();
-var client = mqtt.connect('mqtt://127.0.0.1');
+var client = mqtt.connect('mqtt://' + HOST);
 
 // Callback for when BLE discovers the advertisement
 bleg.on('advertisement', function (adv_obj) {
