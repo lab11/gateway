@@ -5,10 +5,12 @@
  ******************************************************************************/
 
 var BleGateway = require('ble-gateway');
-var express = require('express');
+var express    = require('express');
+var getmac     = require('getmac');
+var async      = require('async');
 
 var bleg = new BleGateway();
-var app = express();
+var app  = express();
 
 // How many of the most recent advertisements should be displayed.
 var ADVERTISEMENTS_TO_KEEP = 10;
@@ -17,25 +19,66 @@ var ADVERTISEMENTS_TO_KEEP = 10;
 var devices = {};
 
 // Really rough way to do HTML to write this app quickly.
-var HTML_BEG = '<html><head><title>BLE Data</title></head><body>';
+var HTML_BEG = '<html><head><title>BLE Data</title><style>p{margin:0;}</style></head><body>';
 var HTML_END = '</body></html>';
+
+// Pre-fetch the mac address
+var macaddr = '';
+getmac.getMac(function (err, addr) {
+	macaddr = addr;
+});
+
+// Get IP address
+function get_ip_addresses (cb) {
+	var os = require('os');
+	var ifaces = os.networkInterfaces();
+
+	var out = '';
+
+	async.eachSeries(Object.keys(ifaces), function (ifname, done) {
+		if (ifname != 'lo') {
+			async.forEachOfSeries(ifaces[ifname], function (iface, index, done2) {
+				out += '<p>' + ifname + ':' + index + ' - ' + iface.address + '</p>';
+				done2();
+			}, function (err) {
+				done();
+			});
+		} else {
+			done();
+		}
+	}, function (err) {
+		cb(out);
+	});
+}
+
+
+/*******************************************************************************
+ * ROUTES
+ ******************************************************************************/
 
 // Display a list of found devices
 app.get('/', function (req, res) {
 
-	var out = HTML_BEG;
+	// Get IP addresses to show
+	get_ip_addresses(function (addrs) {
+		var out = HTML_BEG;
 
-	out += '<h1>Devices</h1>';
+		out += '<h1>Local Machine Info</h1>';
+		out += '<p>MAC Address: ' + macaddr + '</p>';
+		out += addrs;
 
-	out += '<ul>'
-	for (var key in devices) {
-		out += '<li><a href="' + key + '">' + key + '</a></li>';
-	}
-	out += '</ul>';
+		out += '<h1>Devices</h1>';
 
-	out += HTML_END;
+		out += '<ul>'
+		for (var key in devices) {
+			out += '<li><a href="' + key + '">' + key + '</a></li>';
+		}
+		out += '</ul>';
 
-	res.send(out);
+		out += HTML_END;
+
+		res.send(out);
+	});
 });
 
 // Show the unpacked advertisements for a device

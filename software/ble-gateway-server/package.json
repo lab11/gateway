@@ -4,8 +4,10 @@
   "description": "View devices with gateway locally.",
   "main": "ble-gateway-server.js",
   "dependencies": {
+    "async": "^1.5.2",
     "ble-gateway": "^0.1.0",
-    "express": "^4.13.3"
+    "express": "^4.13.3",
+    "getmac": "^1.0.7"
   },
   "devDependencies": {},
   "scripts": {
