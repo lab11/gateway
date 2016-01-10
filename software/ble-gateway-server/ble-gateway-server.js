@@ -9,7 +9,6 @@ var express    = require('express');
 var getmac     = require('getmac');
 var async      = require('async');
 
-var bleg = new BleGateway();
 var app  = express();
 
 // How many of the most recent advertisements should be displayed.
@@ -101,7 +100,7 @@ app.get('/:device', function (req, res) {
 });
 
 // Callback for when BLE discovers the advertisement
-bleg.on('advertisement', function (adv_obj) {
+BleGateway.on('advertisement', function (adv_obj) {
 	var name = '';
 	if ('device' in adv_obj) {
 		name = adv_obj.device + '-' + adv_obj.id;
@@ -120,7 +119,7 @@ bleg.on('advertisement', function (adv_obj) {
 });
 
 // Run the Gateway
-bleg.start();
+BleGateway.start();
 
 // Run the webserver
 var server = app.listen(3000, function () {
