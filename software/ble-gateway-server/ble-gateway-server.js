@@ -136,7 +136,7 @@ client.on('message', function (message, remote) {
 client.bind(UDP_BROADCAST_PORT);
 
 // Run the webserver
-var server = app.listen(3000, function () {
+var server = app.listen(80, function () {
 	var host = server.address().address;
 	var port = server.address().port;
 
