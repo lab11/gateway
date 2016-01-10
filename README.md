@@ -40,14 +40,6 @@ from service adapters that make the packets available over various protocols.
                                      +-----------+
 ```
 
-Example listeners for subscribing to packets are in the
-[examples](https://github.com/lab11/gateway/tree/master/software/examples)
-folder.
-
-### Gateway Hardware
-
-- [Setup a BeagleBone Black to be a gateway](https://github.com/lab11/gateway/blob/master/docs/BBB-for-gateway.md)
-- [Use the BBB gateway](https://github.com/lab11/gateway/blob/master/docs/BBB-for-gateway-usage.md)
 
 
 Related Projects
