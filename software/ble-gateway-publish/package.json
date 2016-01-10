@@ -1,14 +1,14 @@
 {
-  "name": "ble-gateway-broadcast",
+  "name": "ble-gateway-publish",
   "version": "0.1.0",
-  "description": "Broadcast packets to local net",
-  "main": "ble-gateway-broadcast.js",
+  "description": "Publish BLE packets on various protocols.",
+  "main": "ble-gateway-publish.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lab11/gateway.git"
+    "url": "https://github.com/lab11/gateway"
   },
   "author": "Brad Campbell",
   "license": "MIT",
@@ -16,6 +16,9 @@
     "url": "https://github.com/lab11/gateway/issues"
   },
   "dependencies": {
-    "ble-gateway": "^0.1.0"
+    "debug": "^2.2.0",
+    "mqtt": "^1.6.3",
+    "ws": "^1.0.1",
+    "yargs": "^3.31.0"
   }
 }

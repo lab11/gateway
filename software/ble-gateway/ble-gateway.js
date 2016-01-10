@@ -11,23 +11,10 @@ var urlExpander = require('expand-url');
 var _ = require('lodash');
 var debug = require('debug')('ble-gateway');
 
-var argv = require('yargs')
-    .help('h')
-    .alias('h', 'help')
-    .option('no-parse-advertisements', {
-        describe: 'this gateway should not parse advertisements',
-        boolean: true,
-    })
-    .option('no-parse-services', {
-        describe: 'this gateway should not connect and parse services',
-        boolean: true
-    })
-    .option('no-publish', {
-        describe: 'this gateway should not publish parsed data',
-        boolean: true
-    })
-    .argv;
 
+// Whether or not this is running inside of another app as a module.
+// We expect this to normally be true.
+var am_submodule = (require.main !== module);
 
 // Hardcoded constant for the name of the JavaScript that has the functions
 // we care about for this gateway.
@@ -70,7 +57,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
             var device = this._device_to_data[peripheral.id];
 
             // Unless told not to, we parse advertisements
-            if (!argv.noParseAdvertisements) {
+            if (am_submodule || !argv.noParseAdvertisements) {
 
                 // Check if we have some way to parse the advertisement
                 if (device.parser && device.parser.parseAdvertisement) {
@@ -83,7 +70,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                         // Now check if the device wants to do something
                         // with the parsed advertisement.
-                        if (!argv.noPublish && device.parser.publishAdvertisement) {
+                        if ((am_submodule || !argv.noPublish) && device.parser.publishAdvertisement) {
                             device.parser.publishAdvertisement(adv_obj);
                         }
                     };
@@ -95,7 +82,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
             }
 
             // Unless told not to, we see if this device wants us to connect
-            if (!argv.noParseServices) {
+            if (am_submodule || !argv.noParseServices) {
 
                 var parse_services_done = function (data_obj) {
                     data_obj.id = peripheral.id;
@@ -109,7 +96,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                             // Now check if the device wants to do something
                             // with the parsed service data.
-                            if (!argv.noPublish && device.parser.publishServiceData) {
+                            if ((am_submodule || !argv.noPublish) && device.parser.publishServiceData) {
                                 device.parser.publishServiceData(data_obj);
                             }
                         }
@@ -208,6 +195,23 @@ BleGateway.prototype.on_beacon = function (beacon) {
 // If this is true, we are running this file directly and should
 // start the gateway.
 if (require.main === module) {
+    var argv = require('yargs')
+        .help('h')
+        .alias('h', 'help')
+        .option('no-parse-advertisements', {
+            describe: 'this gateway should not parse advertisements',
+            boolean: true,
+        })
+        .option('no-parse-services', {
+            describe: 'this gateway should not connect and parse services',
+            boolean: true
+        })
+        .option('no-publish', {
+            describe: 'this gateway should not publish parsed data',
+            boolean: true
+        })
+        .argv;
+
     var bleg = new BleGateway();
 
     bleg.on('advertisement', function (adv_obj) {
