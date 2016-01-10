@@ -1,5 +1,6 @@
 [Unit]
 Description=ble-gateway-publish
+After=bluetooth.target mosquitto.service
 
 [Service]
 ExecStart=/home/debian/gateway/software/ble-gateway-publish/ble-gateway-publish.js

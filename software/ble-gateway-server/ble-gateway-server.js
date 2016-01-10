@@ -4,12 +4,16 @@
  * Create a simple webserver that shows recent packets
  ******************************************************************************/
 
-var BleGateway = require('ble-gateway');
-var express    = require('express');
-var getmac     = require('getmac');
-var async      = require('async');
+var dgram   = require('dgram');
+var express = require('express');
+var getmac  = require('getmac');
+var async   = require('async');
 
 var app  = express();
+var client = dgram.createSocket('udp4');
+
+// UDP broadcast port
+var UDP_BROADCAST_PORT = 3002;
 
 // How many of the most recent advertisements should be displayed.
 var ADVERTISEMENTS_TO_KEEP = 10;
@@ -50,6 +54,14 @@ function get_ip_addresses (cb) {
 	});
 }
 
+
+/*******************************************************************************
+ * EVENTS
+ ******************************************************************************/
+
+client.on('listening', function () {
+    client.setBroadcast(true);
+});
 
 /*******************************************************************************
  * ROUTES
@@ -100,7 +112,9 @@ app.get('/:device', function (req, res) {
 });
 
 // Callback for when BLE discovers the advertisement
-BleGateway.on('advertisement', function (adv_obj) {
+client.on('message', function (message, remote) {
+    var adv_obj = JSON.parse(message.toString());
+
 	var name = '';
 	if ('device' in adv_obj) {
 		name = adv_obj.device + '-' + adv_obj.id;
@@ -118,8 +132,8 @@ BleGateway.on('advertisement', function (adv_obj) {
 	devices[name] = devices[name].slice(0, ADVERTISEMENTS_TO_KEEP);
 });
 
-// Run the Gateway
-BleGateway.start();
+// Start getting packets
+client.bind(UDP_BROADCAST_PORT);
 
 // Run the webserver
 var server = app.listen(3000, function () {

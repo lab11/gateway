@@ -1,0 +1,13 @@
+[Unit]
+Description=ble-gateway-server
+After=bluetooth.target ble-gateway-publish.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/ble-gateway-server/ble-gateway-server.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ble-gateway-server
+
+[Install]
+WantedBy=multi-user.target
