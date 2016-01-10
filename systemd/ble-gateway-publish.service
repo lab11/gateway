@@ -1,0 +1,12 @@
+[Unit]
+Description=ble-gateway-publish
+
+[Service]
+ExecStart=/home/debian/gateway/software/ble-gateway-publish/ble-gateway-publish.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ble-gateway-publish
+
+[Install]
+WantedBy=multi-user.target
