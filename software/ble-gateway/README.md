@@ -109,7 +109,7 @@ var parse_advertisement = function (advertisement, cb) {
 
     var name = advertisement.localName;
     var service_uuid = parseInt(advertisement.serviceData[0].uuid, 16);
-    
+
     var out = {
         name: name,
         uuid: service_uuid
@@ -133,8 +133,7 @@ events.
 
 
 ```js
-var bg = require('ble-gateway');
-var BleGateway = new bg();
+var BleGateway = require('ble-gateway');
 
 // Receive formatted advertisement data objects.
 // adv_obj.id will be the peripheral id that it was captured from.
@@ -166,10 +165,7 @@ Questions
 
 - How to let devices trigger common parsing functions (like Cloudcomm)?
 Likely that a device will want to be able to use a common gateway function.
-
 - Is there anyway to make downloading and running arbitrary JavaScript safe?
 - How to specify what to do with the data?
 - How to securely get a key off of the device to publish the data with?
 - How to match formatted output data with a website publishing script?
-
-

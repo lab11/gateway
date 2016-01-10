@@ -217,4 +217,4 @@ if (require.main === module) {
     bleg.start();
 }
 
-module.exports = BleGateway;
+module.exports = new BleGateway();
