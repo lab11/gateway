@@ -10,7 +10,7 @@ var getmac  = require('getmac');
 var async   = require('async');
 
 var app  = express();
-var client = dgram.createSocket('udp4');
+var client = dgram.createSocket({type: 'udp4', reuseAddr: true, reusePort: true});
 
 // UDP broadcast port
 var UDP_BROADCAST_PORT = 3002;
