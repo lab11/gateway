@@ -1,0 +1,13 @@
+[Unit]
+Description=adv-gateway-ip
+After=bluetooth.target
+
+[Service]
+ExecStart=/home/debian/gateway/software/adv-gateway-ip/adv-gateway-ip.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=adv-gateway-ip
+
+[Install]
+WantedBy=multi-user.target
