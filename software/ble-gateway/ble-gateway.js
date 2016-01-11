@@ -33,13 +33,17 @@ var am_submodule = (require.main !== module);
 // we care about for this gateway.
 var FILENAME_PARSE = 'parse.js'
 
+// Hardcoded constant for the timeout window to check for a new parse.js
+var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
+
 // Main object for the BleGateway
 var BleGateway = function () {
     debug('Creating a new gateway');
     this._device_to_data = {};
 
     noble.on('discover', this.on_discover.bind(this));
-    EddystoneBeaconScanner.on('found', this.on_beacon.bind(this));
+    EddystoneBeaconScanner.on('updated', this.on_beacon.bind(this));
+    this._device_id_ages = {};
 };
 
 // We use the EventEmitter pattern to return parsed objects
@@ -174,6 +178,15 @@ BleGateway.prototype.get_base_url = function (full_url) {
 BleGateway.prototype.on_beacon = function (beacon) {
     // Tickle the watchdog
     watchdog.reset();
+
+    // We keep a list of the last time we updated for each device, this allows
+    // the gateway to pull down new parse.js files when they update
+    if (beacon.id in this._device_id_ages) {
+      if ((Date.now() - this._device_id_ages[beacon.id]) < PARSE_JS_CACHE_TIME_IN_MS) {
+        return;
+      }
+    }
+    this._device_id_ages[beacon.id] = Date.now();
 
     if (beacon.type == 'url') {
         debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
