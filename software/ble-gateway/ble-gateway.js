@@ -77,7 +77,11 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                     // Call the device specific advertisement parse function.
                     // Give it the done callback.
-                    device.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
+                    try {
+                        device.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
+                    } catch (e) {
+                        debug('Error calling parse function for ' + peripheral.id);
+                    }
                 }
             }
 
