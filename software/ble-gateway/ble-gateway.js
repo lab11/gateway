@@ -10,6 +10,19 @@ var EddystoneBeaconScanner = require('eddystone-beacon-scanner');
 var urlExpander = require('expand-url');
 var _ = require('lodash');
 var debug = require('debug')('ble-gateway');
+var watchout = require('watchout');
+
+
+// There is a currently unknown issue where this script will hang sometimes,
+// for the moment, we work around it with the venerage watchdog timer
+var watchdog = new watchout(5*60*1000, function(didCancelWatchdog) {
+  if (didCancelWatchdog) {
+    // benign
+  } else {
+    debug("Watchdog tripped");
+    process.exit(1);
+  }
+});
 
 
 // Whether or not this is running inside of another app as a module.
@@ -47,6 +60,8 @@ BleGateway.prototype.start = function () {
 
 // Called on each advertisement packet
 BleGateway.prototype.on_discover = function (peripheral) {
+    // Tickle the watchdog
+    watchout.reset();
 
     // Don't want the Eddystone beacons at the moment.
     if (!EddystoneBeaconScanner.isBeacon(peripheral)) {
@@ -157,6 +172,8 @@ BleGateway.prototype.get_base_url = function (full_url) {
 
 // Callback when an eddystone beacon is found.
 BleGateway.prototype.on_beacon = function (beacon) {
+    // Tickle the watchdog
+    watchout.reset();
 
     if (beacon.type == 'url') {
         debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
