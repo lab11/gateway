@@ -11,17 +11,18 @@ var urlExpander = require('expand-url');
 var _ = require('lodash');
 var debug = require('debug')('ble-gateway');
 var watchout = require('watchout');
+var async = require('async');
 
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
 var watchdog = new watchout(5*60*1000, function(didCancelWatchdog) {
-  if (didCancelWatchdog) {
-    // benign
-  } else {
-    debug("Watchdog tripped");
-    process.exit(1);
-  }
+    if (didCancelWatchdog) {
+        // benign
+    } else {
+        debug("Watchdog tripped");
+        process.exit(1);
+    }
 });
 
 
@@ -51,15 +52,15 @@ util.inherits(BleGateway, events.EventEmitter);
 
 // Call .start() to run the gateway functionality
 BleGateway.prototype.start = function () {
-  var startScanningOnPowerOn = function() {
-    if (noble.state === 'poweredOn') {
-      noble.startScanning([], true);
-    } else {
-      noble.once('stateChange', startScanningOnPowerOn);
-    }
-  };
+    var startScanningOnPowerOn = function() {
+        if (noble.state === 'poweredOn') {
+            noble.startScanning([], true);
+        } else {
+            noble.once('stateChange', startScanningOnPowerOn);
+        }
+    };
 
-  startScanningOnPowerOn();
+    startScanningOnPowerOn();
 };
 
 // Called on each advertisement packet
@@ -191,8 +192,8 @@ BleGateway.prototype.on_beacon = function (beacon) {
     if (beacon.type == 'url') {
         debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
 
-        // Expand the URL and save it
-        urlExpander.expand(beacon.url, (err, full_url) => {
+        // This is called when we successfully get the expanded URL.
+        var got_expanded_url = function (err, full_url) {
             if (!err) {
                 // Create space if this is a new beacon
                 if (!(beacon.id in this._device_to_data)) {
@@ -205,22 +206,37 @@ BleGateway.prototype.on_beacon = function (beacon) {
                 // Store that
                 this._device_to_data[beacon.id]['url'] = base_url;
 
-                // Now see if we can get parse.js
-                request(base_url + FILENAME_PARSE, (req_parse_err, response, body) => {
-                    if (!req_parse_err && response.statusCode == 200) {
-                        debug('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url);
-                        this._device_to_data[beacon.id]['parse.js'] = body;
+                // This is called after we successfully try to fetch parse.js
+                var got_parse_js = function (err, response) {
+                    if (!err && response.statusCode == 200) {
+                        debug('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + beacon.id + ')');
+                        this._device_to_data[beacon.id]['parse.js'] = response.body;
 
+                        // Make the downloaded JS an actual function
+                        // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
                         try {
-                            var parser = this.require_from_string(body, base_url + FILENAME_PARSE);
+                            var parser = this.require_from_string(response.body, base_url + FILENAME_PARSE);
                             this._device_to_data[beacon.id].parser = parser;
                             parser.parseAdvertisement();
                         } catch (e) {}
 
+                    } else {
+                        debug('Could not fetch parse.js after trying multiple times. (' + beacon.id + ')');
                     }
-                });
+                };
+
+                // Now see if we can get parse.js
+                async.retry(10, function (cb, r) {
+                    request(base_url + FILENAME_PARSE, cb);
+                }, got_parse_js.bind(this));
+
+            } else {
+                debug('Error getting full URL (' + beacon.url + ') after several tries.');
             }
-        });
+        };
+
+        // Try to expand the URL up to 10 times
+        async.retry(10, function (cb, r) { urlExpander.expand(beacon.url, cb); }, got_expanded_url.bind(this));
 
     }
 };
@@ -253,6 +269,7 @@ if (require.main === module) {
     });
 
     bleg.start();
-}
 
-module.exports = new BleGateway();
+}else {
+    module.exports = new BleGateway();
+}
