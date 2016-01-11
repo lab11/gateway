@@ -22,7 +22,7 @@ var ADVERTISEMENTS_TO_KEEP = 10;
 var devices = {};
 
 // Really rough way to do HTML to write this app quickly.
-var HTML_BEG = '<html><head><title>BLE Data</title><style>p{margin:0;}</style></head><body>';
+var HTML_BEG = '<html><head><title>Swarm Gateway</title><style>p{margin:0;}</style></head><body>';
 var HTML_END = '</body></html>';
 
 // Pre-fetch the mac address
