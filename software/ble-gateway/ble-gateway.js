@@ -61,7 +61,7 @@ BleGateway.prototype.start = function () {
 // Called on each advertisement packet
 BleGateway.prototype.on_discover = function (peripheral) {
     // Tickle the watchdog
-    watchout.reset();
+    watchdog.reset();
 
     // Don't want the Eddystone beacons at the moment.
     if (!EddystoneBeaconScanner.isBeacon(peripheral)) {
@@ -173,7 +173,7 @@ BleGateway.prototype.get_base_url = function (full_url) {
 // Callback when an eddystone beacon is found.
 BleGateway.prototype.on_beacon = function (beacon) {
     // Tickle the watchdog
-    watchout.reset();
+    watchdog.reset();
 
     if (beacon.type == 'url') {
         debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
