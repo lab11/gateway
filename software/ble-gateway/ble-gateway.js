@@ -227,7 +227,11 @@ BleGateway.prototype.on_beacon = function (beacon) {
 
                 // Now see if we can get parse.js
                 async.retry(10, function (cb, r) {
-                    request(base_url + FILENAME_PARSE, cb);
+                    request(base_url + FILENAME_PARSE, function (err, response, body) {
+                        // We want to error if err or 503
+                        var request_err = (err || response.statusCode==503);
+                        cb(request_err, response);
+                    });
                 }, got_parse_js.bind(this));
 
             } else {
