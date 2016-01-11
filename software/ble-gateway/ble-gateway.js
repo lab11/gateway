@@ -42,6 +42,10 @@ var BleGateway = function () {
     debug('Creating a new gateway');
     this._device_to_data = {};
 
+    // Keep a map of URL -> parse.js parsers so we don't have to re-download
+    // parse.js for the same devices.
+    this._cached_parsers = {};
+
     noble.on('discover', this.on_discover.bind(this));
     EddystoneBeaconScanner.on('updated', this.on_beacon.bind(this));
     this._device_id_ages = {};
@@ -74,69 +78,75 @@ BleGateway.prototype.on_discover = function (peripheral) {
         // We have seen an eddystone packet from the same address
         if (peripheral.id in this._device_to_data) {
 
+            // Lookup the correct device to get its parser URL identifier
             var device = this._device_to_data[peripheral.id];
 
-            // Unless told not to, we parse advertisements
-            if (am_submodule || !argv.noParseAdvertisements) {
+            // Check to see if a parser is available
+            if (device.request_url in this._cached_parsers) {
+                var parser = this._cached_parsers[device.request_url];
 
-                // Check if we have some way to parse the advertisement
-                if (device.parser && device.parser.parseAdvertisement) {
+                // Unless told not to, we parse advertisements
+                if (am_submodule || !argv.noParseAdvertisements) {
 
-                    var parse_advertisement_done = function (adv_obj) {
-                        adv_obj.id = peripheral.id;
+                    // Check if we have some way to parse the advertisement
+                    if (parser.parser && parser.parser.parseAdvertisement) {
 
-                        // We broadcast on "advertisement"
-                        this.emit('advertisement', adv_obj);
+                        var parse_advertisement_done = function (adv_obj) {
+                            adv_obj.id = peripheral.id;
 
-                        // Now check if the device wants to do something
-                        // with the parsed advertisement.
-                        if ((am_submodule || !argv.noPublish) && device.parser.publishAdvertisement) {
-                            device.parser.publishAdvertisement(adv_obj);
-                        }
-                    };
-
-                    // Call the device specific advertisement parse function.
-                    // Give it the done callback.
-                    try {
-                        device.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
-                    } catch (e) {
-                        debug('Error calling parse function for ' + peripheral.id);
-                    }
-                }
-            }
-
-            // Unless told not to, we see if this device wants us to connect
-            if (am_submodule || !argv.noParseServices) {
-
-                var parse_services_done = function (data_obj) {
-                    data_obj.id = peripheral.id;
-
-                    // After device-specific code is done, disconnect and handle
-                    // returned object.
-                    peripheral.disconnect((disconnect_error) => {
-                        if (!disconnect_error) {
-                            // Broadcast this on "data"
-                            this.emit('data', data_obj);
+                            // We broadcast on "advertisement"
+                            this.emit('advertisement', adv_obj);
 
                             // Now check if the device wants to do something
-                            // with the parsed service data.
-                            if ((am_submodule || !argv.noPublish) && device.parser.publishServiceData) {
-                                device.parser.publishServiceData(data_obj);
+                            // with the parsed advertisement.
+                            if ((am_submodule || !argv.noPublish) && parser.parser.publishAdvertisement) {
+                                parser.parser.publishAdvertisement(adv_obj);
                             }
+                        };
+
+                        // Call the device specific advertisement parse function.
+                        // Give it the done callback.
+                        try {
+                            parser.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
+                        } catch (e) {
+                            debug('Error calling parse function for ' + peripheral.id);
                         }
-                    });
+                    }
                 }
 
-                // Check if we have some code to connect
-                if (device.parser && device.parser.parseServices) {
-                    // Use noble to connect to the BLE device
-                    peripheral.connect((connect_error) => {
-                        if (!connect_error) {
-                            // After a successful connection, let the
-                            // device specific code read services and whatnot.
-                            device.parser.parseServices(peripheral, parse_services_done.bind(this));
-                        }
-                    });
+                // Unless told not to, we see if this device wants us to connect
+                if (am_submodule || !argv.noParseServices) {
+
+                    var parse_services_done = function (data_obj) {
+                        data_obj.id = peripheral.id;
+
+                        // After device-specific code is done, disconnect and handle
+                        // returned object.
+                        peripheral.disconnect((disconnect_error) => {
+                            if (!disconnect_error) {
+                                // Broadcast this on "data"
+                                this.emit('data', data_obj);
+
+                                // Now check if the device wants to do something
+                                // with the parsed service data.
+                                if ((am_submodule || !argv.noPublish) && parser.parser.publishServiceData) {
+                                    parser.parser.publishServiceData(data_obj);
+                                }
+                            }
+                        });
+                    }
+
+                    // Check if we have some code to connect
+                    if (parser.parser && parser.parser.parseServices) {
+                        // Use noble to connect to the BLE device
+                        peripheral.connect((connect_error) => {
+                            if (!connect_error) {
+                                // After a successful connection, let the
+                                // device specific code read services and whatnot.
+                                parser.parser.parseServices(peripheral, parse_services_done.bind(this));
+                            }
+                        });
+                    }
                 }
             }
 
@@ -206,17 +216,24 @@ BleGateway.prototype.on_beacon = function (beacon) {
                 // Store that
                 this._device_to_data[beacon.id]['url'] = base_url;
 
+                // Figure out the URL we are going to fetch, and store that
+                var request_url = base_url + FILENAME_PARSE;
+                this._device_to_data[beacon.id]['request_url'] = request_url;
+
                 // This is called after we successfully try to fetch parse.js
                 var got_parse_js = function (err, response) {
                     if (!err && response.statusCode == 200) {
-                        debug('Fetching and loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + beacon.id + ')');
-                        this._device_to_data[beacon.id]['parse.js'] = response.body;
+                        debug('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + beacon.id + ')');
+
+                        // Store this in the known parsers object
+                        this._cached_parsers[request_url] = {};
+                        this._cached_parsers[request_url]['parse.js'] = response.body;
 
                         // Make the downloaded JS an actual function
                         // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
                         try {
-                            var parser = this.require_from_string(response.body, base_url + FILENAME_PARSE);
-                            this._device_to_data[beacon.id].parser = parser;
+                            var parser = this.require_from_string(response.body, request_url);
+                            this._cached_parsers[request_url].parser = parser;
                             parser.parseAdvertisement();
                         } catch (e) {}
 
@@ -225,14 +242,22 @@ BleGateway.prototype.on_beacon = function (beacon) {
                     }
                 };
 
-                // Now see if we can get parse.js
-                async.retry(10, function (cb, r) {
-                    request(base_url + FILENAME_PARSE, function (err, response, body) {
-                        // We want to error if err or 503
-                        var request_err = (err || response.statusCode==503);
-                        cb(request_err, response);
-                    });
-                }, got_parse_js.bind(this));
+                // Check if we already know about this URL
+                if (!(request_url in this._cached_parsers)) {
+                    // Don't have this one yet, so lets get it
+                    debug('Fetching ' + request_url + ' (' + beacon.id + ')');
+
+                    // Now see if we can get parse.js
+                    async.retry({tries: 10, interval: 400}, function (cb, r) {
+                        request(request_url, function (err, response, body) {
+                            // We want to error if err or 503
+                            var request_err = (err || response.statusCode==503);
+                            cb(request_err, response);
+                        });
+                    }, got_parse_js.bind(this));
+                } else {
+                    debug('Using cached parse.js for ' + beacon.id);
+                }
 
             } else {
                 debug('Error getting full URL (' + beacon.url + ') after several tries.');
