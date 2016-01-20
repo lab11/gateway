@@ -47,6 +47,7 @@ BleAddressSniffer.prototype.on_scan_changed = function (enable, filter_dups) {
 };
 
 BleAddressSniffer.prototype.on_discover = function (peripheral) {
+	var now = new Date().toISOString();
 	var address_buffer = new Buffer(peripheral.id, 'hex')
 	var hashes = this.hash_address(address_buffer);
 	var full_hash = hashes[0];
@@ -54,7 +55,9 @@ BleAddressSniffer.prototype.on_discover = function (peripheral) {
 
 	var adv = {
 		globalHashedAddress: hashed_address,
-		localHashedAddress: full_hash
+		localHashedAddress: full_hash,
+		receivedTime: now
+
 	};
 	this.emit('advertisement', adv);
 };
@@ -103,7 +106,11 @@ if (require.main === module) {
 	bas.on('advertisement', function (adv) {
 		if (!(adv.globalHashedAddress in hash_to_addresses)) {
 			hash_to_addresses[adv.globalHashedAddress] = [];
-			console.log(adv.localHashedAddress);
+			console.log('=== Found New BLE Address ===');
+			console.log('Global Hashed Address: ' + adv.globalHashedAddress);
+			console.log('Local Hashed Address:  ' + adv.localHashedAddress);
+			console.log('Received Time:         ' + adv.receivedTime);
+			// console.log(adv.localHashedAddress + ' (' + adv.receivedTime + ')');
 		}
 
 		if (hash_to_addresses[adv.globalHashedAddress].indexOf(adv.localHashedAddress) < 0) {
