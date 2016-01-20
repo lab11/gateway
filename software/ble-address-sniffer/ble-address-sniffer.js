@@ -33,7 +33,7 @@ var hash_to_addresses = {};
 
 
 noble.on('discover', function (peripheral) {
-	// console.log(peripheral.address)
+	// console.log(peripheral)
 	var address_buffer = new Buffer(peripheral.id, 'hex')
 	var hashed_address = hash_address(address_buffer);
 	// console.log(hashed_address)
@@ -41,6 +41,7 @@ noble.on('discover', function (peripheral) {
 
 	if (!(hashed_address in hash_to_addresses)) {
 		hash_to_addresses[hashed_address] = [];
+		console.log(peripheral.address)
 	}
 
 	if (hash_to_addresses[hashed_address].indexOf(peripheral.address) < 0) {
