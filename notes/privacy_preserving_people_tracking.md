@@ -84,7 +84,7 @@ significantly obscure any patterns. The issue with changing hash functions
 is it aids tracking specific people if you have a known BLE MAC address.
 For example, imagine you learn that person `X` has a device with BLE MAC address
 `Y`. At time interval `t1` you hash `Y` with the `t1` hash function and find
-that there is a matching in locations `A`, `B`, and `C`. Then you wait until
+that there is a match in locations `A`, `B`, and `C`. Then you wait until
 time interval `t2`. You again hash `Y` with the `t2` hash function and find
 that the gateways found a match in locations `B`, `D`, `E`. Now you can
 reasonably conclude that the person `X` was in location `B` during `t1` and `t2`.
