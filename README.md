@@ -57,4 +57,7 @@ Collect BLE advertisements from PowerBlade devices.
 - **[GAP](https://github.com/lab11/gap)**: Add 802.15.4 hardware support
 to the BeagleBone Black.
 
+- **[Edison Based Gateway](https://github.com/lab11/IntelEdisonGateway)**: Gateway hardware
+based on the Intel Edison.
+
 
