@@ -1,0 +1,27 @@
+{
+  "name": "ble-address-sniffer",
+  "version": "0.1.0",
+  "description": "Sniff for BLE advertisement MAC addresses and hash them.",
+  "main": "ble-address-sniffer.js",
+  "dependencies": {
+    "noble": "^1.3.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "keywords": [
+    "BLE",
+    "sniffing"
+  ],
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme"
+}
