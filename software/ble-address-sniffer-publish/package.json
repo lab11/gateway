@@ -1,0 +1,26 @@
+{
+  "name": "ble-address-sniffer-publish",
+  "version": "0.1.0",
+  "description": "Publish BLE MAC addresses.",
+  "main": "ble-address-sniffer-publish.js",
+  "dependencies": {
+    "ble-address-sniffer": "^0.1.0",
+    "debug": "^2.2.0",
+    "mqtt": "^1.7.0",
+    "yargs": "^3.32.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme"
+}
