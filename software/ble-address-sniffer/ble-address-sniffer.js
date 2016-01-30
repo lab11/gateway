@@ -63,6 +63,7 @@ BleAddressSniffer.prototype.on_discover = function (peripheral) {
 		globalHashedAddress: hashed_address,
 		localHashedAddress:  full_hash,
 		address:             peripheral.id,
+		rssi:                peripheral.rssi,
 		receivedTime:        now
 
 	};
