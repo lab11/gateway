@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*
 
 Takes the stream of packets from the BLE gateway and makes individual
