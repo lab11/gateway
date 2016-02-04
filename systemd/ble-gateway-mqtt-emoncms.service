@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish Gateway Advertisements to Emoncms
+After=bluetooth.target mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/ble-gateway-mqtt-emoncms/ble-gateway-mqtt-emoncms.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ble-gateway-mqtt-emoncms
+
+[Install]
+WantedBy=multi-user.target
