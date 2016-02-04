@@ -10,6 +10,8 @@ var getmac  = require('getmac');
 var async   = require('async');
 
 var app  = express();
+// Static
+app.use('/js', express.static('js'));
 var client = dgram.createSocket({type: 'udp4', reuseAddr: true, reusePort: true});
 
 // UDP broadcast port
@@ -92,6 +94,25 @@ app.get('/', function (req, res) {
 	});
 });
 
+// Show a graph of a value in real time
+app.get('/graph', function (req, res) {
+
+	var out = `<html>
+                 <head>
+                  <title>Swarm Gateway Graph</title>
+                  <style>p, body, html {margin:0;}</style>
+                  <script type="text/javascript" src="js/smoothie.js"></script>
+                </head>
+                <body>
+                  <div id='charts'></div>
+                  <canvas id="chart" width="100%" height="400"></canvas>
+                  <script language='javascript' src='/js/graph-websockets.js'></script>
+                </body>
+              </html>`;
+
+	res.send(out);
+});
+
 // Show the unpacked advertisements for a device
 app.get('/:device', function (req, res) {
 	var device = req.params.device;
@@ -101,6 +122,27 @@ app.get('/:device', function (req, res) {
 	out += '<h1>' + device + '</h1>';
 
 	if (device in devices) {
+
+		out += '<h2>Most Recent Packet</h2><ul>';
+		var last = devices[device][0];
+
+		for (var key in last) {
+			var val = last[key];
+
+			// Decide if we should show a graph link
+			var graph = '';
+			if (key != 'id') {
+				if (!isNaN(val)) {
+					graph = ' (<a href="/graph?ws_host=4908bbb33.eecs.umich.edu:3001&id=' + last.id + '&field=' + key + '">graph</a>)';
+				}
+			}
+
+			out += '<li>' + key + ': ' + val + graph + '</li>';
+		}
+		out += '</ul>'
+
+		out += '<h2>Last 10 Packets</h2>';
+
 		out += '<p>' + JSON.stringify(devices[device]) + '</p>';
 	} else {
 		out += '<p>Not Found</p>'
