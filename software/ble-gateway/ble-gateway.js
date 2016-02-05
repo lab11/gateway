@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 var events = require('events');
-var url = require('url');
-var util = require('util');
+var url    = require('url');
+var util   = require('util');
 
-var noble = require('noble');
-var request = require('request');
+var noble                  = require('noble');
+var request                = require('request');
 var EddystoneBeaconScanner = require('eddystone-beacon-scanner');
-var urlExpander = require('expand-url');
-var _ = require('lodash');
-var debug = require('debug')('ble-gateway');
-var watchout = require('watchout');
-var async = require('async');
+var urlExpander            = require('expand-url');
+var _                      = require('lodash');
+var debug                  = require('debug')('ble-gateway');
+var watchout               = require('watchout');
+var async                  = require('async');
 
 
 // There is a currently unknown issue where this script will hang sometimes,
@@ -47,6 +47,7 @@ var BleGateway = function () {
     this._cached_parsers = {};
 
     noble.on('discover', this.on_discover.bind(this));
+    noble.on('scanStop', this.on_scanStop.bind(this));
     EddystoneBeaconScanner.on('updated', this.on_beacon.bind(this));
     this._device_id_ages = {};
 };
@@ -65,6 +66,13 @@ BleGateway.prototype.start = function () {
     };
 
     startScanningOnPowerOn();
+};
+
+// We catch this event to detect if scanning ever stops. We don't want it to
+// stop, so it's likely that some other process made it stop and we want to
+// override that.
+BleGateway.prototype.on_scanStop = function () {
+    noble.startScanning([], true);
 };
 
 // Called on each advertisement packet
