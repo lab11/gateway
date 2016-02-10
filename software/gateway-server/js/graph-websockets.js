@@ -3,7 +3,7 @@ var readings = new TimeSeries();
 var queryDict = {}
 location.search.substr(1).split("&").forEach(function(item) {queryDict[item.split("=")[0]] = item.split("=")[1]});
 
-var ws_host = queryDict.ws_host || 'localhost:3001';
+var ws_host = queryDict.ws_host || window.location.hostname + ':3001';
 var id      = queryDict.id;
 var field   = queryDict.field;
 
