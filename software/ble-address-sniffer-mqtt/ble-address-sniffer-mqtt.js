@@ -43,7 +43,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
     BleAddrSniff.on('advertisement', function (adv) {
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(adv))
     });
-}
+});
 
 // Find MQTT server
 MQTTDiscover.start();
