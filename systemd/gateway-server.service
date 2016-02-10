@@ -1,13 +1,13 @@
 [Unit]
-Description=ble-gateway-publish
+Description=Web interface for gateway
 After=bluetooth.target mosquitto.service
 
 [Service]
-ExecStart=/home/debian/gateway/software/ble-gateway-publish/ble-gateway-publish.js
+ExecStart=/home/debian/gateway/software/gateway-server/gateway-server.js
 Restart=always
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=ble-gateway-publish
+SyslogIdentifier=gateway-server
 
 [Install]
 WantedBy=multi-user.target

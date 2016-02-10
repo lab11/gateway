@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish MQTT gateway packets to other mediums.
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-publish/gateway-publish.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-publish
+
+[Install]
+WantedBy=multi-user.target
