@@ -62,7 +62,6 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 
         // Callback for when BLE discovers the advertisement
         mqtt_client.on('message', function (topic, message) {
-            var message = new Buffer(message);
             server.send(message, 0, message.length, UDP_BROADCAST_PORT, "255.255.255.255");
         });
     }
@@ -77,7 +76,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         // Callback for when BLE discovers the advertisement
         mqtt_client.on('message', function (topic, message) {
             wsserver.clients.forEach(function (client) {
-                client.send(JSON.parse(message));
+                client.send(message.toString());
             });
         });
     }
