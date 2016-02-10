@@ -12,6 +12,7 @@ var _                      = require('lodash');
 var debug                  = require('debug')('ble-gateway');
 var watchout               = require('watchout');
 var async                  = require('async');
+var getmac                 = require('getmac');
 
 
 // There is a currently unknown issue where this script will hang sometimes,
@@ -65,7 +66,14 @@ BleGateway.prototype.start = function () {
         }
     };
 
-    startScanningOnPowerOn();
+    // Pre-fetch the mac address
+    this._gateway_id = '';
+    getmac.getMac((err, addr) => {
+        this._gateway_id = addr;
+
+        // Now start BLE scanning.
+        startScanningOnPowerOn();
+    });
 };
 
 // We catch this event to detect if scanning ever stops. We don't want it to
@@ -79,6 +87,9 @@ BleGateway.prototype.on_scanStop = function () {
 BleGateway.prototype.on_discover = function (peripheral) {
     // Tickle the watchdog
     watchdog.reset();
+
+    // Get the time
+    received_time = new Date().toISOString();
 
     // Don't want the Eddystone beacons at the moment.
     if (!EddystoneBeaconScanner.isBeacon(peripheral)) {
@@ -101,6 +112,14 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                         var parse_advertisement_done = function (adv_obj) {
                             adv_obj.id = peripheral.id;
+
+                            // Add a _meta key with some more information
+                            adv_obj._meta = {
+                                received_time: received_time,
+                                device_id:     peripheral.id,
+                                receiver:      'ble-gateway',
+                                gateway_id:    this._gateway_id
+                            };
 
                             // We broadcast on "advertisement"
                             this.emit('advertisement', adv_obj);

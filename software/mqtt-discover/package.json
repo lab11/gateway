@@ -1,13 +1,8 @@
 {
-  "name": "ble-gateway-mqtt-topics",
+  "name": "mqtt-discover",
   "version": "0.1.0",
-  "description": "Split global data stream up by device.",
-  "main": "ble-gateway-mqtt-topics.js",
-  "dependencies": {
-    "mdns": "^2.2.11",
-    "mqtt": "^1.7.0"
-  },
-  "devDependencies": {},
+  "description": "Find MQTT broker using localhost and mDNS.",
+  "main": "mqtt-discover.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,7 +11,6 @@
     "url": "git+https://github.com/lab11/gateway.git"
   },
   "keywords": [
-    "ble",
     "mqtt"
   ],
   "author": "Brad Campbell",
@@ -24,5 +18,11 @@
   "bugs": {
     "url": "https://github.com/lab11/gateway/issues"
   },
-  "homepage": "https://github.com/lab11/gateway#readme"
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "dependencies": {
+    "ble-gateway": "^0.4.0",
+    "debug": "^2.2.0",
+    "mdns": "^2.3.0",
+    "mqtt": "^1.7.0"
+  }
 }

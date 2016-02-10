@@ -1,5 +1,5 @@
-Ble Gateway to Emoncms
-======================
+Gateway to Emoncms
+==================
 
 [EmonCMS](http://emoncms.org/) is a backend for power metering data. It can,
 however, operate on any numeric timeseries data. This tool publishes the

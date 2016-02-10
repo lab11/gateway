@@ -1,7 +1,7 @@
-BLE Gateway to MQTT Topics
+Gateway to MQTT Topics
 ==========================
 
-Re-send the global stream `ble-gateway-advertisements` to individual
+Re-send the global stream `gateway-data` to individual
 MQTT topics:
 
     device/<device type>/<device id>
@@ -16,11 +16,11 @@ List Topics
 
 You can see all valid `device` topics by listening to:
 
-    ble-gateway-topics
+    gateway-topics
 
 Command:
 
-    $ mosquitto_sub -h <mqtt broker ip address> -t ble-gateway-topics
+    $ mosquitto_sub -h <mqtt broker ip address> -t gateway-topics
 
 
 
