@@ -77,7 +77,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 
     });
 
-}
+});
 
 // Find MQTT server
 MQTTDiscover.start();
