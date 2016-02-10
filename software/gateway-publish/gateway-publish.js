@@ -77,7 +77,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         // Callback for when BLE discovers the advertisement
         mqtt_client.on('message', function (topic, message) {
             wsserver.clients.forEach(function (client) {
-                client.send(JSON.loads(message));
+                client.send(JSON.parse(message));
             });
         });
     }
