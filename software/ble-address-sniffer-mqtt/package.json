@@ -1,12 +1,12 @@
 {
   "name": "ble-address-sniffer-publish",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Publish BLE MAC addresses.",
   "main": "ble-address-sniffer-publish.js",
   "dependencies": {
     "ble-address-sniffer": "^0.1.0",
     "debug": "^2.2.0",
-    "mqtt": "^1.7.0",
+    "mqtt-discover": "^0.1.0",
     "yargs": "^3.32.0"
   },
   "devDependencies": {},
