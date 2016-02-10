@@ -1,8 +1,8 @@
 {
-  "name": "ble-gateway-server",
-  "version": "0.1.0",
+  "name": "gateway-server",
+  "version": "0.3.0",
   "description": "View devices with gateway locally.",
-  "main": "ble-gateway-server.js",
+  "main": "gateway-server.js",
   "dependencies": {
     "async": "^1.5.2",
     "express": "^4.13.3",

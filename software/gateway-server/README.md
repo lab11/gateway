@@ -1,4 +1,4 @@
-Ble Gateway Local Server View
-=============================
+Gateway Local Server View
+=========================
 
-Create a simple HTTP server to display the findings of BleGateway.
+Create a simple HTTP server to display the findings of the gateway.

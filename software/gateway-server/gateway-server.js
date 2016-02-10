@@ -131,10 +131,8 @@ app.get('/:device', function (req, res) {
 
 			// Decide if we should show a graph link
 			var graph = '';
-			if (key != 'id') {
-				if (!isNaN(val)) {
-					graph = ' (<a href="/graph?ws_host=4908bbb33.eecs.umich.edu:3001&id=' + last.id + '&field=' + key + '">graph</a>)';
-				}
+			if (key != 'id' && !isNaN(val)) {
+				graph = ' (<a href="/graph?ws_host=4908bbb33.eecs.umich.edu:3001&id=' + last.id + '&field=' + key + '">graph</a>)';
 			}
 
 			out += '<li>' + key + ': ' + val + graph + '</li>';
@@ -159,9 +157,12 @@ client.on('message', function (message, remote) {
 
 	var name = '';
 	if ('device' in adv_obj) {
-		name = adv_obj.device + '-' + adv_obj.id;
+		name = adv_obj.device;
+	}
+	if ('_meta' in adv_obj) {
+		name += adv_obj._meta.device_id;
 	} else {
-		name = adv_obj.id;
+		name += adv_obj.id;
 	}
 
 	if (!(name in devices)) {
