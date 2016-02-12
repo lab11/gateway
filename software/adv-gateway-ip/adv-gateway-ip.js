@@ -1,7 +1,6 @@
 #! /usr/bin/env node
 
 var eddystoneBeacon = require('eddystone-beacon');
-var bleno = require('eddystone-beacon/node_modules/bleno');
 var os = require('os');
 
 var ble_adv_options = {
