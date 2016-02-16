@@ -155,7 +155,17 @@ app.get('/:device', function (req, res) {
 
 // Callback for when BLE discovers the advertisement
 client.on('message', function (message, remote) {
-    var adv_obj = JSON.parse(message.toString());
+	// sometimes we are getting bad JSON data and this fails
+	//  print more information so we can figure out why
+	var adv_obj = {};
+	try {
+		adv_obj = JSON.parse(message.toString());
+	} catch (e) {
+		console.log(e);
+		console.log('\nBad JSON object');
+		console.log(message);
+		return;
+	}
 
 	var name = '';
 	if ('device' in adv_obj) {
