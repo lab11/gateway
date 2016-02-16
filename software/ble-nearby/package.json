@@ -1,0 +1,22 @@
+{
+  "name": "ble-nearby",
+  "version": "1.0.0",
+  "description": "Determines which BLE devices are nearby to the gateway",
+  "main": "ble-nearby.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lab11/gateway"
+  },
+  "author": "Branden Ghena",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "dependencies": {
+    "debug": "^2.2.0",
+    "moment": "^2.11.2"
+  }
+}
