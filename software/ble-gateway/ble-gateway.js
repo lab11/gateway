@@ -91,26 +91,26 @@ BleGateway.prototype.on_discover = function (peripheral) {
     // Get the time
     received_time = new Date().toISOString();
 
-    // Don't want the Eddystone beacons at the moment.
-    if (!EddystoneBeaconScanner.isBeacon(peripheral)) {
+    // We have seen an eddystone packet from the same address
+    if (peripheral.id in this._device_to_data) {
 
-        // We have seen an eddystone packet from the same address
-        if (peripheral.id in this._device_to_data) {
+        // Lookup the correct device to get its parser URL identifier
+        var device = this._device_to_data[peripheral.id];
 
-            // Lookup the correct device to get its parser URL identifier
-            var device = this._device_to_data[peripheral.id];
+        // Check to see if a parser is available
+        if (device.request_url in this._cached_parsers) {
+            var parser = this._cached_parsers[device.request_url];
 
-            // Check to see if a parser is available
-            if (device.request_url in this._cached_parsers) {
-                var parser = this._cached_parsers[device.request_url];
+            // Unless told not to, we parse advertisements
+            if (am_submodule || !argv.noParseAdvertisements) {
 
-                // Unless told not to, we parse advertisements
-                if (am_submodule || !argv.noParseAdvertisements) {
+                // Check if we have some way to parse the advertisement
+                if (parser.parser && parser.parser.parseAdvertisement) {
 
-                    // Check if we have some way to parse the advertisement
-                    if (parser.parser && parser.parser.parseAdvertisement) {
+                    var parse_advertisement_done = function (adv_obj) {
 
-                        var parse_advertisement_done = function (adv_obj) {
+                        // only continue if the result was valid
+                        if (adv_obj) {
                             adv_obj.id = peripheral.id;
 
                             // Add a _meta key with some more information
@@ -129,22 +129,24 @@ BleGateway.prototype.on_discover = function (peripheral) {
                             if ((am_submodule || !argv.noPublish) && parser.parser.publishAdvertisement) {
                                 parser.parser.publishAdvertisement(adv_obj);
                             }
-                        };
-
-                        // Call the device specific advertisement parse function.
-                        // Give it the done callback.
-                        try {
-                            parser.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
-                        } catch (e) {
-                            debug('Error calling parse function for ' + peripheral.id);
                         }
+                    };
+
+                    // Call the device specific advertisement parse function.
+                    // Give it the done callback.
+                    try {
+                        parser.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
+                    } catch (e) {
+                        debug('Error calling parse function for ' + peripheral.id);
                     }
                 }
+            }
 
-                // Unless told not to, we see if this device wants us to connect
-                if (am_submodule || !argv.noParseServices) {
+            // Unless told not to, we see if this device wants us to connect
+            if (am_submodule || !argv.noParseServices) {
 
-                    var parse_services_done = function (data_obj) {
+                var parse_services_done = function (data_obj) {
+                    if (data_obj) {
                         data_obj.id = peripheral.id;
 
                         // After device-specific code is done, disconnect and handle
@@ -162,25 +164,21 @@ BleGateway.prototype.on_discover = function (peripheral) {
                             }
                         });
                     }
+                }
 
-                    // Check if we have some code to connect
-                    if (parser.parser && parser.parser.parseServices) {
-                        // Use noble to connect to the BLE device
-                        peripheral.connect((connect_error) => {
-                            if (!connect_error) {
-                                // After a successful connection, let the
-                                // device specific code read services and whatnot.
-                                parser.parser.parseServices(peripheral, parse_services_done.bind(this));
-                            }
-                        });
-                    }
+                // Check if we have some code to connect
+                if (parser.parser && parser.parser.parseServices) {
+                    // Use noble to connect to the BLE device
+                    peripheral.connect((connect_error) => {
+                        if (!connect_error) {
+                            // After a successful connection, let the
+                            // device specific code read services and whatnot.
+                            parser.parser.parseServices(peripheral, parse_services_done.bind(this));
+                        }
+                    });
                 }
             }
-
         }
-    } else {
-        // We don't parse eddystone packets for content
-        debug('Skipping Eddystone packet for: ' + peripheral.id);
     }
 };
 

@@ -12,6 +12,7 @@ var async   = require('async');
 var app  = express();
 // Static
 app.use('/js', express.static(__dirname + '/js'));
+app.use(express.static(__dirname + '/public'));
 var client = dgram.createSocket({type: 'udp4', reuseAddr: true, reusePort: true});
 
 // UDP broadcast port

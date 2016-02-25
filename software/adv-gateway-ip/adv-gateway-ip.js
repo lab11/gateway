@@ -1,5 +1,9 @@
 #! /usr/bin/env node
 
+// set advertisement rate to be once per second. This must be set before
+//  including the bleno library (which is included from eddystone-beacon)
+process.env['BLENO_ADVERTISING_INTERVAL'] = 1000;
+
 var eddystoneBeacon = require('eddystone-beacon');
 var os = require('os');
 
