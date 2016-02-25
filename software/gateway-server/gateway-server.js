@@ -149,7 +149,12 @@ app.get('/:device', function (req, res) {
 				graph = ' (<a href="/graph?id=' + last._meta.device_id + '&field=' + key + '">graph</a>)';
 			}
 
-			out += '<li>' + key + ': ' + val + graph + '</li>';
+			if (typeof val === 'object') {
+				// Display a JSON version of this
+				out += '<li>' + key + ': ' + JSON.stringify(val) + '</li>';
+			} else {
+				out += '<li>' + key + ': ' + val + graph + '</li>';
+			}
 		}
 		out += '</ul>'
 
