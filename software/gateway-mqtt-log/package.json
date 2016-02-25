@@ -1,8 +1,8 @@
 {
-  "name": "gateway-log",
+  "name": "gateway-mqtt-log",
   "version": "0.1.0",
   "description": "Log gateway packets to file.",
-  "main": "gateway-log.js",
+  "main": "gateway-mqtt-log.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
