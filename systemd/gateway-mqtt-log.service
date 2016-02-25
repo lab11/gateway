@@ -3,7 +3,7 @@ Description=Log gateway packets from MQTT to a text file.
 After=mosquitto.service
 
 [Service]
-ExecStart=/home/debian/gateway/software/gateway-log/gateway-mqtt-log.js
+ExecStart=/home/debian/gateway/software/gateway-mqtt-log/gateway-mqtt-log.js
 Restart=always
 StandardOutput=syslog
 StandardError=syslog
