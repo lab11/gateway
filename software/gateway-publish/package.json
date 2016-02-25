@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "mqtt-discover": "^0.1.0",
+    "mqtt-discover": "^0.1.1",
     "ws": "^1.0.1",
     "yargs": "^3.31.0"
   }

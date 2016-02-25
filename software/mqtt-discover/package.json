@@ -1,6 +1,6 @@
 {
   "name": "mqtt-discover",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Find MQTT broker using localhost and mDNS.",
   "main": "mqtt-discover.js",
   "scripts": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/lab11/gateway#readme",
   "dependencies": {
-    "ble-gateway": "^0.4.0",
+    "ble-gateway": "^0.6.0",
     "debug": "^2.2.0",
     "mdns": "^2.3.0",
     "mqtt": "^1.7.0"
