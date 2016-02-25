@@ -26,7 +26,14 @@ ws.onclose = function() { };
 ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 
-    if (data.id == id) {
+    // Get the correct device id
+    if ('_meta' in data) {
+        var device_id = data._meta.device_id;
+    } else {
+        var device_id = data.id;
+    }
+
+    if (device_id == id) {
         var timestamp = Date.now();
         var value = data[field];
 
