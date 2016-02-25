@@ -25,7 +25,18 @@ var ADVERTISEMENTS_TO_KEEP = 10;
 var devices = {};
 
 // Really rough way to do HTML to write this app quickly.
-var HTML_BEG = '<html><head><title>Swarm Gateway</title><style>p{margin:0;}</style></head><body>';
+var HTML_BEG = `
+<html>
+  <head>
+    <title>Swarm Gateway</title>
+    <style>p{margin:0;}</style>
+  </head>
+  <body>
+    <h1>SwarmGateway</h1>
+    <p>
+      Learn more about the SwarmGateway in the <a href="https://github.com/terraswarm/urban-heartbeat-kit">Urban Heartbeat Kit</a>.
+    </p>
+    `;
 var HTML_END = '</body></html>';
 
 // Pre-fetch the mac address
@@ -77,11 +88,11 @@ app.get('/', function (req, res) {
 	get_ip_addresses(function (addrs) {
 		var out = HTML_BEG;
 
-		out += '<h1>Local Machine Info</h1>';
+		out += '<h2>Local Machine Info</h2>';
 		out += '<p>MAC Address: ' + macaddr + '</p>';
 		out += addrs;
 
-		out += '<h1>Devices</h1>';
+		out += '<h2>Devices</h2>';
 
 		out += '<ul>'
 		for (var key in devices) {
@@ -120,7 +131,7 @@ app.get('/:device', function (req, res) {
 
 	var out = HTML_BEG;
 
-	out += '<h1>' + device + '</h1>';
+	out += '<h2>' + device + '</h2>';
 
 	if (device in devices) {
 
