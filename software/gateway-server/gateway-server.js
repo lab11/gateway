@@ -95,7 +95,9 @@ app.get('/', function (req, res) {
 		out += '<h2>Devices</h2>';
 
 		out += '<ul>'
-		for (var key in devices) {
+		var devices_sorted = Object.keys(devices).sort();
+		for (var i=0; i<devices_sorted.length; i++) {
+			var key = devices_sorted[i];
 			out += '<li><a href="' + key + '">' + key + '</a></li>';
 		}
 		out += '</ul>';
