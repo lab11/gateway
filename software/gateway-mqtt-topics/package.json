@@ -4,6 +4,7 @@
   "description": "Split global data stream up by device.",
   "main": "ble-gateway-mqtt-topics.js",
   "dependencies": {
+    "mqtt-discover": "^0.1.1"
   },
   "devDependencies": {},
   "scripts": {
