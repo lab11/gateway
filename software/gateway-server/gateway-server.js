@@ -133,7 +133,7 @@ app.get('/:device', function (req, res) {
 			// Decide if we should show a graph link
 			var graph = '';
 			if (key != 'id' && !isNaN(val)) {
-				graph = ' (<a href="/graph?id=' + last.id + '&field=' + key + '">graph</a>)';
+				graph = ' (<a href="/graph?id=' + last._meta.device_id + '&field=' + key + '">graph</a>)';
 			}
 
 			out += '<li>' + key + ': ' + val + graph + '</li>';
