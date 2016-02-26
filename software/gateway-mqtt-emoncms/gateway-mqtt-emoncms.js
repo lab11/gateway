@@ -18,6 +18,12 @@ var request      = require('request');
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
 
+// How long to wait before transmitting a new EmonCMS packet
+var RATE_LIMIT_SECONDS = 30;
+
+// Keep track of last transmission time to rate limit data packets
+var last_transmission_times = {};
+
 
 // Read in the config file to get the parameters. If the parameters are not set
 // or the file does not exist, we exit this program.
@@ -44,8 +50,19 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         // message is Buffer
         var adv_obj = JSON.parse(message.toString());
 
-        if ('id' in adv_obj) {
+        // Get device id
+        device_id = undefined;
+        if ('_meta' in adv_obj) {
+            device_id = adv_obj._meta.device_id;
+        } else if ('id' in adv_obj) {
+            device_id = adv_obj.id;
+        }
+
+        if (device_id) {
             var node = adv_obj.id;
+
+            // Delete meta key and possible id key
+            delete adv_obj._meta;
             delete adv_obj.id;
 
             // Delete any non numeric keys
@@ -58,20 +75,32 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
                 }
             }
 
-            // Delete meta key
-            delete adv_obj._meta;
-
             // Only publish if there is some data
             if (Object.keys(adv_obj).length > 0) {
 
-                // Create blob for emoncms
-                var url = config.url + '/input/post.json?node=' + node + '&json=' + JSON.stringify(adv_obj) + '&apikey=' + config.api_key;
-                // console.log(url)
+                // Before we go to transmit, make sure we haven't transmitted
+                // in a while.
 
-                var p = request.post(url);
-                p.on('error', function (err) {
-                    console.log('Error when posting to emoncms: ' + err);
-                });
+                // Init
+                if (!(device_id in last_transmission_times)) {
+                    last_transmission_times[device_id] = new Date(0);
+                }
+
+                var now = new Date();
+                if (now - last_transmission_times[device_id] >= RATE_LIMIT_SECONDS*1000) {
+
+                    // Create blob for emoncms
+                    var url = config.url + '/input/post.json?node=' + node + '&json=' + JSON.stringify(adv_obj) + '&apikey=' + config.api_key;
+                    // console.log(url)
+
+                    var p = request.post(url);
+                    p.on('error', function (err) {
+                        console.log('Error when posting to emoncms: ' + err);
+                    });
+
+                    // Update last transmit time
+                    last_transmission_times[device_id] = now;
+                }
             }
         }
 
