@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 var MQTTDiscover = require('mqtt-discover');
+var PPS          = require('./packets-per-second.js');
 var express      = require('express');
 var getmac       = require('getmac');
 var async        = require('async');
@@ -83,6 +84,9 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 		// message is Buffer
 		var adv_obj = JSON.parse(message.toString());
 
+		// Keep track of speed
+		PPS.add('overall');
+
 		var name = '';
 		if ('device' in adv_obj) {
 			name = adv_obj.device;
@@ -92,6 +96,9 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 		} else {
 			name += adv_obj.id;
 		}
+
+		// Record the speed of each data stream
+		PPS.add(name);
 
 		if (!(name in devices)) {
 			devices[name] = [];
@@ -144,6 +151,9 @@ app.get('/', function (req, res) {
 			out += '<li><a href="' + key + '">' + key + '</a></li>';
 		}
 		out += '</ul>';
+
+		out += '<h2>Statistics</h2>';
+		out += '<p>Incoming packets per second: ' + PPS.rate('overall').toFixed(2) + '</p>';
 
 		out += HTML_END;
 
@@ -202,8 +212,10 @@ app.get('/:device', function (req, res) {
 		out += '</ul>'
 
 		out += '<h2>Last 10 Packets</h2>';
-
 		out += '<p>' + JSON.stringify(devices[device]) + '</p>';
+
+		out += '<h2>Statistics</h2>';
+		out += '<p>Incoming packets per second: ' + PPS.rate(device).toFixed(2) + '</p>';
 	} else {
 		out += '<p>Not Found</p>'
 	}
