@@ -6,7 +6,8 @@
   "dependencies": {
     "async": "^1.5.2",
     "express": "^4.13.3",
-    "getmac": "^1.0.7"
+    "getmac": "^1.0.7",
+    "mqtt-discover": "^0.1.1"
   },
   "devDependencies": {},
   "scripts": {

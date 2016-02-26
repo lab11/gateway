@@ -4,19 +4,17 @@
  * Create a simple webserver that shows recent packets
  ******************************************************************************/
 
-var dgram   = require('dgram');
-var express = require('express');
-var getmac  = require('getmac');
-var async   = require('async');
+var MQTTDiscover = require('mqtt-discover');
+var express      = require('express');
+var getmac       = require('getmac');
+var async        = require('async');
 
 var app  = express();
 // Static
 app.use('/js', express.static(__dirname + '/js'));
 app.use(express.static(__dirname + '/public'));
-var client = dgram.createSocket({type: 'udp4', reuseAddr: true, reusePort: true});
 
-// UDP broadcast port
-var UDP_BROADCAST_PORT = 3002;
+var TOPIC_MAIN_STREAM = 'gateway-data';
 
 // How many of the most recent advertisements should be displayed.
 var ADVERTISEMENTS_TO_KEEP = 10;
@@ -73,9 +71,54 @@ function get_ip_addresses (cb) {
  * EVENTS
  ******************************************************************************/
 
-client.on('listening', function () {
-    client.setBroadcast(true);
+// Callback after we have found a MQTT broker.
+MQTTDiscover.on('mqttBroker', function (mqtt_client) {
+	console.log('Connected to MQTT at ' + mqtt_client.options.href);
+
+	// On connect we subscribe to all formatted data packets
+	mqtt_client.subscribe(TOPIC_MAIN_STREAM);
+
+	// Called when we get a packet from MQTT
+	mqtt_client.on('message', function (topic, message) {
+		// message is Buffer
+		var adv_obj = JSON.parse(message.toString());
+
+		var name = '';
+		if ('device' in adv_obj) {
+			name = adv_obj.device;
+		}
+		if ('_meta' in adv_obj) {
+			name += adv_obj._meta.device_id;
+		} else {
+			name += adv_obj.id;
+		}
+
+		if (!(name in devices)) {
+			devices[name] = [];
+		}
+
+		devices[name].unshift(adv_obj);
+
+		// Limit to only so many advertisements
+		devices[name] = devices[name].slice(0, ADVERTISEMENTS_TO_KEEP);
+	});
 });
+
+// Clear out old devices
+setInterval(function () {
+	var now = new Date();
+
+	for (device_name in devices) {
+		var recent_pkt = devices[device_name][0];
+		var then = new Date(recent_pkt._meta.received_time);
+		var diff = now - then;
+
+		// If we haven't seen a packet in a while, drop this device
+		if (diff > 10*60*1000) {
+			delete devices[device_name];
+		}
+	}
+}, 5*60*1000);
 
 /*******************************************************************************
  * ROUTES
@@ -170,32 +213,13 @@ app.get('/:device', function (req, res) {
 	res.send(out);
 });
 
-// Callback for when BLE discovers the advertisement
-client.on('message', function (message, remote) {
-    var adv_obj = JSON.parse(message.toString());
 
-	var name = '';
-	if ('device' in adv_obj) {
-		name = adv_obj.device;
-	}
-	if ('_meta' in adv_obj) {
-		name += adv_obj._meta.device_id;
-	} else {
-		name += adv_obj.id;
-	}
+/*******************************************************************************
+ * MAIN CODE
+ ******************************************************************************/
 
-	if (!(name in devices)) {
-		devices[name] = [];
-	}
-
-	devices[name].unshift(adv_obj);
-
-	// Limit to only so many advertisements
-	devices[name] = devices[name].slice(0, ADVERTISEMENTS_TO_KEEP);
-});
-
-// Start getting packets
-client.bind(UDP_BROADCAST_PORT);
+// Find MQTT server to start getting packets
+MQTTDiscover.start();
 
 // Run the webserver
 var server = app.listen(80, function () {
