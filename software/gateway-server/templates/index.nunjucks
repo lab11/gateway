@@ -28,9 +28,7 @@ Status
 <script>
 var ws = new WebSocket('ws://'+window.location.host+'/ws');
 
-ws.onopen = function () {
-  console.log('open')
-};
+ws.onopen = function () { };
 
 ws.onmessage = function (evt) {
   var status = JSON.parse(evt.data);
@@ -39,7 +37,6 @@ ws.onmessage = function (evt) {
   var search_group = $('ul[data-group="' + status.group + '"]');
   if (search_group.length == 0) {
     // Create group
-    console.log('crate group')
     var new_group = '<ul class="list-group" data-group="' + status.group + '">';
     new_group += '<li class="list-group-item group-name">';
     new_group += '<strong>' + status.group + '</strong>';
