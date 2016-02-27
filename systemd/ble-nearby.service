@@ -1,0 +1,13 @@
+[Unit]
+Description=Determine which BLE devices are nearby this gateway.
+After=bluetooth.target mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/ble-nearby/ble-nearby.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ble-nearby
+
+[Install]
+WantedBy=multi-user.target

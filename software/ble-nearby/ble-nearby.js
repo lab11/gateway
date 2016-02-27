@@ -89,7 +89,7 @@ var primary_mqtt_client = null;
 
 // connect to MQTT broker
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    debug("Primary Gateway: " + mqtt_client.options.host);
+    console.log("Primary Gateway: " + mqtt_client.options.host);
     primary_mqtt_client = mqtt_client;
 
     // keep track of gateways we have discovered
@@ -280,7 +280,7 @@ function discover_gateways (mqtt_addr) {
             if (gateways.indexOf(pkt.ip_address) == -1) {
                 gateways.push(pkt.ip_address);
                 gateway_ble_addrs.push(pkt._meta.device_id);
-                debug("Secondary Gateway: " + pkt.ip_address);
+                console.log("Secondary Gateway: " + pkt.ip_address);
 
                 // make a mqtt connection to gateway for BLE data
                 var new_mqtt_addr = 'mqtt://' + pkt.ip_address;
