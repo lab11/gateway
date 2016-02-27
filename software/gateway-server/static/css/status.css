@@ -1,0 +1,332 @@
+.status-page {
+	padding-top:40px;
+	font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+	background-color:#F0F3F4;
+	color:#333;
+	font-size:1.4em;
+	font-weight:400
+}
+.status-page hr {
+	margin-top:10px;
+	margin-bottom:10px
+}
+.status-page h1,.status-page h2,.status-page h3,.status-page h4,.status-page h5 {
+	margin-bottom:20px
+}
+.status-page img.emoji {
+	height:20px;
+	width:20px;
+	vertical-align:middle;
+	max-width:none
+}
+.status-page p,.status-page strong {
+	color:#333
+}
+.status-page .tooltip .tooltip-inner {
+	padding:8px 12px;
+	font-size:14px;
+	word-wrap:break-word
+}
+.status-page .help-icon {
+	cursor:help
+}
+.status-page .text-component-1,.status-page .text-success {
+	color:#7ED321
+}
+.status-page .text-component-2,.status-page .text-info {
+	color:#3498db
+}
+.status-page .text-alert,.status-page .text-component-3 {
+	color:#F7CA18
+}
+.status-page .text-component-4,.status-page .text-danger {
+	color:#ff6f6f
+}
+.status-page .container {
+	max-width:960px
+}
+.status-page .page-header {
+	margin-top:10px
+}
+.status-page .app-banner {
+	margin-bottom:30px
+}
+.status-page .about-app {
+	margin-bottom:40px
+}
+.status-page .about-app p {
+	font-size:1.2em
+}
+.status-page .alert {
+	font-size:1.2em;
+	font-weight:600
+}
+.status-page .timeline .content-wrapper {
+	margin-top:40px;
+	margin-bottom:40px
+}
+.status-page .timeline h3 {
+	margin-top:30px;
+	margin-bottom:40px;
+	font-size:22px
+}
+.status-page .timeline h3 small {
+	margin-left:15px
+}
+.status-page .timeline .list-group.components .panel-body h1,.status-page .timeline .panel .panel-body h1 {
+	margin-top:0;
+	margin-bottom:4px;
+	font-size:2em
+}
+.status-page .timeline .list-group.components .panel-body h2,.status-page .timeline .panel .panel-body h2 {
+	margin-top:0;
+	margin-bottom:4px;
+	font-size:1.8em
+}
+.status-page .timeline .list-group.components .panel-body h3,.status-page .timeline .panel .panel-body h3 {
+	margin-top:0;
+	margin-bottom:4px;
+	font-size:1.6em
+}
+.status-page .timeline .list-group.components .panel-body h4,.status-page .timeline .panel .panel-body h4 {
+	margin-top:0;
+	margin-bottom:4px;
+	font-size:1.4em
+}
+.status-page .timeline .list-group.components .panel-body h5,.status-page .timeline .panel .panel-body h5 {
+	margin-top:0;
+	margin-bottom:4px;
+	font-size:1.2em
+}
+.status-page .timeline .moment .list-group.components .panel-body p,.status-page .timeline .moment .list-group.components .panel-heading strong,.status-page .timeline .moment .panel .panel-body p,.status-page .timeline .moment .panel .panel-heading strong {
+	font-size:1.1em
+}
+.status-page .timeline .list-group.components .panel-body p,.status-page .timeline .panel .panel-body p {
+	margin:0
+}
+.status-page .timeline .moment {
+	width:100%;
+	padding-bottom:10px;
+	position:relative
+}
+.status-page .timeline .moment.first:before {
+	top:-5px
+}
+.status-page .timeline .moment:before {
+	content:'';
+	position:absolute;
+	left:26px;
+	top:-5px;
+	width:2px;
+	height:100%;
+	background:#7266BA
+}
+.status-page .timeline .moment .status-icon {
+	background:#fff;
+	width:35px;
+	height:35px;
+	border-radius:50%;
+	border:1px solid #e8e8e8;
+	position:absolute;
+	left:25px;
+	top:14px
+}
+.status-page .timeline .moment .status-icon .icon {
+	position:absolute;
+	top:7px;
+	left:11px
+}
+.status-page .timeline .moment .status-icon .icon.ion-alert {
+	left:15px
+}
+.status-page .timeline .moment .status-icon.status-0 {
+	color:#b23f73
+}
+.status-page .timeline .moment .status-icon.status-1 {
+	color:#f80
+}
+.status-page .timeline .moment .status-icon.status-2 {
+	color:#F7CA18
+}
+.status-page .timeline .moment .status-icon.status-3 {
+	color:#3498db
+}
+.status-page .timeline .moment .status-icon.status-4 {
+	color:#7ED321
+}
+.status-page .timeline .moment.last:before {
+	background:#fff
+}
+.status-page .timeline .moment .list-group.components,.status-page .timeline .moment .panel {
+	margin:0;
+	border-radius:2px
+}
+.status-page .timeline .moment .panel-message.list-group.components,.status-page .timeline .moment .panel.panel-message {
+	border:1px solid #e8e8e8
+}
+.status-page .timeline .moment .panel-message.list-group.components .date,.status-page .timeline .moment .panel.panel-message .date {
+	color:#949494
+}
+.status-page .timeline .moment .panel-message.list-group.components:before,.status-page .timeline .moment .panel.panel-message:before {
+	position:absolute;
+	top:16px;
+	left:1px;
+	display:inline-block;
+	border-top:15px solid transparent;
+	border-left:0 solid #e8e8e8;
+	border-right:15px solid #e8e8e8;
+	border-bottom:15px solid transparent;
+	content:" "
+}
+.status-page .timeline .moment .panel-message.list-group.components:after,.status-page .timeline .moment .panel.panel-message:after {
+	position:absolute;
+	top:17px;
+	left:2px;
+	display:inline-block;
+	border-top:14px solid transparent;
+	border-left:0 solid #fff;
+	border-right:14px solid #fff;
+	border-bottom:14px solid transparent;
+	content:" "
+}
+.status-page .timeline .moment .list-group.components .panel-body,.status-page .timeline .moment .panel .panel-body {
+	border-top:1px solid #eee
+}
+.status-page .timeline .moment .list-group.components .panel-body p:not(:last-child),.status-page .timeline .moment .panel .panel-body p:not(:last-child) {
+	margin-bottom:10px
+}
+@media (max-width:767px) {
+	.status-page .timeline .moment .content {
+		width:100%
+	}
+}
+.status-page .list-group {
+	padding-left:0
+}
+.status-page .list-group .list-group-item {
+	border-radius:0;
+	background-color:#fff;
+	border:1px solid #e8e8e8;
+	font-size:1.1em;
+	padding:15px
+}
+.status-page .list-group .list-group-item a {
+	font-weight:400
+}
+.status-page .list-group .list-group-item h4 {
+	margin:0;
+	font-weight:400;
+	max-width:90%
+}
+.status-page .list-group .list-group-item p,.status-page .list-group .list-group-item time {
+	margin-bottom:0;
+	line-height:1.3em
+}
+.status-page .list-group .list-group-item.group-name {
+	background-color:#e8e8e8;
+	padding-top:.6em;
+	padding-bottom:.6em;
+	cursor:pointer;
+	-webkit-touch-callout:none;
+	-webkit-user-select:none;
+	-khtml-user-select:none;
+	-moz-user-select:none;
+	-ms-user-select:none;
+	user-select:none
+}
+.status-page .list-group .list-group-item.break {
+	padding:1px;
+	background-color:#f0f3f4
+}
+.status-page .list-group.components {
+	border-color:#e8e8e8
+}
+.status-page .list-group.components:last-child {
+	margin-bottom:30px
+}
+.status-page .list-group.components+.components {
+	margin-top:5px
+}
+.status-page .list-group.components p {
+	margin-bottom:10px
+}
+.status-page .list-group.components .badge {
+	color:transparent
+}
+.status-page .list-group.components a {
+	color:#333!important
+}
+.status-page footer {
+	position:absolute;
+	width:100%;
+	bottom:0;
+	height:60px;
+	padding:30px 0 60px;
+	border-top:1px solid #e8e8e8;
+	color:#666;
+	font-size:13px;
+	line-height:30px;
+	text-align:center;
+	text-shadow:0 1px 0 rgba(255,255,255,.5)
+}
+.status-page footer .btn {
+	text-shadow:none
+}
+.status-page footer .icons a.icon-link {
+	display:inline-block;
+	min-width:30px;
+	height:30px;
+	border-radius:3px;
+	background-color:#666;
+	text-align:center;
+	color:#e8e8e8;
+	transition:all .15s;
+	padding:0 10px
+}
+.status-page footer .icons a.icon-link.rss {
+	background-color:#f80
+}
+.status-page footer .icons a.icon-link:hover {
+	text-decoration:none;
+	background-color:#4d4d4d
+}
+.status-page footer .list-inline>li {
+	padding-right:0
+}
+@media (min-width:768px) {
+	.status-page footer {
+		text-align:left
+	}
+	.status-page footer .list-inline {
+		text-align:right
+	}
+	.status-page footer .list-inline>li {
+		padding-right:0
+	}
+	.status-page footer .icons {
+		margin-top:0;
+		text-align:right
+	}
+}
+.status-page .section-components,.status-page .section-metrics,.status-page .section-scheduled,.status-page .section-timeline {
+	margin-top:40px
+}
+.error-page {
+	background-color:#f3f3f4
+}
+.error-page .middle-box {
+	height:400px;
+	width:400px;
+	position:absolute;
+	top:50%;
+	left:50%;
+	margin-top:-250px;
+	margin-left:-200px;
+	z-index:100
+}
+.error-page .middle-box h1 {
+	font-size:9em
+}
+.error-page h3.font-bold {
+	font-weight:600
+}

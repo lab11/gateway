@@ -1,0 +1,69 @@
+{% extends "base.nunjucks" %}
+
+{% block title %}
+Status
+{% endblock %}
+
+{% block body %}
+<h1>Status</h1>
+
+<div class="statuses">
+  {% for group, st in statuses %}
+  <ul class="list-group" data-group="{{ group }}">
+    <li class="list-group-item group-name">
+      <strong>{{ group }}</strong>
+    </li>
+    {% for key,val in st %}
+    <li class="list-group-item sub-component" data-key="{{ key }}">
+      <span class="status-key">{{ key }}</span>
+      <div class="pull-right status-value">
+        {{ val }}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+</div>
+
+<script>
+var ws = new WebSocket('ws://'+window.location.host+'/ws');
+
+ws.onopen = function () {
+  console.log('open')
+};
+
+ws.onmessage = function (evt) {
+  var status = JSON.parse(evt.data);
+
+  // Determine if group exists
+  var search_group = $('ul[data-group="' + status.group + '"]');
+  if (search_group.length == 0) {
+    // Create group
+    console.log('crate group')
+    var new_group = '<ul class="list-group" data-group="' + status.group + '">';
+    new_group += '<li class="list-group-item group-name">';
+    new_group += '<strong>' + status.group + '</strong>';
+    new_group += '</li></ul>';
+    $('.statuses').append(new_group);
+
+    search_group = $('ul[data-group="' + status.group + '"]');
+  }
+
+  // Determine if status exists
+  var search_key = search_group.children('li[data-key="' + status.key + '"]');
+  if (search_key.length == 0) {
+    // create key
+    var new_key = '<li class="list-group-item sub-component" data-key="' + status.key +'">';
+    new_key += '<span class="status-key">' + status.key + '</span>';
+    new_key += '<div class="pull-right status-value">' + status.value + '</div>';
+    new_key += '</li>';
+    search_group.append(new_key);
+  } else {
+    // Update key
+    search_key.children('.status-key').text(status.key);
+    search_key.children('.status-value').text(status.value);
+  }
+}
+</script>
+
+{% endblock %}

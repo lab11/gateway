@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/status.css">
+
+    <script src="/static/js/jquery-2.2.1.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <title>{% block title %}{% endblock %}</title>
+  </head>
+
+  <body class="status-page">
+    <div class="container">
+      {% block body %}
+      {% endblock %}
+    </div>
+  </body>
+
+ </html>

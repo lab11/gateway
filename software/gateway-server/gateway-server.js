@@ -7,13 +7,30 @@
 var MQTTDiscover = require('mqtt-discover');
 var PPS          = require('./packets-per-second.js');
 var express      = require('express');
+var nunjucks     = require('nunjucks');
+var bodyParser   = require('body-parser');
 var getmac       = require('getmac');
 var async        = require('async');
 
-var app  = express();
+var expressWs    = require('express-ws')(express());
+var app = expressWs.app;
+
 // Static
-app.use('/js', express.static(__dirname + '/js'));
+app.use('/static', express.static(__dirname + '/static'));
 app.use(express.static(__dirname + '/public'));
+
+// Provide the websocket server to any attached applications
+app.use(function (req, res, next) {
+	res.locals = {
+		ws: expressWs.getWss(),
+	};
+	next();
+});
+// Include the status page app
+app.use('/status', require('./status-app.js'));
+
+// Need a dummy endpoint for things to work
+app.ws('/ws', function (req, res) { });
 
 var TOPIC_MAIN_STREAM = 'gateway-data';
 
@@ -168,12 +185,12 @@ app.get('/graph', function (req, res) {
                  <head>
                   <title>Swarm Gateway Graph</title>
                   <style>p, body, html {margin:0;}</style>
-                  <script type="text/javascript" src="js/smoothie.js"></script>
+                  <script type="text/javascript" src="static/js/smoothie.js"></script>
                 </head>
                 <body>
                   <div id='charts'></div>
                   <canvas id="chart" width="100%" height="400"></canvas>
-                  <script language='javascript' src='/js/graph-websockets.js'></script>
+                  <script language='javascript' src='/static/js/graph-websockets.js'></script>
                 </body>
               </html>`;
 
