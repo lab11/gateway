@@ -4,13 +4,11 @@ var bodyParser = require('body-parser');
 
 var app = express();
 
-// Static
-app.use('/static', express.static(__dirname + '/static'));
-
 // POST parsing
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-nunjucks.configure('templates', {
+nunjucks.configure(__dirname + '/templates', {
 	autoescape: true,
 	express: app
 });
@@ -37,7 +35,6 @@ app.get('/', function (req, res) {
 });
 
 app.post('/update', function (req, res) {
-
 	// Get the group of this status item
 	var group = DEFAULT_GROUP;
 	if ('group' in req.body) {
