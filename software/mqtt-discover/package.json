@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/lab11/gateway#readme",
   "dependencies": {
-    "ble-gateway": "^0.6.0",
     "debug": "^2.2.0",
     "mdns": "^2.3.0",
     "mqtt": "^1.7.0"
