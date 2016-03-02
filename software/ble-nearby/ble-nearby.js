@@ -53,6 +53,7 @@ MQTTDiscover.start();
 // various other libraries
 var mqtt = require('mqtt');
 var moment = require('moment');
+var request = require('request');
 
 // looking for BLE advertisements
 var TOPIC_BLE_ADVERTISEMENTS = 'ble-advertisements';
@@ -68,55 +69,71 @@ var BLE_MIN_PKT_RECEPTION_RATE = 0.10; // % packet reception
 // keep a dict of all devices found
 //  <ble_address> : {
 //      gateways: {
-//          <gateway_ip>: {
+//          <gateway_id>: {
 //              'rssis': [],
 //              'avg_rssi': <float>,
 //              'times': [],
 //              'pkt_reception_rate': <float>,
 //          },
-//      nearby_gateway: <gateway_ip>,
+//      nearby_gateway: <gateway_id>,
 //      time_diffs: [],
 //      adv_rate: <float>,
 //  }
 //
 //  old RSSI values are removed when they have timed out
 var devices = {};
-var callbacks = {};
+
+// keep a timer for when all data in this device is invalid
+var timeouts = {};
+
+// unique ID of primary gateway
 var primary_gateway = '';
+
+// unique IDs and IP addresses of gateways so we can know which we have already contacted
 var gateways = [];
+
+// keep list of BLE addresses for discovered gateways so they can be ignored
 var gateway_ble_addrs = [];
+
+// keep the main mqtt client `ble-nearby` can be published back to it
 var primary_mqtt_client = null;
+
 
 // connect to MQTT broker
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log("Primary Gateway: " + mqtt_client.options.host);
     primary_mqtt_client = mqtt_client;
 
-    // keep track of gateways we have discovered
-    var gateway_ip = mqtt_client.options.host;
-    if (gateways.indexOf(gateway_ip) == -1) {
-        gateways.push(gateway_ip);
-        primary_gateway = gateway_ip;
-    }
+    // get unique ID to identify the gateway
+    get_gateway_id(mqtt_client.options.host, function(gateway_id) {
+        console.log("Primary Gateway: " + mqtt_client.options.host + ' ID: ' + gateway_id);
 
-    // pull data from gateway
-    connect_to_gateway(mqtt_client);
+        // keep track of gateways we have discovered
+        if (gateways.indexOf(gateway_id) == -1) {
+            gateways.push(gateway_id);
+            primary_gateway = gateway_id;
+        }
+        if (gateways.indexOf(mqtt_client.options.host) == -1) {
+            gateways.push(mqtt_client.options.host);
+        }
 
-    // periodically determine which devices are "nearby" this gateway
-    setInterval(determine_locations, BLE_DETERMINATION_INTERVAL*1000);
+        // pull data from gateway
+        connect_to_gateway(mqtt_client, gateway_id);
+
+        // periodically determine which devices are "nearby" this gateway
+        setInterval(determine_locations, BLE_DETERMINATION_INTERVAL*1000);
+    });
 });
 
-function connect_to_gateway (mqtt_client) {
+function connect_to_gateway (mqtt_client, gateway_id) {
 
     // collect BLE advertisements from gateway
-    record_ble(mqtt_client, mqtt_client.options.host);
+    record_ble(mqtt_client, gateway_id);
 
     // discover other gateways
     discover_gateways(mqtt_client.options.href);
 }
 
-
-function record_ble (mqtt_client, gateway_ip) {
+function record_ble (mqtt_client, gateway_id) {
     // subscribe to all BLE advertisements
     mqtt_client.subscribe(TOPIC_BLE_ADVERTISEMENTS);
 
@@ -128,7 +145,7 @@ function record_ble (mqtt_client, gateway_ip) {
         if (!(adv.address in devices)) {
             // no need to keep track of devices not seen by the primary gateway
             //  Only devices seen by the primary will ever be "nearby" it
-            if (gateway_ip != primary_gateway) {
+            if (gateway_id != primary_gateway) {
                 return;
             }
             debug("Discovered: " + adv.address);
@@ -138,11 +155,11 @@ function record_ble (mqtt_client, gateway_ip) {
                 'adv_rate': null,
                 'nearby': null,
             };
-            callbacks[adv.address] = null;
+            timeouts[adv.address] = null;
         }
         var ble_dev = devices[adv.address];
-        if (!(gateway_ip in ble_dev.gateways)) {
-            ble_dev.gateways[gateway_ip] = {
+        if (!(gateway_id in ble_dev.gateways)) {
+            ble_dev.gateways[gateway_id] = {
                 'rssis': [],
                 'avg_rssi': null,
                 'times': [],
@@ -162,7 +179,7 @@ function record_ble (mqtt_client, gateway_ip) {
         }
 
         // add new data
-        var dev = ble_dev.gateways[gateway_ip];
+        var dev = ble_dev.gateways[gateway_id];
         dev.rssis.push(adv.rssi);
         dev.times.push(moment(adv.receivedTime).valueOf()/1000);
 
@@ -193,10 +210,10 @@ function record_ble (mqtt_client, gateway_ip) {
         //  lead to brief periods where the location of the device is
         //  determined incorrectly, but since there is no new data coming in,
         //  it's more likely that all locations are invalid
-        if (callbacks[adv.address] != null) {
-            clearTimeout(callbacks[adv.address]);
+        if (timeouts[adv.address] != null) {
+            clearTimeout(timeouts[adv.address]);
         }
-        callbacks[adv.address] = setTimeout(timeout_device, BLE_ADV_TIMEOUT*1000, adv.address);
+        timeouts[adv.address] = setTimeout(timeout_device, BLE_ADV_TIMEOUT*1000, adv.address);
     });
 }
 
@@ -275,23 +292,59 @@ function discover_gateways (mqtt_addr) {
         mqtt_client.on('message', function (topic, message) {
             pkt = JSON.parse(message);
 
-            // keep track of gateways discovered and only care if this is a
-            //  new gateway to connect to
+            // don't need to get the unique ID if we are already connected
             if (gateways.indexOf(pkt.ip_address) == -1) {
                 gateways.push(pkt.ip_address);
-                gateway_ble_addrs.push(pkt._meta.device_id);
-                console.log("Secondary Gateway: " + pkt.ip_address);
 
-                // make a mqtt connection to gateway for BLE data
-                var new_mqtt_addr = 'mqtt://' + pkt.ip_address;
-                var new_mqtt_client = mqtt.connect(new_mqtt_addr);
-                new_mqtt_client.on('connect', function () {
+                // get unique ID to identify the gateway
+                get_gateway_id(pkt.ip_address, function(gateway_id) {
 
-                    // pull data from gateway
-                    connect_to_gateway(new_mqtt_client);
+                    // keep track of gateways discovered and only care if this is a
+                    //  new gateway to connect to. We also need the escape of
+                    //  continuing to connect to devices where we couldn't get
+                    //  a unique ID
+                    if (gateways.indexOf(gateway_id) == -1 || gateway_id == pkt.ip_address) {
+                        gateways.push(gateway_id);
+                        console.log("Secondary Gateway: " + pkt.ip_address + ' ID: ' + gateway_id);
+
+                        // make a mqtt connection to gateway for BLE data
+                        var new_mqtt_addr = 'mqtt://' + pkt.ip_address;
+                        var new_mqtt_client = mqtt.connect(new_mqtt_addr);
+                        new_mqtt_client.on('connect', function () {
+
+                            // pull data from gateway
+                            connect_to_gateway(new_mqtt_client, gateway_id);
+                        });
+                    }
+
+                    // also make sure to ignore this BLE address
+                    var gateway_ble_addr = pkt._meta.device_id;
+                    if (gateway_ble_addrs.indexOf(gateway_ble_addr) == -1) {
+                        gateway_ble_addrs.push(pkt._meta.device_id);
+                    }
                 });
             }
         });
+    });
+}
+
+// get the unique id for this gateway
+function get_gateway_id (gateway_ip, cb) {
+    //  http://<gateway_ip>/api/id has a unique ID for the device
+    //  This is the MAC address as discovered by getmac
+    //  If that response cannot be obtained, default to ip address
+    //  Note that on the primary this is usually 'localhost'
+    var gateway_id = gateway_ip;
+    request('http://'+gateway_ip+'/api/id', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            gateway_id = body;
+        } else {
+            debug("Error requesting ID from " + gateway_ip);
+        }
+
+        // callback
+        debug("Gateways: " + gateways);
+        cb(gateway_id);
     });
 }
 

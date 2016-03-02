@@ -19,6 +19,7 @@
     "debug": "^2.2.0",
     "moment": "^2.11.2",
     "mqtt": "^1.7.2",
-    "mqtt-discover": "^0.1.1"
+    "mqtt-discover": "^0.1.1",
+    "request": "^2.69.0"
   }
 }
