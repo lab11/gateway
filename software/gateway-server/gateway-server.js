@@ -5,14 +5,14 @@
  ******************************************************************************/
 
 var MQTTDiscover = require('mqtt-discover');
-var PPS					 = require('./packets-per-second.js');
-var express			 = require('express');
-var nunjucks		 = require('nunjucks');
+var PPS			 = require('./packets-per-second.js');
+var express		 = require('express');
+var nunjucks	 = require('nunjucks');
 var bodyParser	 = require('body-parser');
-var getmac			 = require('getmac');
-var async				 = require('async');
+var getmac		 = require('getmac');
+var async		 = require('async');
 
-var expressWs		 = require('express-ws')(express());
+var expressWs  = require('express-ws')(express());
 var app = expressWs.app;
 
 // Static
@@ -102,65 +102,65 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 	// On connect we subscribe to all formatted data packets
 	mqtt_client.subscribe(TOPIC_MAIN_STREAM);
 
-		// Also subscribe to the list of nearby devices
-		mqtt_client.subscribe(TOPIC_NEARBY_STREAM);
+	// Also subscribe to the list of nearby devices
+	mqtt_client.subscribe(TOPIC_NEARBY_STREAM);
 
 	// Called when we get a packet from MQTT
 	mqtt_client.on('message', function (topic, message) {
-				if (topic == TOPIC_MAIN_STREAM) {
-						// message is Buffer
-						var adv_obj = JSON.parse(message.toString());
+		if (topic == TOPIC_MAIN_STREAM) {
+			// message is Buffer
+			var adv_obj = JSON.parse(message.toString());
 
-						// Keep track of speed
-						PPS.add('overall');
+			// Keep track of speed
+			PPS.add('overall');
 
-						var name = '';
-						if ('device' in adv_obj) {
-								name = adv_obj.device + '_';
-						}
-						if ('_meta' in adv_obj) {
-								name += adv_obj._meta.device_id;
-						} else {
-								name += adv_obj.id;
-						}
+			var name = '';
+			if ('device' in adv_obj) {
+				name = adv_obj.device + '_';
+			}
+			if ('_meta' in adv_obj) {
+				name += adv_obj._meta.device_id;
+			} else {
+				name += adv_obj.id;
+			}
 
-						// Record the speed of each data stream
-						PPS.add(name);
+			// Record the speed of each data stream
+			PPS.add(name);
 
-						if (!(name in devices)) {
-								devices[name] = [];
-						}
+			if (!(name in devices)) {
+				devices[name] = [];
+			}
 
-						devices[name].unshift(adv_obj);
+			devices[name].unshift(adv_obj);
 
-						// Limit to only so many advertisements
-						devices[name] = devices[name].slice(0, ADVERTISEMENTS_TO_KEEP);
-				} else if (topic == TOPIC_NEARBY_STREAM) {
-						// message is array of BLE addresses
-						nearby = JSON.parse(message.toString());
+			// Limit to only so many advertisements
+			devices[name] = devices[name].slice(0, ADVERTISEMENTS_TO_KEEP);
+		} else if (topic == TOPIC_NEARBY_STREAM) {
+			// message is array of BLE addresses
+			nearby = JSON.parse(message.toString());
 
-						// split devices list into nearby or other
-						nearby_devices = {};
-						other_devices = {};
-						for (var device in devices) {
-								var adv_obj = devices[device][0];
+			// split devices list into nearby or other
+			nearby_devices = {};
+			other_devices = {};
+			for (var device in devices) {
+				var adv_obj = devices[device][0];
 
-								// get the BLE address of each device
-								var id;
-								if ('_meta' in adv_obj) {
-										id = adv_obj._meta.device_id;
-								} else {
-										id = adv_obj.id;
-								}
-
-								if (nearby.indexOf(id) != -1) {
-										// device is nearby
-										nearby_devices[device] = devices[device];
-								} else {
-										other_devices[device] = devices[device];
-								}
-						}
+				// get the BLE address of each device
+				var id;
+				if ('_meta' in adv_obj) {
+					id = adv_obj._meta.device_id;
+				} else {
+					id = adv_obj.id;
 				}
+
+				if (nearby.indexOf(id) != -1) {
+					// device is nearby
+					nearby_devices[device] = devices[device];
+				} else {
+					other_devices[device] = devices[device];
+				}
+			}
+		}
 	});
 });
 
@@ -228,17 +228,17 @@ app.get('/', function (req, res) {
 app.get('/graph', function (req, res) {
 
 	var out = `<html>
-								 <head>
-									<title>Swarm Gateway Graph</title>
-									<style>p, body, html {margin:0;}</style>
-									<script type="text/javascript" src="static/js/smoothie.js"></script>
-								</head>
-								<body>
-									<div id='charts'></div>
-									<canvas id="chart" width="100%" height="400"></canvas>
-									<script language='javascript' src='/static/js/graph-websockets.js'></script>
-								</body>
-							</html>`;
+				 <head>
+					<title>Swarm Gateway Graph</title>
+					<style>p, body, html {margin:0;}</style>
+					<script type="text/javascript" src="static/js/smoothie.js"></script>
+				</head>
+				<body>
+					<div id='charts'></div>
+					<canvas id="chart" width="100%" height="400"></canvas>
+					<script language='javascript' src='/static/js/graph-websockets.js'></script>
+				</body>
+			</html>`;
 
 	res.send(out);
 });
