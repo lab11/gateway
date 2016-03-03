@@ -138,28 +138,6 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 		} else if (topic == TOPIC_NEARBY_STREAM) {
 			// message is array of BLE addresses
 			nearby = JSON.parse(message.toString());
-
-			// split devices list into nearby or other
-			nearby_devices = {};
-			other_devices = {};
-			for (var device in devices) {
-				var adv_obj = devices[device][0];
-
-				// get the BLE address of each device
-				var id;
-				if ('_meta' in adv_obj) {
-					id = adv_obj._meta.device_id;
-				} else {
-					id = adv_obj.id;
-				}
-
-				if (nearby.indexOf(id) != -1) {
-					// device is nearby
-					nearby_devices[device] = devices[device];
-				} else {
-					other_devices[device] = devices[device];
-				}
-			}
 		}
 	});
 });
@@ -187,7 +165,7 @@ setInterval(function () {
 
 // Unique device ID for the gateway (mac address)
 app.get('/api/id', function (req, res) {
-    res.send(macaddr);
+	res.send(macaddr);
 });
 
 
@@ -206,25 +184,37 @@ app.get('/', function (req, res) {
 		out += '<p>MAC Address: ' + macaddr + '</p>';
 		out += addrs;
 
+		// split up devices by nearby-ness
 		out += '<h2>Devices</h2>';
-
-		out += '<h4>Nearby</h4>';
-		out += '<ul>'
-		var devices_sorted = Object.keys(nearby_devices).sort();
+		nearby_str = '<h4>Nearby</h4>';
+		nearby_str += '<ul>';
+		other_str = '<h4>Other</h4>';
+		other_str += '<ul>';
+		var devices_sorted = Object.keys(devices).sort();
 		for (var i=0; i<devices_sorted.length; i++) {
-			var key = devices_sorted[i];
-			out += '<li><a href="' + key + '">' + key + '</a></li>';
-		}
-		out += '</ul>';
+			var device = devices_sorted[i];
+			var adv_obj = devices[device][0];
 
-		out += '<h4>Other</h4>';
-		out += '<ul>'
-		devices_sorted = Object.keys(other_devices).sort();
-		for (var i=0; i<devices_sorted.length; i++) {
-			var key = devices_sorted[i];
-			out += '<li><a href="' + key + '">' + key + '</a></li>';
+			// get the BLE address of each device
+			var id;
+			if ('_meta' in adv_obj) {
+				id = adv_obj._meta.device_id;
+			} else {
+				id = adv_obj.id;
+			}
+
+			// add device to appropriate list
+			if (nearby.indexOf(id) != -1) {
+				// device is nearby
+				nearby_str += '<li><a href="' + device + '">' + device + '</a></li>';
+			} else {
+				// device goes in other
+				other_str += '<li><a href="' + device + '">' + device + '</a></li>';
+			}
 		}
-		out += '</ul>';
+		nearby_str += '</ul>';
+		other_str += '</ul>';
+		out += nearby_str + other_str;
 
 		out += '<h2>Statistics</h2>';
 		out += '<p>Incoming packets per second: ' + PPS.rate('overall').toFixed(2) + '</p>';
