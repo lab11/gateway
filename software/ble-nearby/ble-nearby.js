@@ -290,7 +290,7 @@ function discover_gateways (mqtt_addr) {
 
         // handle incoming packets
         mqtt_client.on('message', function (topic, message) {
-            pkt = JSON.parse(message);
+            var pkt = JSON.parse(message);
 
             // don't need to get the unique ID if we are already connected
             if (gateways.indexOf(pkt.ip_address) == -1) {
