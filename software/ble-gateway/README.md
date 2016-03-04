@@ -34,15 +34,16 @@ to parse other advertisements the device sends in the future.
 To use this gateway with your BLE device
 ------------------------------------
 
-1. Configure your device to advertise (at least) two different advertisements.
-One should be an Eddystone URL packet. The URL should point to a webserver
+1. Configure your device to advertise (at least) an Eddystone URL packet.
+The URL should point to a webserver
 path where you can host the needed JavaScript code. For example, the Eddystone
 URL should be a shortened version of something like:
 
         https://rawgit.com/org/project/device/
 
-    The second advertisement can be completely device specific. It can contain
-    data or not. The second advertisement is what the gateway will use
+    The scan response of that advertisement or a second advertisement
+    can be completely device specific. It can contain
+    data or not. This is what the gateway will use
     to parse data from the device.
 
     If you wish, you can advertise additional custom advertisements. Each will
