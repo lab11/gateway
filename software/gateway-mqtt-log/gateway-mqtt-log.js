@@ -80,8 +80,8 @@ GatewayStream.prototype.deliver = function () {
 
 var gateway_stream = new GatewayStream();
 var logger = log({file: log_file,
-                  size: '50m',
-                  keep: 1000,
+                  size: config.file_size,
+                  keep: parseInt(config.num_files),
                   compress: true});
 
 logger.on('rotated', function () {
