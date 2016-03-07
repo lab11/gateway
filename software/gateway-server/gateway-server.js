@@ -244,6 +244,24 @@ app.get('/graph', function (req, res) {
 	res.send(out);
 });
 
+// Show a graph of a value in real time
+app.get('/triumvi', function (req, res) {
+
+	var out = `<html>
+				 <head>
+					<title>Triumvi Display</title>
+					<style>p, body, html {margin:0;}</style>
+					<script type="text/javascript" src="static/js/jquery-2.2.1.min.js"></script>
+				</head>
+				<body>
+					<div id="meters"></div>
+					<script language='javascript' src='/static/js/triumvi.js'></script>
+				</body>
+			</html>`;
+
+	res.send(out);
+});
+
 // Show the unpacked advertisements for a device
 app.get('/:device', function (req, res) {
 	var device = req.params.device;
