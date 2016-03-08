@@ -122,7 +122,6 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 							seq_no: monjolo_seq_no
 						};
 
-						console.log(out);
 						mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
 
 					}

@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Monjolo packets from CC2520
+After=mosquitto.service sockets.target
+
+[Service]
+ExecStart=/home/debian/gateway/software/ieee802154-monjolo-gateway/ieee802154-monjolo-gateway.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ieee802154-monjolo-gateway
+
+[Install]
+WantedBy=multi-user.target
