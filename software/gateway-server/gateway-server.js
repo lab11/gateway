@@ -148,12 +148,14 @@ setInterval(function () {
 
 	for (device_name in devices) {
 		var recent_pkt = devices[device_name][0];
-		var then = new Date(recent_pkt._meta.received_time);
-		var diff = now - then;
+		if ('_meta' in recent_pkt) {
+			var then = new Date(recent_pkt._meta.received_time);
+			var diff = now - then;
 
-		// If we haven't seen a packet in a while, drop this device
-		if (diff > 10*60*1000) {
-			delete devices[device_name];
+			// If we haven't seen a packet in a while, drop this device
+			if (diff > 10*60*1000) {
+				delete devices[device_name];
+			}
 		}
 	}
 }, 5*60*1000);
