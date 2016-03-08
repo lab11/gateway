@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/lab11/gateway#readme",
   "dependencies": {
+    "async": "^1.5.2",
+    "getmac": "^1.0.7",
     "raw-socket": "git+https://github.com/lab11/node-raw-socket.git#address-family"
   }
 }
