@@ -63,7 +63,6 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 
         // Continue on to post to emoncms
         if (device_id) {
-            var node = adv_obj.id;
 
             // Delete meta key and possible id key
             delete adv_obj._meta;
@@ -94,7 +93,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
                 if (now - last_transmission_times[device_id] >= RATE_LIMIT_SECONDS*1000) {
 
                     // Create blob for emoncms
-                    var url = config.url + '/input/post.json?node=' + node + '&json=' + JSON.stringify(adv_obj) + '&apikey=' + config.api_key;
+                    var url = config.url + '/input/post.json?node=' + device_id + '&json=' + JSON.stringify(adv_obj) + '&apikey=' + config.api_key;
                     // console.log(url)
 
                     var p = request.post(url);
