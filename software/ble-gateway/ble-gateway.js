@@ -89,7 +89,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
     watchdog.reset();
 
     // Get the time
-    received_time = new Date().toISOString();
+    var received_time = new Date().toISOString();
 
     // We have seen an eddystone packet from the same address
     if (peripheral.id in this._device_to_data) {
