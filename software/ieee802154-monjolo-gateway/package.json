@@ -1,0 +1,26 @@
+{
+  "name": "ieee802154-monjolo-gateway",
+  "version": "0.1.0",
+  "description": "Capture 15.4 Monjolo packets.",
+  "main": "ieee802154-monjolo-gateway.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "keywords": [
+    "monjolo",
+    "802.15.4"
+  ],
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "dependencies": {
+    "raw-socket": "git+https://github.com/lab11/node-raw-socket.git#address-family"
+  }
+}
