@@ -58,6 +58,10 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
             device_id = adv_obj.id;
         }
 
+        // Make sure the device id is only alpha numerical characters
+        device_id.replace(/\W/g, '');
+
+        // Continue on to post to emoncms
         if (device_id) {
             var node = adv_obj.id;
 
