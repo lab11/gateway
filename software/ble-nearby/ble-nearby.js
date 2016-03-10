@@ -6,25 +6,7 @@
  *
  */
 
-//COMPLETE
-// search for mqtt broker
-//  pull BLE data from it
-//
-//  find other nearby gateways by their BLE advertisements
-//      add those brokers too
-//
-//  run wearabouts on all of the devices
-//      assigning each to its own gateway
-//
-//  make stream of nearby devices available at each gateway
-//      probably just post to your own discovered broker
-//      each gateway will run this script on its own
-
-//COMPLETE
-//- make an eddystone parser for ble-gateway
-//-  allow ble-gateway to use bytes from a packet for keying
-//-  make a lookup for eddystone and make that a device type
-
+// TODO
 // make a room-occupancy script
 //  pull nearby streams from local gateway
 //
@@ -37,6 +19,7 @@
 //
 //  make data stream available as a topic
 
+// TODO
 // make a light controller script
 //  probably just ends up running on nuclear
 //  pull occupancy stream from 4908 gateway
@@ -63,7 +46,7 @@ var TOPIC_NEARBY_DEVICES = 'ble-nearby';
 // wearabouts configuration
 var BLE_ADV_TIMEOUT = 75; // seconds
 var BLE_DETERMINATION_INTERVAL = 10; // seconds
-var BLE_TIME_DIFFS_LEN = 50;
+var BLE_TIME_DIFFS_LEN = 200;
 var BLE_MIN_PKT_RECEPTION_RATE = 0.10; // % packet reception
 
 // keep a dict of all devices found
@@ -85,6 +68,7 @@ var devices = {};
 
 // keep a timer for when all data in this device is invalid
 var timeouts = {};
+var determine_timeout = null;
 
 // unique ID of primary gateway
 var primary_gateway = '';
@@ -101,6 +85,7 @@ var primary_mqtt_client = null;
 
 // connect to MQTT broker
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
+    console.log("Primary connected: " + mqtt_client.options.host);
     primary_mqtt_client = mqtt_client;
 
     // get unique ID to identify the gateway
@@ -120,7 +105,9 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         connect_to_gateway(mqtt_client, gateway_id);
 
         // periodically determine which devices are "nearby" this gateway
-        setInterval(determine_locations, BLE_DETERMINATION_INTERVAL*1000);
+        if (determine_timeout == null) {
+            determine_timeout = setInterval(determine_locations, BLE_DETERMINATION_INTERVAL*1000);
+        }
     });
 });
 
@@ -193,8 +180,11 @@ function record_ble (mqtt_client, gateway_id) {
         // calculate new time diff
         if (dev.times.length >= 2) {
             var len = dev.times.length;
-            var time_diff = dev.times[len-1]-dev.times[len-2];
-            ble_dev.time_diffs.push(time_diff);
+            var time_diff = Math.round((dev.times[len-1]-dev.times[len-2])*1000)/1000;
+            if (time_diff > 0.015) {
+                // minimum time difference is 20 ms, but give a little wiggle room
+                ble_dev.time_diffs.push(time_diff);
+            }
         }
 
         // track the percentage of packets that have been received
@@ -225,6 +215,7 @@ function timeout_device (ble_addr) {
 }
 
 function determine_locations () {
+    debug("Making determination");
 
     var nearby_devices = [];
     for (var ble_addr in devices) {
@@ -232,22 +223,34 @@ function determine_locations () {
 
         // calculate advertising rate for each device periodically
         if (ble_dev.time_diffs.length >= BLE_TIME_DIFFS_LEN) {
-            // the minimum time difference is probably close to the true
-            //  advertisement rate
-            ble_dev.adv_rate = Math.min.apply(null, ble_dev.time_diffs);
+            // the median of the lower half of the data is probably close to
+            //  the true advertisement rate
+            //  Also, no, sorting does NOT naturally just work on integers
+            //  Thanks javascript
+            var srtd_diffs = ble_dev.time_diffs.sort(function (a,b) {return a-b;});
+            var lower_diffs = srtd_diffs.slice(0,Math.round(srtd_diffs.length/2));
+            var mid = Math.floor(lower_diffs.length/2);
+            if (lower_diffs.length % 2 == 0) {
+                ble_dev.adv_rate = (lower_diffs[mid-1]+lower_diffs[mid])/2;
+            } else {
+                ble_dev.adv_rate = lower_diffs[mid];
+            }
             ble_dev.time_diffs = [];
         }
 
         // don't bother figuring out nearby for gateways
         if (gateway_ble_addrs.indexOf(ble_addr) != -1) {
+            console.log(ble_addr + ": Skipping gateway");
             continue;
         }
 
         // determine which gateway this device is "nearby"
         var min_rssi = -200;
         var nearby_gateway = null;
+        var log_str = ble_addr + ": |"+ble_dev.adv_rate+"|";
         for (gateway in ble_dev.gateways) {
             var dev = ble_dev.gateways[gateway];
+            log_str += '['+gateway+'] PRR='+dev.pkt_reception_rate+' RSSI='+dev.avg_rssi+' ';
 
             // only accept devices that meet a minimum PRR
             if (dev.pkt_reception_rate != null &&
@@ -266,6 +269,8 @@ function determine_locations () {
             }
         }
         ble_dev.nearby_gateway = nearby_gateway;
+        log_str += '<'+nearby_gateway+'>';
+        debug(log_str);
 
         // broadcast out devices that are near the primary
         if (ble_dev.nearby_gateway == primary_gateway) {
@@ -284,6 +289,7 @@ function discover_gateways (mqtt_addr) {
     // create a second mqtt connection to the same host
     var mqtt_client = mqtt.connect(mqtt_addr);
     mqtt_client.on('connect', function () {
+        console.log("Searching for gateways: " + mqtt_client.options.host);
 
         // subscribe to all gateways discovered
         mqtt_client.subscribe(TOPIC_GATEWAY_DEVICES);
@@ -343,7 +349,6 @@ function get_gateway_id (gateway_ip, cb) {
         }
 
         // callback
-        debug("Gateways: " + gateways);
         cb(gateway_id);
     });
 }
