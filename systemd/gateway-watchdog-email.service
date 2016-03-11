@@ -1,0 +1,13 @@
+[Unit]
+Description=Send email notification on gateway errors.
+After=bluetooth.target mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-watchdog-email/gateway-watchdog-email.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-watchdog-email
+
+[Install]
+WantedBy=multi-user.target
