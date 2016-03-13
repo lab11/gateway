@@ -40,7 +40,7 @@ Publish to GATD.
 - [Log](https://github.com/lab11/gateway/tree/master/software/gateway-mqtt-log):
 Write to a local text file log.
 
-## Other
+### Other
 
 These provide other useful services:
 
