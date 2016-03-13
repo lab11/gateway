@@ -43,6 +43,6 @@ salt is unique for each device and on each gateway. If you see the same
 `localHashedAddress` you can be sure you saw the same BLE device. However,
 devices cannot be tracked across gateways as each gateway will have different
 salts.
-- `address`: The actuall MAC address. Here for obvious convenience, but should
+- `address`: The actual MAC address. Here for obvious convenience, but should
 be removed some day.
 - `rssi`: Received signal strength indicator for the received packet.
