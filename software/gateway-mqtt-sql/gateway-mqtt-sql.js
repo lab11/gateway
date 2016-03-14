@@ -115,5 +115,5 @@ function log_to_sql (adv) {
     //         }
     //     });
     // }
-}
+//}
 
