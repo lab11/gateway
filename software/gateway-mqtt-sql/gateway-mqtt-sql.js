@@ -79,9 +79,13 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 });
 
 // Log csv-formatted advertisements to a temp file
-var powerblade_count = 
+var powerblade_count = 0;
 function log_to_sql (adv) {
-    
+    console.log(adv['device'])
+}
+
+function post_to_sql () {
+    console.log("Post")
 }
 
 // post JSON advertisements to GATD
