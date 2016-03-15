@@ -64,6 +64,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         }
 
         // log packets in SQL format
+        var curr_time = Date.now()/1000;
         log_to_sql(adv);
         if(post_count == 0) {      // Mark the start time of the first packet in this file
             file_start_time = curr_time;
@@ -78,8 +79,9 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 });
 
 // Log csv-formatted advertisements to a temp file
+var powerblade_count = 
 function log_to_sql (adv) {
-    console.log(adv);
+    
 }
 
 // post JSON advertisements to GATD
