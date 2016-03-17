@@ -9,36 +9,41 @@
  ******************************************************************************/
 
 var MQTTDiscover = require('mqtt-discover');
-
-var debug = require('debug')('gateway-publish');
-
-var argv = require('yargs')
-    .help('h')
-    .alias('h', 'help')
-    .option('udp-broadcast', {
-        describe: 'publish UDP broadcast packets. Use --no-udp-broadcast to not.',
-        boolean: true,
-        default: true
-    })
-    .option('websockets', {
-        describe: 'publish to websockets. Use --no-websockets to not.',
-        boolean: true,
-        default: true
-    })
-    .strict()
-    .argv;
+var debug        = require('debug')('gateway-publish');
+var ini          = require('ini');
 
 /*******************************************************************************
  * CONFIGURATION OPTIONS
  ******************************************************************************/
 
 // Receive
-var MQTT_TOPIC_NAME = 'gateway-data';
+var DEFAULT_MQTT_TOPIC_NAME = 'gateway-data';
 
 // Publish
-var UDP_BROADCAST_PORT = 3002;
-var WS_PORT = 3001;
+var DEFAULT_UDP_PUBLISH = false;
+var DEFAULT_UDP_BROADCAST_PORT = 3002;
+var DEFAULT_WS_PUBLISH = true;
+var DEFAULT_WS_PORT = 3001;
 
+
+// Read in the config file to get the parameters. If the parameters are not set
+// we use defaults
+var config;
+try {
+    var config_file = fs.readFileSync('/etc/swarm-gateway/publish.conf', 'utf-8');
+    config = ini.parse(config_file);
+} catch (e) {console.log(e)
+    console.log('Could not find /etc/swarm-gateway/publish.conf. Using defaults');
+}
+// Set defaults
+if (config.udpPublish === undefined)        config.udpPublish        = DEFAULT_UDP_PUBLISH;
+if (config.udpPort === undefined)           config.udpPort           = DEFAULT_UDP_BROADCAST_PORT;
+if (config.websocketsPublish === undefined) config.websocketsPublish = DEFAULT_WS_PUBLISH;
+if (config.websocketPort === undefined)     config.websocketPort     = DEFAULT_WS_PORT;
+if (config.mqttTopic === undefined)         config.mqttTopic         = DEFAULT_MQTT_TOPIC_NAME;
+// Type conversion
+if (config.udpPublish === 'true')        config.udpPublish = true;
+if (config.websocketsPublish === 'true') config.websocketsPublish = true;
 
 /*******************************************************************************
  * MAIN CODE
@@ -47,10 +52,10 @@ var WS_PORT = 3001;
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
     console.log('Connected to MQTT ' + mqtt_client.options.href);
 
-    mqtt_client.subscribe(MQTT_TOPIC_NAME);
+    mqtt_client.subscribe(config.mqttTopic);
 
     // Setup UDP Broadcast
-    if (argv.udpBroadcast) {
+    if (config.udpPublish) {
         debug('Setting up UDP broadcast.');
 
         var dgram  = require('dgram');
@@ -62,16 +67,16 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 
         // Callback for when BLE discovers the advertisement
         mqtt_client.on('message', function (topic, message) {
-            server.send(message, 0, message.length, UDP_BROADCAST_PORT, "255.255.255.255");
+            server.send(message, 0, message.length, config.udpPort, "255.255.255.255");
         });
     }
 
     // WebSockets
-    if (argv.websockets) {
+    if (config.websocketsPublish) {
         debug('Setting up WebSockets.');
 
         var ws       = require('ws');
-        var wsserver = new ws.Server({port: WS_PORT});
+        var wsserver = new ws.Server({port: config.websocketPort});
 
         // Callback for when BLE discovers the advertisement
         mqtt_client.on('message', function (topic, message) {
