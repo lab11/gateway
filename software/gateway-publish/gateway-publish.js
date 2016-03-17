@@ -10,6 +10,7 @@
 
 var MQTTDiscover = require('mqtt-discover');
 var debug        = require('debug')('gateway-publish');
+var fs           = require('fs');
 var ini          = require('ini');
 
 /*******************************************************************************
@@ -34,6 +35,7 @@ try {
     config = ini.parse(config_file);
 } catch (e) {console.log(e)
     console.log('Could not find /etc/swarm-gateway/publish.conf. Using defaults');
+    config = {};
 }
 // Set defaults
 if (config.udpPublish === undefined)        config.udpPublish        = DEFAULT_UDP_PUBLISH;
