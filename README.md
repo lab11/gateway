@@ -3,6 +3,8 @@ Gateway
 
 Software for the Lab11 gateway platform.
 
+<img src="https://www.gliffy.com/go/publish/image/10262809/L.png">
+
 Goals
 -----
 
