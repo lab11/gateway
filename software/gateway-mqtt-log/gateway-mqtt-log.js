@@ -10,13 +10,8 @@ var ini          = require('ini');
 
 
 var MQTT_TOPIC_NAME = 'gateway-data';
+var DEFAULT_NUM_FILES = 5000;
 
-
-// Figure out which file to log to
-// var log_file = '/media/sdcard/gateway.log';
-// if (process.argv.length > 2) {
-// 	log_file = process.argv[2];
-// }
 
 // Read in the config file to get the log filename
 try {
@@ -33,6 +28,11 @@ try {
 
 var log_file = config.log_file;
 console.log('Logging to ' + log_file);
+
+if (config.num_files === undefined) {
+	config.num_files = DEFAULT_NUM_FILES;
+}
+console.log('Logging up to ' + config.num_files + ' files.');
 
 var GatewayStream = function () {
 	stream.Readable.call(this);
