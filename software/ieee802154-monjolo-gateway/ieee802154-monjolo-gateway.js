@@ -2,9 +2,10 @@
 
 var exec = require('child_process').exec;
 
-var async  = require('async');
-var getmac = require('getmac');
-var raw    = require('raw-socket');
+var async    = require('async');
+var getmac   = require('getmac');
+var raw      = require('raw-socket');
+var watchout = require('watchout');
 
 var MQTTDiscover = require('mqtt-discover');
 
@@ -17,21 +18,21 @@ var ETH_P_IEEE802154 = 0x00F6;
 
 // Identifiers for different monjolos
 var MONJOLO_TYPES = ['unused',
-                     'Coilcube',
-                     'sEHnsor',
-                     'Impulse',
-                     'Coilcube (Splitcore)',
-                     'Solar Monjolo',
-                     'Buzz',
-                     'Thermes'];
+		'Coilcube',
+		'sEHnsor',
+		'Impulse',
+		'Coilcube (Splitcore)',
+		'Solar Monjolo',
+		'Buzz',
+		'Thermes'];
 
 var MQTT_TOPIC_NAME = 'gateway-data';
 
 // These commands must be run to initialize the gateway
 var COMMANDS = ['iwpan phy phy0 set channel 0 18',
-                'ifconfig wpan0 down',
-                'iwpan dev wpan0 set pan_id 0x0022',
-                'ifconfig wpan0 up'];
+		'ifconfig wpan0 down',
+		'iwpan dev wpan0 set pan_id 0x0022',
+		'ifconfig wpan0 up'];
 
 /*******************************************************************************
  * Helper functions
@@ -45,6 +46,14 @@ function reverse (b) {
 	return out;
 }
 
+// There is a currently unknown issue where this script will hang sometimes,
+// for the moment, we work around it with a watchdog timer
+var watchdog = new watchout(5*60*1000, function(didCancelWatchdog) {
+	if (!didCancelWatchdog) {
+		console.log("Watchdog tripped");
+		process.exit(1);
+	}
+});
 
 /*******************************************************************************
  * MAIN
@@ -126,6 +135,12 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 
 						mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
 
+						// ping the watchdog
+						//  We're doing it here rather than at packet receieve because no
+						//  monjolo packets means its not working. Monjolo's nature means
+						//  that the watchdog might trip on its own occasionally, but
+						//  that is not a problem
+						watchdog.reset();
 					}
 				});
 			});
