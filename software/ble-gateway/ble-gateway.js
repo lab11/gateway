@@ -47,6 +47,10 @@ var BleGateway = function () {
     // parse.js for the same devices.
     this._cached_parsers = {};
 
+    // Keep track of shortened URLs to the full expanded URL so we don't
+    // have to query each time we get a short URL
+    this._cached_urls = {};
+
     noble.on('discover', this.on_discover.bind(this));
     noble.on('scanStop', this.on_scanStop.bind(this));
     EddystoneBeaconScanner.on('updated', this.on_beacon.bind(this));
@@ -232,6 +236,9 @@ BleGateway.prototype.on_beacon = function (beacon) {
         // This is called when we successfully get the expanded URL.
         var got_expanded_url = function (err, full_url) {
             if (!err) {
+                // Save this URL expansion. OK to just overwrite it each time.
+                this._cached_urls[beacon.url] = full_url;
+
                 // Create space if this is a new beacon
                 if (!(beacon.id in this._device_to_data)) {
                     this._device_to_data[beacon.id] = {};
@@ -291,8 +298,13 @@ BleGateway.prototype.on_beacon = function (beacon) {
             }
         };
 
-        // Try to expand the URL up to 10 times
-        async.retry(10, function (cb, r) { urlExpander.expand(beacon.url, cb); }, got_expanded_url.bind(this));
+        if (beacon.url in this._cached_urls) {
+            // We already know what this URL expands to. Just use that.
+            got_expanded_url.call(this, null, this._cached_urls[beacon.url]);
+        } else {
+            // Try to expand the URL up to 10 times.
+            async.retry(10, function (cb, r) { urlExpander.expand(beacon.url, cb); }, got_expanded_url.bind(this));
+        }
 
     }
 };
