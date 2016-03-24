@@ -48,3 +48,29 @@ These provide other useful services:
 Broadcast the gateway's IP address as a BLE packet.
 - [BLE Nearby](https://github.com/lab11/gateway/tree/master/software/ble-nearby):
 Use nearby gateways to decide which devices are nearest to which gateway.
+
+
+## Requirements
+
+In order to get a Gateway running with this software, follow the instructions at [Urban Heartbeat Kit](https://github.com/terraswarm/urban-heartbeat-kit)
+
+For testing on Linux:
+
+1. Install [node.js](https://nodejs.org/en/download/). If you are cool with
+running a downloaded shell script as root you can do this on Ubuntu:
+
+        curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+
+2. On Linux, make sure you have other dependencies installed:
+
+        sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev avahi-daemon libavahi-compat-libdnssd-dev
+
+    Also setup node.js so it can look for BLE packets without being root:
+
+        sudo setcap cap_net_raw+eip $(eval readlink -f `which node`)
+
+3. Setup the dependencies for a script:
+
+        cd software/<script name>
+        npm install
