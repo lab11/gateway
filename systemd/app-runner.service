@@ -1,0 +1,14 @@
+[Unit]
+Description=Automatically run nodejs apps on the gateway.
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/app-runner/app-runner.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=app-runner
+User=debian
+
+[Install]
+WantedBy=multi-user.target
