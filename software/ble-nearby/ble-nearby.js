@@ -284,7 +284,10 @@ function determine_locations () {
             if (error) {
                 console.log("Disconnected... Reconnecting!");
                 primary_mqtt_client = mqtt.connect(primary_mqtt_client.options.href);
-                connect_to_gateway(mqtt_client, gateway_id);
+                primary_mqtt_client.on('connect', function () {
+                    debug("Reconnected to primary");
+                    connect_to_gateway(primary_mqtt_client, primary_gateway);
+                });
             }
         });
     }
