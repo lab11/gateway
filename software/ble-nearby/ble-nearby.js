@@ -281,10 +281,12 @@ function determine_locations () {
     // broadcast list of devices that are nearby the primary
     if (primary_mqtt_client) {
         primary_mqtt_client.publish(TOPIC_NEARBY_DEVICES, JSON.stringify(nearby_devices), {retain: true}, function (error) {
-            console.log("Error publishing: " + error);
-            console.log("Primary with error: " + primary_mqtt_client.options.host);
-            console.log("Reconnecting!");
-            primary_mqtt_client = mqtt.connect(primary_mqtt_client.options.href);
+            if (error) {
+                console.log("Error publishing: " + error);
+                console.log("Primary with error: " + primary_mqtt_client.options.host);
+                console.log("Reconnecting!");
+                primary_mqtt_client = mqtt.connect(primary_mqtt_client.options.href);
+            }
         });
     }
 }
