@@ -240,7 +240,7 @@ function determine_locations () {
 
         // don't bother figuring out nearby for gateways
         if (gateway_ble_addrs.indexOf(ble_addr) != -1) {
-            console.log(ble_addr + ": Skipping gateway");
+            debug(ble_addr + ": Skipping gateway");
             continue;
         }
 
@@ -282,10 +282,9 @@ function determine_locations () {
     if (primary_mqtt_client) {
         primary_mqtt_client.publish(TOPIC_NEARBY_DEVICES, JSON.stringify(nearby_devices), {retain: true}, function (error) {
             if (error) {
-                console.log("Error publishing: " + error);
-                console.log("Primary with error: " + primary_mqtt_client.options.host);
-                console.log("Reconnecting!");
+                console.log("Disconnected... Reconnecting!");
                 primary_mqtt_client = mqtt.connect(primary_mqtt_client.options.href);
+                connect_to_gateway(mqtt_client, gateway_id);
             }
         });
     }
