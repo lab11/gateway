@@ -1,0 +1,4 @@
+# This makes the sdcard mount in known locations for the fstab to use
+
+KERNEL=="mmcblk[0-9]p[0-9]", SUBSYSTEMS=="mmc", ATTRS{type}=="SD", ATTRS{name}=="?*", ATTRS{serial}=="?*", ENV{ID_NAME}="$attr{name}", ENV{ID_SERIAL}="$attr{serial}", SYMLINK+="sdcard"
+
