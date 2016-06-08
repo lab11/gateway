@@ -1,0 +1,25 @@
+{
+  "name": "gateway-mqtt-sensu",
+  "version": "0.1.0",
+  "description": "Publish keepalives to sensu on behalf of devices.",
+  "main": "gateway-mqtt-sensu.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "author": "Brad Campbell",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "dependencies": {
+    "amqp": "^0.2.6",
+    "getmac": "^1.2.1",
+    "ini": "^1.3.4",
+    "mqtt-discover": "^0.1.1"
+  }
+}
