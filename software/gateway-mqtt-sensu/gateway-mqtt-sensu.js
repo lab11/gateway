@@ -43,6 +43,11 @@ try {
     process.exit(1);
 }
 
+var device_filters;
+if (config.ignore) {
+    device_filters = config.ignore.split(',');
+}
+
 // Start by getting an ID for this node
 getmac.getMac(function (err, macaddr) {
     console.log('Using MAC address: ' + macaddr);
@@ -80,10 +85,18 @@ getmac.getMac(function (err, macaddr) {
                     }
 
                     // Make sure the device id is only alpha numerical characters
-                    device_id.replace(/\W/g, '');
+                    device_id = device_id.replace(/\W/g, '');
+
+                    // Get device name and transform to alphanumeric
+                    var device_name = adv_obj.device;
+                    device_name = device_name.replace(/\W/g, '');
 
                     // Continue on to send keepalive
-                    if (device_id && adv_obj.device) {
+                    if (device_id && device_name) {
+                        // Escape if this is a filtered device_name
+                        if (device_filters && device_filters.indexOf(device_name) != -1) {
+                            return;
+                        }
 
                         // Init timestamp for new device
                         if (!(device_id in last_transmission_times)) {
