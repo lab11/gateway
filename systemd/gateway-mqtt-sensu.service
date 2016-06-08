@@ -3,7 +3,7 @@ Description=Publish Keepalive Messages to Sensu
 After=bluetooth.target mosquitto.service
 
 [Service]
-ExecStart=/home/debian/gateway/software/gateway-mqtt-sesnu/gateway-mqtt-sensu.js
+ExecStart=/home/debian/gateway/software/gateway-mqtt-sensu/gateway-mqtt-sensu.js
 Restart=always
 StandardOutput=syslog
 StandardError=syslog

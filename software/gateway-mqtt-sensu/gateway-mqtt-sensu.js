@@ -94,7 +94,7 @@ getmac.getMac(function (err, macaddr) {
                         var now = new Date();
                         if (now - last_transmission_times[device_id] >= RATE_LIMIT_SECONDS*1000) {
 
-                            console.log('Publishing keepalive for ' + adv_obj.device + '-' + device_id + ' on ' + macaddr);
+                            // console.log('Publishing keepalive for ' + adv_obj.device + '-' + device_id + ' on ' + macaddr);
 
                             var out = {
                                 name: adv_obj.device + '-' + device_id,
