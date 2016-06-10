@@ -2,8 +2,8 @@ sensu-process
 =============
 
 Allows long-running processes to send keepalives to
-[Sensu](https://github.com/sensu/sensu) as so that it can keep track of their
-status as if they were devices.
+[Sensu](https://github.com/sensu/sensu) so that it can keep track of their
+status as clients.
 
 ### Example
 sensu-process can automatically send keepalive packets to a Sensu server.
@@ -47,23 +47,25 @@ password = PASSWORD
 
 ### API
 
-SensuProcess.init(SENSU_CONFIG_PATH, PROCESS_NAME)
+**SensuProcess.init(SENSU_CONFIG_PATH, PROCESS_NAME)**
 
 Initializes sensu-process
 
 `SENSU_CONFIG_PATH`: string, path to valid sensu config file
+
 `PROCESS_NAME`: string, name of process to appear in Sensu. Alphanumeric plus underscore and hypen
 
 
-SensuProcess.begin(AUTOMATIC, SEND_RATE)
+**SensuProcess.begin(AUTOMATIC, SEND_RATE)**
 
 Starts sensu-process
 
 `AUTOMATIC`: boolean, whether keepalives should be sent automatically
+
 `SEND_RATE`: integer, minimum number of seconds between each keepalive transmission. Used as interval if in automatic mode, otherwise used to automatically rate limit calls to keepalive()
 
 
-SensuProcess.keepalive()
+**SensuProcess.keepalive()**
 
 Send a keepalive to sensu
 
