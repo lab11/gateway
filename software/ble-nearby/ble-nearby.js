@@ -25,7 +25,6 @@
 //  pull occupancy stream from 4908 gateway
 //  control 4908 lights
 
-//*** Libraries ***
 
 // create our own debug stream
 var debug = require('debug')('ble-nearby');
@@ -39,23 +38,16 @@ var mqtt = require('mqtt');
 var moment = require('moment');
 var request = require('request');
 
-//*** Config ***
-
 // looking for BLE advertisements
 var TOPIC_BLE_ADVERTISEMENTS = 'ble-advertisements';
 var TOPIC_GATEWAY_DEVICES = 'device/SwarmGateway/+';
 var TOPIC_NEARBY_DEVICES = 'ble-nearby';
 
-// gateway configuration
-var GATEWAY_TIMEOUT = 10*60; // seconds
-
-// wearabouts configuration=
+// wearabouts configuration
 var BLE_ADV_TIMEOUT = 75; // seconds
 var BLE_DETERMINATION_INTERVAL = 10; // seconds
 var BLE_TIME_DIFFS_LEN = 200;
 var BLE_MIN_PKT_RECEPTION_RATE = 0.10; // % packet reception
-
-//*** Data Structures ***
 
 // keep a dict of all devices found
 //  <ble_address> : {
@@ -75,48 +67,25 @@ var BLE_MIN_PKT_RECEPTION_RATE = 0.10; // % packet reception
 var devices = {};
 
 // keep a timer for when all data in this device is invalid
-var device_timeouts = {};
-
-// keep list of BLE addresses for discovered gateways so we can skip counting
-//  them as nearby this gateway
-var gateway_ble_addrs = [];
+var timeouts = {};
+var determine_timeout = null;
 
 // unique ID of primary gateway
 var primary_gateway = '';
 
-// keep the main mqtt client `ble-nearby` can be published back to it
-var primary_mqtt_client = null;
-
-// timer for making location determinations for primary
-var determine_timeout = null;
-
 // unique IDs and IP addresses of gateways so we can know which we have already contacted
 var gateways = [];
 
-// keep a timer for when to give up on a given gateway
-var gateway_timeouts = {};
+// keep list of BLE addresses for discovered gateways so they can be ignored
+var gateway_ble_addrs = [];
 
-//*** Code ***
+// keep the main mqtt client `ble-nearby` can be published back to it
+var primary_mqtt_client = null;
+
 
 // connect to MQTT broker
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    // if this is a reconnect, check that we are still connecting the same thing
-    if (primary_mqtt_client) {
-        if (mqtt_client.options.host != primary_mqtt_client.options.host) {
-            // this is a new primary. End connection with the old one
-            console.log("Connecting to new primary");
-            primary_mqtt_client.end(true);
-            primary_mqtt_client = null;
-        }
-    }
-
-    if (!primary_mqtt_client) {
-        // this is the initial connection
-        console.log("Primary connected: " + mqtt_client.options.host);
-    } else {
-        // this is a reconnect
-        console.log("Primary reconnected: " + mqtt_client.options.host);
-    }
+    console.log("Primary connected: " + mqtt_client.options.host);
     primary_mqtt_client = mqtt_client;
 
     // get unique ID to identify the gateway
@@ -132,12 +101,6 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
             gateways.push(mqtt_client.options.host);
         }
 
-        // clear timeout if there is one
-        gateway_timeouts[gateway_id] = null;
-        if (gateway_timeouts[gateway_id]) {
-            clearTimeout(gateway_timeouts[gateway_id]);
-        }
-
         // pull data from gateway
         connect_to_gateway(mqtt_client, gateway_id);
 
@@ -150,125 +113,98 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 
 function connect_to_gateway (mqtt_client, gateway_id) {
 
-    // subscribe to all BLE advertisements and gateways
-    mqtt_client.subscribe([TOPIC_BLE_ADVERTISEMENTS, TOPIC_GATEWAY_DEVICES]);
+    // collect BLE advertisements from gateway
+    record_ble(mqtt_client, gateway_id);
+
+    // discover other gateways
+    discover_gateways(mqtt_client.options.href);
+}
+
+function record_ble (mqtt_client, gateway_id) {
+    // subscribe to all BLE advertisements
+    mqtt_client.subscribe(TOPIC_BLE_ADVERTISEMENTS);
 
     // handle incoming packets
     mqtt_client.on('message', function (topic, message) {
-        if (topic == TOPIC_BLE_ADVERTISEMENTS) {
-            record_ble(message, gateway_id);
-        } else {
-            discover_gateways(message);
+
+        // new advertisement received, add device if necessary
+        var adv = JSON.parse(message.toString());
+        if (!(adv.address in devices)) {
+            // no need to keep track of devices not seen by the primary gateway
+            //  Only devices seen by the primary will ever be "nearby" it
+            if (gateway_id != primary_gateway) {
+                return;
+            }
+            debug("Discovered: " + adv.address);
+            devices[adv.address] = {
+                'gateways': {},
+                'time_diffs': [],
+                'adv_rate': null,
+                'nearby': null,
+            };
+            timeouts[adv.address] = null;
         }
+        var ble_dev = devices[adv.address];
+        if (!(gateway_id in ble_dev.gateways)) {
+            ble_dev.gateways[gateway_id] = {
+                'rssis': [],
+                'avg_rssi': null,
+                'times': [],
+                'pkt_reception_rate': null,
+            };
+        }
+
+        // timeout old data across all gateways if there is any
+        var curr_time = moment().valueOf()/1000;
+        for (var gateway in ble_dev.gateways) {
+            var dev = ble_dev.gateways[gateway];
+            while (dev.times.length > 0 && (curr_time - dev.times[0]) > BLE_ADV_TIMEOUT) {
+                // pop oldest BLE data until caught up
+                dev.rssis.shift();
+                dev.times.shift();
+            }
+        }
+
+        // add new data
+        var dev = ble_dev.gateways[gateway_id];
+        dev.rssis.push(adv.rssi);
+        dev.times.push(moment(adv.receivedTime).valueOf()/1000);
+
+        // calculate new RSSI average
+        var rssi_sum = 0;
+        for (var i=0; i<dev.rssis.length; i++) {
+            rssi_sum += dev.rssis[i];
+        }
+        dev.avg_rssi = rssi_sum/dev.rssis.length;
+
+        // calculate new time diff
+        if (dev.times.length >= 2) {
+            var len = dev.times.length;
+            var time_diff = Math.round((dev.times[len-1]-dev.times[len-2])*1000)/1000;
+            if (time_diff > 0.015) {
+                // minimum time difference is 20 ms, but give a little wiggle room
+                ble_dev.time_diffs.push(time_diff);
+            }
+        }
+
+        // track the percentage of packets that have been received
+        if (ble_dev.adv_rate != null) {
+            dev.pkt_reception_rate = dev.times.length/(BLE_ADV_TIMEOUT/ble_dev.adv_rate);
+        }
+
+        // register a timeout for the device
+        //  this is a rolling timeout placed at the timeout period after the
+        //  newest packet arrival. At each new arrival the old timeout is
+        //  cleared and a new one is set. If packets ever totally cease from
+        //  the device, it will be cleared when the timeout goes off. This may
+        //  lead to brief periods where the location of the device is
+        //  determined incorrectly, but since there is no new data coming in,
+        //  it's more likely that all locations are invalid
+        if (timeouts[adv.address] != null) {
+            clearTimeout(timeouts[adv.address]);
+        }
+        timeouts[adv.address] = setTimeout(timeout_device, BLE_ADV_TIMEOUT*1000, adv.address);
     });
-
-    // handle connection going down somehow
-    mqtt_client.on('offline', function () {
-        if (gateway_timeouts[gateway_id] == null) {
-            gateway_timeouts[gateway_id] = setTimeout(timeout_gateway,
-                    GATEWAY_TIMEOUT*1000, mqtt_client, gateway_id);
-        }
-    });
-}
-
-function timeout_gateway(mqtt_client, gateway_id) {
-
-    // remove gateway from gateways list, gateway id and ip address
-    if (gateways.indexOf(gateway_id) != -1) {
-        gateways.splice(gateways.indexOf(gateway_id), 1);
-    }
-    if (gateways.indexOf(mqtt_client.options.host) != -1) {
-        gateways.splice(gateways.indexOf(mqtt_client.options.host), 1);
-    }
-
-    // close connection
-    mqtt_client.end(true);
-
-    // remove primary if neccessary
-    if (primary_mqtt_client == mqtt_client) {
-        primary_mqtt_client = null;
-    }
-}
-
-function record_ble (message, gateway_id) {
-
-    // new advertisement received, add device if necessary
-    var adv = JSON.parse(message.toString());
-    if (!(adv.address in devices)) {
-        // no need to keep track of devices not seen by the primary gateway
-        //  Only devices seen by the primary will ever be "nearby" it
-        if (gateway_id != primary_gateway) {
-            return;
-        }
-        debug("Discovered: " + adv.address);
-        devices[adv.address] = {
-            'gateways': {},
-            'time_diffs': [],
-            'adv_rate': null,
-            'nearby': null,
-        };
-        device_timeouts[adv.address] = null;
-    }
-    var ble_dev = devices[adv.address];
-    if (!(gateway_id in ble_dev.gateways)) {
-        ble_dev.gateways[gateway_id] = {
-            'rssis': [],
-            'avg_rssi': null,
-            'times': [],
-            'pkt_reception_rate': null,
-        };
-    }
-
-    // timeout old data across all gateways if there is any
-    var curr_time = moment().valueOf()/1000;
-    for (var gateway in ble_dev.gateways) {
-        var dev = ble_dev.gateways[gateway];
-        while (dev.times.length > 0 && (curr_time - dev.times[0]) > BLE_ADV_TIMEOUT) {
-            // pop oldest BLE data until caught up
-            dev.rssis.shift();
-            dev.times.shift();
-        }
-    }
-
-    // add new data
-    var dev = ble_dev.gateways[gateway_id];
-    dev.rssis.push(adv.rssi);
-    dev.times.push(moment(adv.receivedTime).valueOf()/1000);
-
-    // calculate new RSSI average
-    var rssi_sum = 0;
-    for (var i=0; i<dev.rssis.length; i++) {
-        rssi_sum += dev.rssis[i];
-    }
-    dev.avg_rssi = rssi_sum/dev.rssis.length;
-
-    // calculate new time diff
-    if (dev.times.length >= 2) {
-        var len = dev.times.length;
-        var time_diff = Math.round((dev.times[len-1]-dev.times[len-2])*1000)/1000;
-        if (time_diff > 0.015) {
-            // minimum time difference is 20 ms, but give a little wiggle room
-            ble_dev.time_diffs.push(time_diff);
-        }
-    }
-
-    // track the percentage of packets that have been received
-    if (ble_dev.adv_rate != null) {
-        dev.pkt_reception_rate = dev.times.length/(BLE_ADV_TIMEOUT/ble_dev.adv_rate);
-    }
-
-    // register a timeout for the device
-    //  this is a rolling timeout placed at the timeout period after the
-    //  newest packet arrival. At each new arrival the old timeout is
-    //  cleared and a new one is set. If packets ever totally cease from
-    //  the device, it will be cleared when the timeout goes off. This may
-    //  lead to brief periods where the location of the device is
-    //  determined incorrectly, but since there is no new data coming in,
-    //  it's more likely that all locations are invalid
-    if (device_timeouts[adv.address] != null) {
-        clearTimeout(device_timeouts[adv.address]);
-    }
-    device_timeouts[adv.address] = setTimeout(timeout_device, BLE_ADV_TIMEOUT*1000, adv.address);
 }
 
 function timeout_device (ble_addr) {
@@ -344,56 +280,67 @@ function determine_locations () {
 
     // broadcast list of devices that are nearby the primary
     if (primary_mqtt_client) {
-        primary_mqtt_client.publish(TOPIC_NEARBY_DEVICES, JSON.stringify(nearby_devices),
-                {retain: true}, function (error) {
-
+        primary_mqtt_client.publish(TOPIC_NEARBY_DEVICES, JSON.stringify(nearby_devices), {retain: true}, function (error) {
             if (error) {
-                debug("Publish error: " + error);
-                // carry on
+                console.log("Disconnected... Reconnecting!");
+                primary_mqtt_client = mqtt.connect(primary_mqtt_client.options.href);
+                primary_mqtt_client.on('connect', function () {
+                    debug("Reconnected to primary");
+                    connect_to_gateway(primary_mqtt_client, primary_gateway);
+                });
             }
         });
     }
 }
 
+function discover_gateways (mqtt_addr) {
 
-function discover_gateways (message) {
+    // create a second mqtt connection to the same host
+    var mqtt_client = mqtt.connect(mqtt_addr);
+    mqtt_client.on('connect', function () {
+        console.log("Searching for gateways: " + mqtt_client.options.host);
 
-    var pkt = JSON.parse(message);
+        // subscribe to all gateways discovered
+        mqtt_client.subscribe(TOPIC_GATEWAY_DEVICES);
 
-    // don't need to get the unique ID if we are already connected
-    if (gateways.indexOf(pkt.ip_address) == -1) {
-        gateways.push(pkt.ip_address);
+        // handle incoming packets
+        mqtt_client.on('message', function (topic, message) {
+            var pkt = JSON.parse(message);
 
-        // get unique ID to identify the gateway
-        get_gateway_id(pkt.ip_address, function(gateway_id) {
+            // don't need to get the unique ID if we are already connected
+            if (gateways.indexOf(pkt.ip_address) == -1) {
+                gateways.push(pkt.ip_address);
 
-            // keep track of gateways discovered and only care if this is a
-            //  new gateway to connect to. We also need the escape of
-            //  continuing to connect to devices where we couldn't get
-            //  a unique ID
-            if (gateways.indexOf(gateway_id) == -1 || gateway_id == pkt.ip_address) {
-                gateways.push(gateway_id);
-                console.log("Secondary Gateway: " + pkt.ip_address + ' ID: ' + gateway_id);
+                // get unique ID to identify the gateway
+                get_gateway_id(pkt.ip_address, function(gateway_id) {
 
-                // make a mqtt connection to gateway for BLE data
-                var new_mqtt_addr = 'mqtt://' + pkt.ip_address;
-                var new_mqtt_client = mqtt.connect(new_mqtt_addr);
-                new_mqtt_client.on('connect', function () {
-                    // this could be a connect or a reconnect
-                    //  either way should work the same
+                    // keep track of gateways discovered and only care if this is a
+                    //  new gateway to connect to. We also need the escape of
+                    //  continuing to connect to devices where we couldn't get
+                    //  a unique ID
+                    if (gateways.indexOf(gateway_id) == -1 || gateway_id == pkt.ip_address) {
+                        gateways.push(gateway_id);
+                        console.log("Secondary Gateway: " + pkt.ip_address + ' ID: ' + gateway_id);
 
-                    // pull data from gateway
-                    connect_to_gateway(new_mqtt_client, gateway_id);
+                        // make a mqtt connection to gateway for BLE data
+                        var new_mqtt_addr = 'mqtt://' + pkt.ip_address;
+                        var new_mqtt_client = mqtt.connect(new_mqtt_addr);
+                        new_mqtt_client.on('connect', function () {
+
+                            // pull data from gateway
+                            connect_to_gateway(new_mqtt_client, gateway_id);
+                        });
+                    }
+
+                    // also make sure to ignore this BLE address
+                    var gateway_ble_addr = pkt._meta.device_id;
+                    if (gateway_ble_addrs.indexOf(gateway_ble_addr) == -1) {
+                        gateway_ble_addrs.push(pkt._meta.device_id);
+                    }
                 });
             }
-
-            // also make sure to ignore this BLE address
-            var gateway_ble_addr = pkt._meta.device_id;
-            if (gateway_ble_addrs.indexOf(gateway_ble_addr) == -1) {
-                gateway_ble_addrs.push(gateway_ble_addr);
-            }
         });
-    }
+    });
 }
 
 // get the unique id for this gateway
