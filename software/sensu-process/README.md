@@ -6,17 +6,7 @@ Allows long-running processes to send keepalives to
 status as clients.
 
 ### Example
-sensu-process can automatically send keepalive packets to a Sensu server.
-
-```
-var SensuProcess = require('sensu-process');
-SensuProcess.init('./sensu.conf', 'SensuTest');
-
-// automatically send keepalives every 60 seconds
-SensuProcess.begin(true, 60);
-```
-
-sensu-process can also be used to transmit keepalives on demand. This is best
+sensu-process can be used to transmit keepalives on demand. This is best
 suited towards processes which do things like handle packets and are likely in
 an error state if they haven't processed a packet in a while. Keepalives are
 automatically rate limited based on the `send_rate` parameter.
@@ -31,6 +21,17 @@ SensuProcess.begin();
 on.('packethandle', function () {
     SensuProcess.keepalive();
 });
+```
+
+sensu-process can also automatically send keepalive packets to a Sensu server,
+which suits applications where simply running means that it is working.
+
+```
+var SensuProcess = require('sensu-process');
+SensuProcess.init('./sensu.conf', 'SensuTest');
+
+// automatically send keepalives every 60 seconds
+SensuProcess.begin(true, 60);
 ```
 
 ### Requirements
@@ -60,9 +61,9 @@ Initializes sensu-process
 
 Starts sensu-process
 
-`AUTOMATIC`: boolean, whether keepalives should be sent automatically
+`AUTOMATIC`: boolean, whether keepalives should be sent automatically. Default value: `false`
 
-`SEND_RATE`: integer, minimum number of seconds between each keepalive transmission. Used as interval if in automatic mode, otherwise used to automatically rate limit calls to keepalive()
+`SEND_RATE`: integer, minimum number of seconds between each keepalive transmission. Used as interval if in automatic mode, otherwise used to automatically rate limit calls to keepalive(). Default value: `60`
 
 
 **SensuProcess.keepalive()**
