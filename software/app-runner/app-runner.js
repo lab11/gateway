@@ -43,7 +43,7 @@ function handle_app_change (app_folder) {
 
   // Wait for a while before actually doing anything, in case files
   // keep changing
-  setTimeout(restart_app, 5)
+  setTimeout(restart_app, 5000)
 
   function restart_app () {
     log(app_folder)
@@ -51,18 +51,22 @@ function handle_app_change (app_folder) {
 
     // First check if this is already running, if so, we want to close it
     if (running_apps[app_folder].process !== undefined) {
+      log('Killing old process')
+      log(running_apps[app_folder].process)
       running_apps[app_folder].process.kill('SIGINT')
+    } else {
+      log('No defined process to kill')
     }
 
-    log('running npm i')
-    exec('pushd ' + app_folder + '; npm install; popd', {shell: process.env.SHELL}, function (err, stdout, stderr) {
-      if (err) {
-        log('Failed running npm install for ' + app_folder)
-        log(err)
-        done()
-        return
-      }
-      log('ran npm i!')
+    // log('running npm i')
+    // exec('pushd ' + app_folder + '; npm install; popd', {shell: process.env.SHELL}, function (err, stdout, stderr) {
+    //   if (err) {
+    //     log('Failed running npm install for ' + app_folder)
+    //     log(err)
+    //     done()
+    //     return
+    //   }
+    //   log('ran npm i!')
 
       // Run that app as a child now
       var p = spawn('node', [app_name + '.js'], {cwd: app_folder})
@@ -81,8 +85,12 @@ function handle_app_change (app_folder) {
       p.on('close', function (ret_code) {
         log('closed.')
         running_apps[app_folder].process = undefined
+
+        // Restart the app in 5 seconds
+        log('Restarting app')
+        setTimeout(function () { handle_app_change(app_folder) }, 5000)
       })
-    })
+    // })
   }
 
   function done (p) {
