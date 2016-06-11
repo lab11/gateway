@@ -54,7 +54,7 @@ function handle_app_change (app_folder) {
       log('Killing old process')
       log(running_apps[app_folder].process)
       running_apps[app_folder].process.force_kill = true
-      running_apps[app_folder].process.kill('SIGINT'
+      running_apps[app_folder].process.kill('SIGINT')
     } else {
       log('No defined process to kill')
     }
