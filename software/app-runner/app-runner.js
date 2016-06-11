@@ -53,7 +53,8 @@ function handle_app_change (app_folder) {
     if (running_apps[app_folder].process !== undefined) {
       log('Killing old process')
       log(running_apps[app_folder].process)
-      running_apps[app_folder].process.kill('SIGINT')
+      running_apps[app_folder].process.force_kill = true
+      running_apps[app_folder].process.kill('SIGINT'
     } else {
       log('No defined process to kill')
     }
@@ -83,12 +84,16 @@ function handle_app_change (app_folder) {
       })
 
       p.on('close', function (ret_code) {
-        log('closed.')
+        log('closed. (' + ret_code + ')')
         running_apps[app_folder].process = undefined
 
-        // Restart the app in 5 seconds
-        log('Restarting app')
-        setTimeout(function () { handle_app_change(app_folder) }, 5000)
+        if (p.force_kill) {
+          log('Not restarting due to kill because file changed')
+        } else {
+          // Restart the app in 5 seconds
+          log('Restarting app')
+          setTimeout(function () { handle_app_change(app_folder) }, 5000)
+        }
       })
     // })
   }
