@@ -55,6 +55,7 @@ function handle_app_change (app_folder) {
       log(running_apps[app_folder].process)
       running_apps[app_folder].process.force_kill = true
       running_apps[app_folder].process.kill('SIGINT')
+      running_apps[app_folder].process = undefined
     } else {
       log('No defined process to kill')
     }
@@ -73,7 +74,9 @@ function handle_app_change (app_folder) {
       var p = spawn('node', [app_name + '.js'], {cwd: app_folder})
 
       // At this point we can handle a new file change
-      done(p)
+      // done(p)
+      running_apps[app_folder].restarting = false
+      running_apps[app_folder].process = p
 
       p.stdout.on('data', function (data) {
         log('stdout: ' + data)
@@ -85,23 +88,23 @@ function handle_app_change (app_folder) {
 
       p.on('close', function (ret_code) {
         log('closed. (' + ret_code + ')')
-        running_apps[app_folder].process = undefined
 
         if (p.force_kill) {
           log('Not restarting due to kill because file changed')
         } else {
           // Restart the app in 5 seconds
           log('Restarting app')
+          running_apps[app_folder].process = undefined
           setTimeout(function () { handle_app_change(app_folder) }, 5000)
         }
       })
     // })
   }
 
-  function done (p) {
-    running_apps[app_folder].restarting = false
-    running_apps[app_folder].process = p
-  }
+  // function done (p) {
+  //   running_apps[app_folder].restarting = false
+  //   running_apps[app_folder].process = p
+  // }
 }
 
 // Check for conf file
