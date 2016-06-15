@@ -1,0 +1,23 @@
+{
+  "name": "gateway-mqtt-influxdb",
+  "version": "1.0.0",
+  "description": "Forward gateway MQTT streams to influxdb instance",
+  "main": "gateway-mqtt-influxdb.js",
+  "dependencies": {
+    "influx": "^4.2.0",
+    "ini": "^1.3.4",
+    "mqtt": "^1.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "MQTT",
+    "influxdb",
+    "lab11",
+    "terraswarm"
+  ],
+  "author": "Pat Pannuto",
+  "license": "ISC"
+}
