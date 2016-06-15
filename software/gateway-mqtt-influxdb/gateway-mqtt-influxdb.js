@@ -121,13 +121,6 @@ function mqtt_on_connect() {
             delete adv_obj._meta;
             delete adv_obj.id;
 
-            // LEGACY: convert booleans to 1 or 0
-            for (var key in adv_obj) {
-                if (adv_obj[key] === false || adv_obj[key] === true) {
-                    adv_obj[key] = adv_obj[key] | 0;
-                }
-            }
-
             // Only publish if there is some data
             if (Object.keys(adv_obj).length > 0) {
                 for (measurement in adv_obj) {
