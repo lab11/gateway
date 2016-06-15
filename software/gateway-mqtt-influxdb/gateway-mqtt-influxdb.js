@@ -137,8 +137,8 @@ function mqtt_on_connect() {
 
 function post_data() {
     // This API is comically poorly named. Sorry. This function is called
-    // writeSeries, it does write a single series, rather, it writes arrays of
-    // points, indexed by measurement type, worry not.
+    // writeSeries, it does not write a single series, rather, it writes arrays
+    // of points, indexed by measurement type, worry not.
     influx_client.writeSeries(measurements, function(err,response) {
         if (err != null) {
             console.log(err);
