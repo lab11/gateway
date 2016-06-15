@@ -41,6 +41,7 @@ var last_transmission_times = {};
 //    db engine and is defined by a unique set of {measurement, {tags}}
 var measurements = {};
 
+
 // Read in the config file to get the parameters. If the parameters are not set
 // or the file does not exist, we exit this program.
 try {
@@ -56,14 +57,31 @@ try {
 }
 
 
+// Add some reasonable defaults where needed
+if (! ('port'     in config) ) config.port     = 8086;
+if (! ('protocol' in config) ) config.protocol = 'http';
+
+
+// Let the command line override conf file settings
+if ('host'     in argv) config.host     = argv.host;
+if ('port'     in argv) config.port     = argv.port;
+if ('protocol' in argv) config.protocol = argv.protocol;
+if ('database' in argv) config.database = argv.database;
+if ('username' in argv) config.username = argv.username;
+if ('password' in argv) config.password = argv.password;
+
+
 var influx_client = influx({
     host : config.host,
-    port : 443,
-    protocol: 'https',
+    port : config.port,
+    protocol : config.protocol,
     database : config.database,
     username : config.username,
     password : config.password,
 });
+
+console.log("Using influx at " + config.protocol + "://" + config.host +
+        ":" + config.port + "  db=" + config.database)
 
 
 var mqtt_client;
