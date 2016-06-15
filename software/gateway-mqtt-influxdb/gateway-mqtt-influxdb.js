@@ -13,9 +13,9 @@ var argv         = require('minimist')(process.argv.slice(2));
 var fs           = require('fs');
 
 var ini          = require('ini');
-//var MQTTDiscover = require('mqtt-discover');
 var request      = require('request');
 
+var MQTTDiscover = require('mqtt-discover');
 var mqtt         = require('mqtt');
 
 var influx       = require('influx');
@@ -168,6 +168,7 @@ if ('remote' in argv) {
         mqtt_on_connect();
     });
 
+    console.log("Searching for local MQTT brokers");
     MQTTDiscover.start();
 }
 
