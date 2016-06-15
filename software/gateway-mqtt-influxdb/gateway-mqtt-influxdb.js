@@ -121,6 +121,7 @@ function mqtt_on_connect() {
                                 receiver: receiver,
                                 gateway_id: gateway_id,
                             },
+                            {time: timestamp},
                     ];
                     if (! (measurement in measurements) ) {
                         measurements[measurement] = [];
