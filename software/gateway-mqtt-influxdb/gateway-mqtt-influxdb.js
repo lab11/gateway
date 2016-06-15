@@ -103,12 +103,9 @@ function mqtt_on_connect() {
             delete adv_obj._meta;
             delete adv_obj.id;
 
-            // Delete any non numeric keys
+            // LEGACY: convert booleans to 1 or 0
             for (var key in adv_obj) {
-                if (isNaN(adv_obj[key])) {
-                    delete adv_obj[key];
-                } else if (adv_obj[key] === false || adv_obj[key] === true) {
-                    // convert to 1 or 0
+                if (adv_obj[key] === false || adv_obj[key] === true) {
                     adv_obj[key] = adv_obj[key] | 0;
                 }
             }
