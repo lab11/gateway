@@ -14,6 +14,7 @@ var fs           = require('fs');
 
 var ini          = require('ini');
 var request      = require('request');
+var util         = require('util');
 
 var MQTTDiscover = require('mqtt-discover');
 var mqtt         = require('mqtt');
@@ -136,6 +137,11 @@ function mqtt_on_connect() {
 
 
 function post_data() {
+    if (argv.v) {
+        console.log("Preparing to post:");
+        console.log(util.inspect(measurements, false, null));
+    }
+
     // This API is comically poorly named. Sorry. This function is called
     // writeSeries, it does not write a single series, rather, it writes arrays
     // of points, indexed by measurement type, worry not.
@@ -143,6 +149,10 @@ function post_data() {
         if (err != null) {
             console.log(err);
             console.log(response);
+        } else {
+            if (argv.v) {
+                console.log("Posted data successfully.");
+            }
         }
     });
 
@@ -160,7 +170,10 @@ setTimeout(post_data, RATE_LIMIT_MILLISECONDS);
 
 
 if ('remote' in argv) {
-    mqtt_client = mqtt.connect('mqtt://' + argv['remote']);
+    var mqtt_url = 'mqtt://' + argv['remote'];
+    console.log("Connecting to " + mqtt_url);
+
+    mqtt_client = mqtt.connect(mqtt_url);
     mqtt_client.on('connect', mqtt_on_connect, mqtt_client);
 } else {
     MQTTDiscover.on('mqttBroker', function (client) {
