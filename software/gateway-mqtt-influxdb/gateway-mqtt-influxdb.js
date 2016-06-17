@@ -23,6 +23,7 @@ var influx       = require('influx');
 
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
+var TOPIC_OCCUPANCY_STREAM = 'occupancy/+';
 
 // How long to batch data for before posting
 var RATE_LIMIT_MILLISECONDS = 5000;
@@ -89,57 +90,95 @@ function mqtt_on_connect() {
     console.log('Connected to MQTT ' + mqtt_client.options.href);
 
     mqtt_client.subscribe(TOPIC_MAIN_STREAM);
-    //mqtt_client.subscribe('device/BLEES/+');
+    mqtt_client.subscribe(TOPIC_OCCUPANCY_STREAM);
 
     // Called when we get a packet from MQTT
     mqtt_client.on('message', function (topic, message) {
-        // message is Buffer
-        var adv_obj = JSON.parse(message.toString());
+        if (topic == TOPIC_MAIN_STREAM) {
+            // message is Buffer
+            var adv_obj = JSON.parse(message.toString());
 
-        // Get device id
-        device_id = undefined;
-        if ('_meta' in adv_obj) {
-            device_id = adv_obj._meta.device_id;
-        } else if ('id' in adv_obj) {
-            device_id = adv_obj.id;
-        }
+            // Get device id
+            var device_id = undefined;
+            if ('_meta' in adv_obj) {
+                device_id = adv_obj._meta.device_id;
+            } else if ('id' in adv_obj) {
+                device_id = adv_obj.id;
+            }
 
-        // Make sure the device id is only alpha numerical characters
-        device_id.replace(/\W/g, '');
+            // Make sure the device id is only alpha numerical characters
+            device_id.replace(/\W/g, '');
 
-        device_class = adv_obj['device'];
-        delete adv_obj.device;
+            var device_class = adv_obj['device'];
+            delete adv_obj.device;
 
-        timestamp  = adv_obj['_meta']['received_time'];
-        receiver   = adv_obj['_meta']['receiver'];
-        gateway_id = adv_obj['_meta']['gateway_id'];
+            var timestamp  = adv_obj['_meta']['received_time'];
+            var receiver   = adv_obj['_meta']['receiver'];
+            var gateway_id = adv_obj['_meta']['gateway_id'];
 
-        // Continue on to post to emoncms
-        if (device_id) {
+            // Continue on to post to influxdb
+            if (device_id) {
 
-            // Delete meta key and possible id key
-            delete adv_obj._meta;
-            delete adv_obj.id;
+                // Delete meta key and possible id key
+                delete adv_obj._meta;
+                delete adv_obj.id;
 
-            // Only publish if there is some data
-            if (Object.keys(adv_obj).length > 0) {
-                for (measurement in adv_obj) {
-                    var point = [
-                            {value: adv_obj[measurement]},
-                            {
-                                device_id: device_id,
-                                device_class: device_class,
-                                receiver: receiver,
-                                gateway_id: gateway_id,
-                            },
-                            {time: timestamp},
-                    ];
-                    if (! (measurement in measurements) ) {
-                        measurements[measurement] = [];
+                // Only publish if there is some data
+                if (Object.keys(adv_obj).length > 0) {
+                    for (measurement in adv_obj) {
+                        var point = [
+                                {value: adv_obj[measurement]},
+                                {
+                                    device_id: device_id,
+                                    device_class: device_class,
+                                    receiver: receiver,
+                                    gateway_id: gateway_id,
+                                },
+                                {time: timestamp},
+                        ];
+                        if (! (measurement in measurements) ) {
+                            measurements[measurement] = [];
+                        }
+                        measurements[measurement].push(point);
                     }
-                    measurements[measurement].push(point);
                 }
             }
+
+        } else if (topic.startsWith('occupancy/')) {
+            if (argv.v) {
+                console.log("Got occupancy message: " + message);
+            }
+            // message is a string
+            var occupancy_msg = JSON.parse(message);
+
+            // add meta data
+            var device_id = occupancy_msg.room;
+            var device_class = 'room';
+            var gateway_id = occupancy_msg.gateway_id;
+            var timestamp = occupancy_msg.time;
+
+            var confidence = 1.0;
+            if (occupancy_msg.confidence) {
+                confidence = occupancy_msg.confidence;
+            }
+
+            var point = [
+                {
+                    occupied: occupancy_msg.occupied,
+                    confidence: confidence
+                },
+                {
+                    device_id: device_id,
+                    device_class: device_class,
+                    gateway_id: gateway_id,
+                },
+                {time: timestamp},
+            ];
+
+            if (!('occupancy' in measurements)) {
+                measurements['occupancy'] = [];
+            }
+            measurements['occupancy'].push(point);
         }
     });
 };
