@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish Gateway Advertisements to Influxdb
+After=bluetooth.target mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-mqtt-influxdb/gateway-mqtt-influxdb.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-mqtt-influxdb
+
+[Install]
+WantedBy=multi-user.target
