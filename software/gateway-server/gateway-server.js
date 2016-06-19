@@ -9,6 +9,7 @@ var PPS			 = require('./packets-per-second.js');
 var express		 = require('express');
 var nunjucks	 = require('nunjucks');
 var bodyParser	 = require('body-parser');
+var prettyjson	= require('prettyjson');
 var getmac		 = require('getmac');
 var async		 = require('async');
 
@@ -296,7 +297,7 @@ app.get('/:device', function (req, res) {
 		out += '</ul>'
 
 		out += '<h2>Last 10 Packets</h2>';
-		out += '<p>' + JSON.stringify(devices[device]) + '</p>';
+		out += '<pre>' + prettyjson.render(devices[device], {noColor: true}) + '</pre>';
 
 		out += '<h2>Statistics</h2>';
 		out += '<p>Incoming packets per second: ' + PPS.rate(device).toFixed(2) + '</p>';
