@@ -11,14 +11,14 @@ Configuration
 You must tell this tool where the influxdb instance is where the data should
 be pushed to. To do this, create `/etc/swarm-gateway/influxdb.conf` and add:
 
-    host = <host of emoncms server>
+    host = <host of influxdb server>
     database = <database to write data to>
     username = <username to authenticate with>
     password = <password to authenticate with>
 
 Example:
 
-    # /etc/swarm-gateway/emoncms.conf
+    # /etc/swarm-gateway/influxdb.conf
     host = https://influxdb.umich.edu
     databse = mydata
     username = user
