@@ -37,8 +37,12 @@ These take data and do something with it:
 Publish to EmonCMS.
 - [GATD](https://github.com/lab11/gateway/tree/master/software/gateway-mqtt-gatd):
 Publish to GATD.
+- [InfluxDB](https://github.com/lab11/gateway/tree/master/software/gateway-mqtt-influxdb):
+Publish to an InfluxDB database.
 - [Log](https://github.com/lab11/gateway/tree/master/software/gateway-mqtt-log):
 Write to a local text file log.
+- [Sensu](https://github.com/lab11/gateway/tree/master/software/gateway-mqtt-sensu):
+Publish keepalives for each seen device to a Sensu monitoring server.
 
 ### Other
 
@@ -48,6 +52,12 @@ These provide other useful services:
 Broadcast the gateway's IP address as a BLE packet.
 - [BLE Nearby](https://github.com/lab11/gateway/tree/master/software/ble-nearby):
 Use nearby gateways to decide which devices are nearest to which gateway.
+- [App Runner](https://github.com/lab11/gateway/tree/master/software/app-runner):
+Automatically start and restart scripts and other applications that make use
+of the gateway's data.
+- [DDNS](https://github.com/lab11/gateway/tree/master/software/ddns):
+Make the gateway publish to a BIND DNS server to register a hostname
+for the gateway.
 
 
 ## Requirements
@@ -59,7 +69,7 @@ For testing on Linux:
 1. Install [node.js](https://nodejs.org/en/download/). If you are cool with
 running a downloaded shell script as root you can do this on Ubuntu:
 
-        curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
         sudo apt-get install -y nodejs
 
 2. On Linux, make sure you have other dependencies installed:
