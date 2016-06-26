@@ -29,10 +29,6 @@
 // create our own debug stream
 var debug = require('debug')('ble-nearby');
 
-// discover an MQTT broker
-var MQTTDiscover = require('mqtt-discover');
-MQTTDiscover.start();
-
 // various other libraries
 var mqtt = require('mqtt');
 var moment = require('moment');
@@ -84,21 +80,23 @@ var primary_mqtt_client = null;
 
 
 // connect to MQTT broker
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log("Primary connected: " + mqtt_client.options.host);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+
+mqtt_client.on('connect', function () {
+    console.log("Primary connected: localhost");
     primary_mqtt_client = mqtt_client;
 
     // get unique ID to identify the gateway
-    get_gateway_id(mqtt_client.options.host, function(gateway_id) {
-        console.log("Primary Gateway: " + mqtt_client.options.host + ' ID: ' + gateway_id);
+    get_gateway_id('localhost', function(gateway_id) {
+        console.log('Primary Gateway: localhost ID: ' + gateway_id);
 
         // keep track of gateways we have discovered
         if (gateways.indexOf(gateway_id) == -1) {
             gateways.push(gateway_id);
             primary_gateway = gateway_id;
         }
-        if (gateways.indexOf(mqtt_client.options.host) == -1) {
-            gateways.push(mqtt_client.options.host);
+        if (gateways.indexOf('localhost') == -1) {
+            gateways.push('localhost');
         }
 
         // pull data from gateway

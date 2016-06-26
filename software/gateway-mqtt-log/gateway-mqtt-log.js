@@ -4,9 +4,9 @@ var fs     = require('fs');
 var stream = require('stream');
 var util   = require('util');
 
-var log          = require('logrotate-stream');
-var MQTTDiscover = require('mqtt-discover');
-var ini          = require('ini');
+var log    = require('logrotate-stream');
+var mqtt   = require('mqtt');
+var ini    = require('ini');
 
 
 var MQTT_TOPIC_NAME = 'gateway-data';
@@ -39,23 +39,21 @@ var GatewayStream = function () {
 	this.internal_queue = [];
 	this.read_active = false;
 
-	MQTTDiscover.on('mqttBroker', this.on_mqttBroker.bind(this));
-
-	MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-	    console.log('Connected to MQTT ' + mqtt_client.options.href);
-
-	    mqtt_client.subscribe(MQTT_TOPIC_NAME);
-	});
-
-	MQTTDiscover.start();
+	this.mqtt_client = mqtt.connect('mqtt://localhost');
+	this.mqtt_client.on('connect', this.on_mqttBroker.bind(this));
 };
 
 util.inherits(GatewayStream, stream.Readable);
 
 
-GatewayStream.prototype.on_mqttBroker = function (mqtt_client) {
+GatewayStream.prototype.on_mqttBroker = function () {
+	console.log('Connected to MQTT ' + this.mqtt_client.options.href);
+
+	// Subscribe to the main data topic
+	this.mqtt_client.subscribe(MQTT_TOPIC_NAME);
+
 	// Callback for when BLE discovers the advertisement
-	mqtt_client.on('message', (topic, message) => {
+	this.mqtt_client.on('message', (topic, message) => {
 	    this.internal_queue.push(message + '\n');
 	    this.deliver();
 	});

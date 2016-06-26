@@ -8,7 +8,7 @@
  ******************************************************************************/
 
 var BleGateway = require('ble-gateway');
-var MQTTDiscover = require('mqtt-discover');
+var mqtt       = require('mqtt');
 
 var debug = require('debug')('ble-gateway-mqtt');
 
@@ -28,8 +28,10 @@ var MQTT_TOPIC_NAME = 'gateway-data';
  * MAIN CODE
  ******************************************************************************/
 
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log('Connected to MQTT ' + mqtt_client.options.href);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+
+mqtt_client.on('connect', function () {
+    debug('Connected to MQTT');
 
     // Start the gateway
     BleGateway.start();
@@ -38,6 +40,3 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(adv_obj));
     });
 });
-
-// Find MQTT server
-MQTTDiscover.start();

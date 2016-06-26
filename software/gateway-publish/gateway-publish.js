@@ -8,10 +8,10 @@
  *  - WebSockets (port 3001)
  ******************************************************************************/
 
-var MQTTDiscover = require('mqtt-discover');
-var debug        = require('debug')('gateway-publish');
-var fs           = require('fs');
-var ini          = require('ini');
+var mqtt  = require('mqtt');
+var debug = require('debug')('gateway-publish');
+var fs    = require('fs');
+var ini   = require('ini');
 
 /*******************************************************************************
  * CONFIGURATION OPTIONS
@@ -51,8 +51,9 @@ if (config.websocketsPublish === 'true') config.websocketsPublish = true;
  * MAIN CODE
  ******************************************************************************/
 
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log('Connected to MQTT ' + mqtt_client.options.href);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
+    console.log('Connected to MQTT');
 
     mqtt_client.subscribe(config.mqttTopic);
 
@@ -93,6 +94,3 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         });
     }
 });
-
-// Find MQTT server
-MQTTDiscover.start();

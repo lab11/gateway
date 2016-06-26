@@ -1,19 +1,17 @@
 #! /usr/bin/env node
 
 // watch for errors on gateway and notify via email
-//	current checks:
-//		watchdog on incoming ble packets over mqtt
+//  current checks:
+//      watchdog on incoming ble packets over mqtt
 
 var nodemailer = require('nodemailer');
-var fs = require('fs');
-var ini = require('ini');
-var watchout = require('watchout');
-var MQTTDiscover = require('mqtt-discover');
-var getmac = require('getmac');
-var request = require('request');
+var fs         = require('fs');
+var ini        = require('ini');
+var watchout   = require('watchout');
+var mqtt       = require('mqtt');
+var getmac     = require('getmac');
+var request    = require('request');
 
-// discover the local MQTT broker
-MQTTDiscover.start();
 var MQTT_DATA_TOPIC = 'gateway-data';
 var MQTT_DATA_WATCHDOG_DURATION = 1*60*1000;
 
@@ -22,7 +20,7 @@ try {
     var config_file = fs.readFileSync('/etc/swarm-gateway/email.conf', 'utf-8');
     var config = ini.parse(config_file);
     if (config.email_transport == undefined || config.email_transport == '') {
-	throw new Exception("No email transport configuration");
+    throw new Exception("No email transport configuration");
     }
 } catch (e) {
     console.log(e);
@@ -36,7 +34,7 @@ try {
 var gateway_id = '';
 getmac.getMac(function (err, addr) {
     if (gateway_id == '') {
-	gateway_id = addr;
+        gateway_id = addr;
     }
 });
 
@@ -60,18 +58,18 @@ var transporter = nodemailer.createTransport(config.email_transport);
 function send_email (subject, text) {
     // setup e-mail data with unicode symbols
     var mailOptions = {
-	from: '4908admin@umich.edu',
-	to: config.to_list,
-	subject: subject,
-	text: text,
+        from: '4908admin@umich.edu',
+        to: config.to_list,
+        subject: subject,
+        text: text,
     };
 
     // send mail with defined transport object
-    transporter.sendMail(mailOptions, function(error, info){
-	if (error) {
-	    console.log("Error sending email: " + error);
-	    return;
-	}
+    transporter.sendMail(mailOptions, function(error, info) {
+        if (error) {
+            console.log("Error sending email: " + error);
+            return;
+        }
     });
 }
 
@@ -81,24 +79,25 @@ var mqtt_last_data = '';
 var mqtt_watchdog = null;
 function mqtt_data_watchdog (didCancelWatchdog) {
     if (!didCancelWatchdog) {
-	console.log("MQTT data watchdog tripped");
-	mqtt_down = true;
-	mqtt_watchdog = null;
+        console.log("MQTT data watchdog tripped");
+        mqtt_down = true;
+        mqtt_watchdog = null;
 
-	subject = "MQTT data watchdog tripped";
+        subject = "MQTT data watchdog tripped";
 
-	text = '';
-	text += "Swarm Gateway: " + gateway_id + '\n\n';
-	text += "MQTT data watchdog tripped\n";
-	text += "Last received data packets at : " + mqtt_last_data + '\n'
+        text = '';
+        text += "Swarm Gateway: " + gateway_id + '\n\n';
+        text += "MQTT data watchdog tripped\n";
+        text += "Last received data packets at : " + mqtt_last_data + '\n'
 
-	send_email(subject, text);
+        send_email(subject, text);
     }
 }
 
 // connect to MQTT broker and subscribe to packets
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log("Connected to MQTT broker: " + mqtt_client.options.host);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
+    console.log('Connected to MQTT');
 
     // attempt to get unique ID for gateway
     get_gateway_id(mqtt_client.options.host);
@@ -106,19 +105,18 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
     // subscribe to BLE data
     mqtt_client.subscribe(MQTT_DATA_TOPIC);
     mqtt_client.on('message', function (topic, message) {
-	if (topic == MQTT_DATA_TOPIC) {
-	    // ping the watchdog
-	    if (mqtt_watchdog == null) {
-		mqtt_watchdog = new watchout(MQTT_DATA_WATCHDOG_DURATION, mqtt_data_watchdog);
-	    }
-	    mqtt_watchdog.reset();
+        if (topic == MQTT_DATA_TOPIC) {
+            // ping the watchdog
+            if (mqtt_watchdog == null) {
+                mqtt_watchdog = new watchout(MQTT_DATA_WATCHDOG_DURATION, mqtt_data_watchdog);
+            }
+            mqtt_watchdog.reset();
 
-	    mqtt_last_data = new Date();
-	    if (mqtt_down) {
-		console.log("Getting packets again");
-		mqtt_down = false;
-	    }
-	}
+            mqtt_last_data = new Date();
+            if (mqtt_down) {
+                console.log("Getting packets again");
+                mqtt_down = false;
+            }
+        }
     });
 });
-

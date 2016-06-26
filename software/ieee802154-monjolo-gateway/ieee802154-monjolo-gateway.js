@@ -7,7 +7,7 @@ var getmac   = require('getmac');
 var raw      = require('raw-socket');
 var watchout = require('watchout');
 
-var MQTTDiscover = require('mqtt-discover');
+var mqtt     = require('mqtt');
 
 /*******************************************************************************
  * Constants
@@ -77,8 +77,9 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 
 
 			// Callback after we have found a MQTT broker.
-			MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-				console.log('Connected to MQTT at ' + mqtt_client.options.href);
+			var mqtt_client = mqtt.connect('mqtt://localhost');
+			mqtt_client.on('connect', function () {
+			    console.log('Connected to MQTT');
 
 				// Then open the socket
 				var socket = raw.createSocket({
@@ -144,9 +145,6 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 					}
 				});
 			});
-
-			// Find MQTT server to start getting packets
-			MQTTDiscover.start();
 		});
 
 	}

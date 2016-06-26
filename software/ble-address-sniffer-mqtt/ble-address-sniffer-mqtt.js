@@ -8,7 +8,7 @@
  ******************************************************************************/
 
 var BleAddrSniff = require('ble-address-sniffer');
-var MQTTDiscover = require('mqtt-discover');
+var mqtt         = require('mqtt');
 
 var debug = require('debug')('ble-address-sniffer-publish');
 
@@ -33,8 +33,10 @@ var MQTT_TOPIC_NAME = 'ble-advertisements';
  * MAIN CODE
  ******************************************************************************/
 
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    debug('Connected to MQTT ' + mqtt_client.options.href);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+
+mqtt_client.on('connect', function () {
+    debug('Connected to MQTT');
 
     // Run the Gateway
     BleAddrSniff.start();
@@ -44,6 +46,3 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(adv));
     });
 });
-
-// Find MQTT server
-MQTTDiscover.start();

@@ -8,11 +8,11 @@ emoncms.
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
-var fs           = require('fs');
+var fs       = require('fs');
 
-var ini          = require('ini');
-var MQTTDiscover = require('mqtt-discover');
-var request      = require('request');
+var ini      = require('ini');
+var mqtt     = require('mqtt');
+var request  = require('request');
 
 
 // Main data MQTT topic
@@ -40,8 +40,9 @@ try {
 }
 
 
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log('Connected to MQTT ' + mqtt_client.options.href);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
+    console.log('Connected to MQTT');
 
     mqtt_client.subscribe(TOPIC_MAIN_STREAM);
 
@@ -110,6 +111,3 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
     });
 
 });
-
-// Find MQTT server
-MQTTDiscover.start();

@@ -8,18 +8,17 @@ influxdb.
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
-var argv         = require('minimist')(process.argv.slice(2));
+var argv    = require('minimist')(process.argv.slice(2));
 
-var fs           = require('fs');
+var fs      = require('fs');
 
-var ini          = require('ini');
-var request      = require('request');
-var util         = require('util');
+var ini     = require('ini');
+var request = require('request');
+var util    = require('util');
 
-var MQTTDiscover = require('mqtt-discover');
-var mqtt         = require('mqtt');
+var mqtt    = require('mqtt');
 
-var influx       = require('influx');
+var influx  = require('influx');
 
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
@@ -219,17 +218,10 @@ setTimeout(post_data, RATE_LIMIT_MILLISECONDS);
 
 if ('remote' in argv) {
     var mqtt_url = 'mqtt://' + argv['remote'];
-    console.log("Connecting to " + mqtt_url);
-
-    mqtt_client = mqtt.connect(mqtt_url);
-    mqtt_client.on('connect', mqtt_on_connect, mqtt_client);
 } else {
-    MQTTDiscover.on('mqttBroker', function (client) {
-        mqtt_client = client;
-        mqtt_on_connect();
-    });
-
-    console.log("Searching for local MQTT brokers");
-    MQTTDiscover.start();
+    var mqtt_url = 'mqtt://localhost';
 }
+console.log("Connecting to " + mqtt_url);
 
+mqtt_client = mqtt.connect(mqtt_url);
+mqtt_client.on('connect', mqtt_on_connect, mqtt_client);

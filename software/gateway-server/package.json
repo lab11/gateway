@@ -9,7 +9,7 @@
     "express": "^4.13.3",
     "express-ws": "^1.0.0",
     "getmac": "^1.0.7",
-    "mqtt-discover": "^0.1.1",
+    "mqtt": "^1.12.0",
     "nunjucks": "^2.3.0",
     "prettyjson": "^1.1.3"
   },

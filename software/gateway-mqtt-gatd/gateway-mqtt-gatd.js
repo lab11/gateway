@@ -9,9 +9,8 @@ var request = require('request');
 var fs = require('fs');
 var ini = require('ini');
 
-// discover the local MQTT broker
-var MQTTDiscover = require('mqtt-discover');
-MQTTDiscover.start();
+// Use MQTT
+var mqtt = require('mqtt');
 var MQTT_DATA_TOPIC = 'gateway-data';
 
 // configuration
@@ -56,8 +55,9 @@ var gatd_watchdog = new watchout(5*60*1000, function(didCancelWatchdog) {
 });
 
 // connect to MQTT broker
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log("Connected to MQTT broker: " + mqtt_client.options.host);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
+    console.log('Connected to MQTT');
 
     // subscribe to powerblade data
     mqtt_client.subscribe(MQTT_DATA_TOPIC);
@@ -107,4 +107,3 @@ function post_to_gatd (adv) {
         });
     }
 }
-

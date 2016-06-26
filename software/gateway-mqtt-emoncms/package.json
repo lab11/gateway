@@ -21,7 +21,7 @@
   "homepage": "https://github.com/lab11/gateway#readme",
   "dependencies": {
     "ini": "^1.3.4",
-    "mqtt-discover": "^0.1.1",
+    "mqtt": "^1.12.0",
     "request": "^2.69.0"
   }
 }

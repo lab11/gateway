@@ -4,14 +4,14 @@
  * Create a simple webserver that shows recent packets
  ******************************************************************************/
 
-var MQTTDiscover = require('mqtt-discover');
-var PPS			 = require('./packets-per-second.js');
-var express		 = require('express');
-var nunjucks	 = require('nunjucks');
-var bodyParser	 = require('body-parser');
-var prettyjson	= require('prettyjson');
-var getmac		 = require('getmac');
-var async		 = require('async');
+var mqtt       = require('mqtt');
+var PPS        = require('./packets-per-second.js');
+var express    = require('express');
+var nunjucks   = require('nunjucks');
+var bodyParser = require('body-parser');
+var prettyjson = require('prettyjson');
+var getmac     = require('getmac');
+var async      = require('async');
 
 var expressWs  = require('express-ws')(express());
 var app = expressWs.app;
@@ -97,8 +97,9 @@ function get_ip_addresses (cb) {
  ******************************************************************************/
 
 // Callback after we have found a MQTT broker.
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-	console.log('Connected to MQTT at ' + mqtt_client.options.href);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
+    console.log('Connected to MQTT');
 
 	// On connect we subscribe to all formatted data packets
 	mqtt_client.subscribe(TOPIC_MAIN_STREAM);
@@ -314,9 +315,6 @@ app.get('/:device', function (req, res) {
 /*******************************************************************************
  * MAIN CODE
  ******************************************************************************/
-
-// Find MQTT server to start getting packets
-MQTTDiscover.start();
 
 // Run the webserver
 var server = app.listen(80, function () {

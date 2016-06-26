@@ -8,12 +8,12 @@ Publish keep alives to a sensu server on behalf of all devices.
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
-var fs           = require('fs');
+var fs     = require('fs');
 
-var getmac       = require('getmac');
-var ini          = require('ini');
-var MQTTDiscover = require('mqtt-discover');
-var amqp         = require('amqp');
+var getmac = require('getmac');
+var ini    = require('ini');
+var mqtt   = require('mqtt-discover');
+var amqp   = require('amqp');
 
 
 // Main data MQTT topic
@@ -65,9 +65,9 @@ getmac.getMac(function (err, macaddr) {
         amqp_conn.exchange('keepalives', {type: 'direct', autoDelete: false}, function (exchange) {
             console.log('Connected to exchange "keepalives"');
 
-
-            MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-                console.log('Connected to MQTT ' + mqtt_client.options.href);
+            var mqtt_client = mqtt.connect('mqtt://localhost');
+            mqtt_client.on('connect', function () {
+                console.log('Connected to MQTT');
 
                 mqtt_client.subscribe(TOPIC_MAIN_STREAM);
 
@@ -129,9 +129,6 @@ getmac.getMac(function (err, macaddr) {
                 });
 
             });
-
-            // Find MQTT server
-            MQTTDiscover.start();
 
         });
     });

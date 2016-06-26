@@ -14,7 +14,7 @@ var SensuProcess = function () {
     // how often keepalive packets should be sent
     this._rate_limit = 60;
     this._last_transmission_time = 0;
-    
+
     this._amqp_config = undefined;
     this._amqp_exchange = undefined;
     this._initialized = false;

@@ -29,7 +29,7 @@ streams out of them.
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
-var MQTTDiscover = require('mqtt-discover');
+var mqtt = require('mqtt');
 
 
 // Main data topic
@@ -53,8 +53,9 @@ var topic_timeouts = {};
 
 
 // Callback after we have found a MQTT broker.
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log('Connected to MQTT at ' + mqtt_client.options.href);
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
+    console.log('Connected to MQTT');
 
     // On connect we subscribe to all formatted data packets
     mqtt_client.subscribe(TOPIC_MAIN_STREAM);
@@ -114,6 +115,3 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
     }
 
 });
-
-// Find MQTT server
-MQTTDiscover.start();
