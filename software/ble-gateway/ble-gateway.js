@@ -17,7 +17,7 @@ var getmac                 = require('getmac');
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
-var watchdog = new watchout(5*60*1000, function(didCancelWatchdog) {
+var watchdog = new watchout(1*60*1000, function(didCancelWatchdog) {
     if (didCancelWatchdog) {
         // benign
     } else {
@@ -89,8 +89,6 @@ BleGateway.prototype.on_scanStop = function () {
 
 // Called on each advertisement packet
 BleGateway.prototype.on_discover = function (peripheral) {
-    // Tickle the watchdog
-    watchdog.reset();
 
     // Get the time
     var received_time = new Date().toISOString();
@@ -127,6 +125,10 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                             // We broadcast on "advertisement"
                             this.emit('advertisement', adv_obj);
+                            
+                            // Tickle the watchdog now that we have successfully
+                            // handled a pakcet.
+                            watchdog.reset();
 
                             // Now check if the device wants to do something
                             // with the parsed advertisement.
@@ -161,6 +163,10 @@ BleGateway.prototype.on_discover = function (peripheral) {
                             if (!disconnect_error) {
                                 // Broadcast this on "data"
                                 this.emit('data', data_obj);
+                                
+                                // Tickle the watchdog now that we have successfully
+                                // handled a pakcet.
+                                watchdog.reset();
 
                                 // Now check if the device wants to do something
                                 // with the parsed service data.
