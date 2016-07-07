@@ -12,7 +12,7 @@ var fs     = require('fs');
 
 var getmac = require('getmac');
 var ini    = require('ini');
-var mqtt   = require('mqtt-discover');
+var mqtt   = require('mqtt');
 var amqp   = require('amqp');
 
 
