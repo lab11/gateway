@@ -10,6 +10,14 @@ device. This uses the standard Dynamic DNS Update requests as defined in RFC
 Currently, devices will automatically register themselves with a DNS entry of
 `MAC_ADDRESS.device.lab11.eecs.umich.edu`.
 
+
+Requirements
+------------
+
+You will need Python3, the `dnspython3` package for Python3, and the `nsupdate`
+utility, which is found in `dnsutils` in `apt`.
+
+
 Configuration
 -------------
 
