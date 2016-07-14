@@ -10,7 +10,7 @@ Goals
 
 This project has several goals:
 
-1. Provide gatway layer functionality for a range of devices.
+1. Provide gateway layer functionality for a range of devices.
 It should not be specific to just some projects.
 
 2. Be as generic as possible. All device specific logic
