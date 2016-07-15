@@ -5,9 +5,6 @@ Takes the stream of packets from the BLE gateway and publishes them to
 influxdb.
 */
 
-// Try to shutup some of the annoying avahi warnings.
-process.env['AVAHI_COMPAT_NOWARN'] = 1;
-
 var argv    = require('minimist')(process.argv.slice(2));
 
 var fs      = require('fs');
@@ -84,6 +81,97 @@ console.log("Using influx at " + config.protocol + "://" + config.host +
         ":" + config.port + "  db=" + config.database)
 
 
+// Convert a field of the object coming from MQTT
+// to a useful for format for publishing to InfluxDB.
+// This tries to convert standalone values to the correct InfluxDB type,
+// and creates a multi-element measurement if the field is an object.
+function fix_measurement (field) {
+
+    function fix_measurement_no_objects (subfield) {
+        if (typeof subfield === 'object') {
+            return JSON.stringify(field);
+        } else if (subfield === null) {
+            return 'null';
+        } else if (typeof subfield === 'number') {
+            return subfield;
+        } else if (typeof subfield === 'boolean') {
+            return subfield;
+        } else if (typeof subfield === 'string') {
+            if (field.lower() === 'true') {
+                return true;
+            } else if (field.lower() === 'false') {
+                return false;
+            } else if (isFloat(field)) {
+                parseFloat(field);
+            } else {
+                return field;
+            }
+        } else {
+            return JSON.stringify(field);
+        }
+    }
+
+    // Taken from https://github.com/chriso/validator.js/blob/master/lib/isFloat.js
+    function isFloat (str) {
+        var float = /^(?:[-+]?(?:[0-9]+))?(?:\.[0-9]*)?(?:[eE][\+\-]?(?:[0-9]+))?$/;
+
+        if (str === '' || str === '.') {
+            return false;
+        }
+        return float.test(str);
+    }
+
+    if (Array.isArray(field)) {
+        // We cannot pass an array to Influx, so we must make it a string
+        // before sending it to Influx.
+        return JSON.stringify(field);
+    } else if (field === null) {
+        // There is no "null" type in Influx, not really sure what the user
+        // wants, so lets send a string. Seems better than forcing it to a
+        // bool.
+        return 'null';
+    } else if (typeof field === 'object') {
+        // Want to pass this as a complex measurement. Otherwise we would
+        // try to store "[object object]".
+        var out = {};
+        for (var key in field) {
+            out[key] = fix_measurement_no_objects(field[key]);
+        }
+        return out;
+    } else if (typeof field === 'number') {
+        // A number will get stored as a float.
+        return {value: field};
+    } else if (typeof field === 'boolean') {
+        // Booleans are OK too.
+        return {value: field};
+    } else if (typeof field === 'string') {
+        // Strings are fine, but we want to promote things which are obviously
+        // bools or numbers to the proper type.
+        if (field.toLowerCase() === 'true') {
+            // Check for any of 'true', 'True', 'TRUE', etc.
+            return {value: true};
+        } else if (field.toLowerCase() === 'false') {
+            return {value: false};
+        } else if (isFloat(field)) {
+            // If this looks like a valid number, make it an actual number.
+            // Since JS doesn't really do integers, and the influx publishing
+            // library doesn't use the integer data type, no need to bother
+            // worrying about if the number is an integer or not.
+            return {value: parseFloat(field)};
+        } else {
+            // Well, guess it's just a string!
+            return {value: field};
+        }
+    } else {
+        // Based on the allowed types in a JSON, we should never get to
+        // this case.
+        console.log('Error parsing type (' + typeof field + ') of: ' + field);
+        return {value: JSON.stringify(field)};
+    }
+
+}
+
+
 var mqtt_client;
 function mqtt_on_connect() {
     console.log('Connected to MQTT ' + mqtt_client.options.href);
@@ -124,9 +212,9 @@ function mqtt_on_connect() {
 
                 // Only publish if there is some data
                 if (Object.keys(adv_obj).length > 0) {
-                    for (measurement in adv_obj) {
+                    for (var measurement in adv_obj) {
                         var point = [
-                                {value: adv_obj[measurement]},
+                                fix_measurement(adv_obj[measurement]),
                                 {
                                     device_id: device_id,
                                     device_class: device_class,
