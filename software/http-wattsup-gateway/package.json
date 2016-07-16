@@ -1,0 +1,17 @@
+{
+  "name": "http-wattsup-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "http-wattsup-gateway.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "getmac": "^1.2.1",
+    "mqtt": "^1.12.0"
+  }
+}
