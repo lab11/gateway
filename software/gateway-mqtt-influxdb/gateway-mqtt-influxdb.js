@@ -45,7 +45,7 @@ try {
     var config_file = fs.readFileSync('/etc/swarm-gateway/influxdb.conf', 'utf-8');
     var config = ini.parse(config_file);
     if (config.host == undefined || config.host == '' ||
-            config.database == undefined || config.database == '') {
+        config.database == undefined || config.database == '') {
         throw new Exception('no settings');
     }
 } catch (e) {console.log(e)
@@ -57,6 +57,7 @@ try {
 // Add some reasonable defaults where needed
 if (! ('port'     in config) ) config.port     = 8086;
 if (! ('protocol' in config) ) config.protocol = 'http';
+if (! ('prefix'   in config) ) config.prefix   = '';
 
 
 // Let the command line override conf file settings
@@ -66,6 +67,7 @@ if ('protocol' in argv) config.protocol = argv.protocol;
 if ('database' in argv) config.database = argv.database;
 if ('username' in argv) config.username = argv.username;
 if ('password' in argv) config.password = argv.password;
+if ('prefix'   in argv) config.prefix   = argv.prefix;
 
 
 var influx_client = influx({
@@ -76,6 +78,16 @@ var influx_client = influx({
     username : config.username,
     password : config.password,
 });
+
+// Hack to switch where `write`s go. This lets us publish to our intermediate
+// receiver which adds the meta data and forwards it on to the database.
+var old_url_function = influx_client.url;
+influx_client.url = function (endpoint, options, query) {
+    if (endpoint == 'write') {
+        endpoint = config.prefix + 'write';
+    }
+    return old_url_function.call(influx_client, endpoint, options, query)
+}
 
 console.log("Using influx at " + config.protocol + "://" + config.host +
         ":" + config.port + "  db=" + config.database)
@@ -199,7 +211,7 @@ function mqtt_on_connect() {
             var device_class = adv_obj['device'];
             delete adv_obj.device;
 
-            var timestamp  = adv_obj['_meta']['received_time'];
+            var timestamp  = new Date(adv_obj['_meta']['received_time'])
             var receiver   = adv_obj['_meta']['receiver'];
             var gateway_id = adv_obj['_meta']['gateway_id'];
 
@@ -213,15 +225,21 @@ function mqtt_on_connect() {
                 // Only publish if there is some data
                 if (Object.keys(adv_obj).length > 0) {
                     for (var measurement in adv_obj) {
+                        var fields = fix_measurement(adv_obj[measurement]);
+
+                        // Library needs time as a field
+                        fields.time = timestamp;
+
+                        // Create the point structure as the influx library
+                        // wants it.
                         var point = [
-                                fix_measurement(adv_obj[measurement]),
+                                fields,
                                 {
                                     device_id: device_id,
                                     device_class: device_class,
                                     receiver: receiver,
                                     gateway_id: gateway_id,
-                                },
-                                {time: timestamp},
+                                }
                         ];
                         if (! (measurement in measurements) ) {
                             measurements[measurement] = [];
@@ -277,19 +295,22 @@ function post_data() {
         console.log(util.inspect(measurements, false, null));
     }
 
-    // This API is comically poorly named. Sorry. This function is called
-    // writeSeries, it does not write a single series, rather, it writes arrays
-    // of points, indexed by measurement type, worry not.
-    influx_client.writeSeries(measurements, function(err,response) {
-        if (err != null) {
-            console.log(err);
-            console.log(response);
-        } else {
-            if (argv.v) {
-                console.log("Posted data successfully.");
+    // Only publish if we have something to send
+    if (Object.keys(measurements).length > -1) {
+        // This API is comically poorly named. Sorry. This function is called
+        // writeSeries, it does not write a single series, rather, it writes arrays
+        // of points, indexed by measurement type, worry not.
+        influx_client.writeSeries(measurements, function(err,response) {
+            if (err != null) {
+                console.log(err);
+                console.log(response);
+            } else {
+                if (argv.v) {
+                    console.log("Posted data successfully.");
+                }
             }
-        }
-    });
+        });
+    }
 
     // Clear out array
     // XXX: Possibly should only do this if post succeeded?
