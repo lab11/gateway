@@ -1,0 +1,14 @@
+[Unit]
+Description=Collect Watts Up? .net packets
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/http-wattsup-gateway/http-wattsup-gateway.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=http-wattsup-gateway
+User=debian
+
+[Install]
+WantedBy=multi-user.target
