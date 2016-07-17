@@ -94,7 +94,7 @@ getmac.getMac(function (err, macaddr) {
                     if (device_id && device_name) {
                         // Sanitize device name for sensu
                         // Remove all non alphanumeric characters and make spaces hyphens
-                        device_name = device_name.replace(/[^\w\ ]/g, '').replace(/\ /g, '-');
+                        device_name = device_name.replace(/[^\w\ -]/g, '').replace(/\ /g, '-');
 
                         // Escape if this is a filtered device_name
                         if (device_filters && device_filters.indexOf(device_name) != -1) {
