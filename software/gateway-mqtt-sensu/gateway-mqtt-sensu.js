@@ -87,12 +87,15 @@ getmac.getMac(function (err, macaddr) {
                     // Make sure the device id is only alpha numerical characters
                     device_id = device_id.replace(/\W/g, '');
 
-                    // Get device name and transform to alphanumeric
+                    // Get device name
                     var device_name = adv_obj.device;
-                    device_name = device_name.replace(/\W/g, '');
 
                     // Continue on to send keepalive
                     if (device_id && device_name) {
+                        // Sanitize device name for sensu
+                        // Remove all non alphanumeric characters and make spaces hyphens
+                        device_name = device_name.replace(/[^\w\ ]/g, '').replace(/\ /g, '-');
+
                         // Escape if this is a filtered device_name
                         if (device_filters && device_filters.indexOf(device_name) != -1) {
                             return;
@@ -110,7 +113,7 @@ getmac.getMac(function (err, macaddr) {
                             // console.log('Publishing keepalive for ' + adv_obj.device + '-' + device_id + ' on ' + macaddr);
 
                             var out = {
-                                name: adv_obj.device + '-' + device_id,
+                                name: device_name + '-' + device_id,
                                 subscriptions: [],
                                 address: macaddr,
                                 version: '0.22.2',
