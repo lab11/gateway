@@ -9,7 +9,7 @@ var ini = require('ini')
 var sane = require('sane')
 
 // List of info on the sub apps we are running
-var running_apps = []
+var running_apps = {}
 
 function handle_app_change (app_folder) {
   // Some base checks.
@@ -18,6 +18,8 @@ function handle_app_change (app_folder) {
       app_folder.indexOf('node_modules') !== -1) {
     return
   }
+
+  console.log('Starting or restarting app in ' + app_folder + ' folder')
 
   // Get nice name for logging
   var app_name = path.basename(app_folder)
@@ -44,10 +46,10 @@ function handle_app_change (app_folder) {
   // Wait for a while before actually doing anything, in case files
   // keep changing
   setTimeout(restart_app, 5000)
+  log('Waiting 5 seconds to start the app in case files are still changing.')
 
   function restart_app () {
-    log(app_folder)
-    // running_apps[app_folder].restarting = false
+    log('Actually restarting app in ' + app_folder)
 
     // First check if this is already running, if so, we want to close it
     if (running_apps[app_folder].process !== undefined) {
@@ -57,54 +59,42 @@ function handle_app_change (app_folder) {
       running_apps[app_folder].process.kill('SIGINT')
       running_apps[app_folder].process = undefined
     } else {
-      log('No defined process to kill')
+      log('No defined process to kill. Continuing.')
     }
 
-    // log('running npm i')
-    // exec('pushd ' + app_folder + '; npm install; popd', {shell: process.env.SHELL}, function (err, stdout, stderr) {
-    //   if (err) {
-    //     log('Failed running npm install for ' + app_folder)
-    //     log(err)
-    //     done()
-    //     return
-    //   }
-    //   log('ran npm i!')
+    // Run that app as a child now
+    var p = spawn('node', [app_name + '.js'], {cwd: app_folder})
+    log('Just spawned the app')
 
-      // Run that app as a child now
-      var p = spawn('node', [app_name + '.js'], {cwd: app_folder})
+    // At this point we can handle a new file change
+    running_apps[app_folder].restarting = false
+    running_apps[app_folder].process = p
 
-      // At this point we can handle a new file change
-      // done(p)
-      running_apps[app_folder].restarting = false
-      running_apps[app_folder].process = p
+    p.on('open', function () {
+      console.log('opened')
+    })
 
-      p.stdout.on('data', function (data) {
-        log('stdout: ' + data)
-      })
+    p.stdout.on('data', function (data) {
+      log('stdout: ' + data)
+    })
 
-      p.stderr.on('data', function (data) {
-        log('stderr: ' + data)
-      })
+    p.stderr.on('data', function (data) {
+      log('stderr: ' + data)
+    })
 
-      p.on('close', function (ret_code) {
-        log('closed. (' + ret_code + ')')
+    p.on('close', function (ret_code) {
+      log('closed. (ret code: ' + ret_code + ')')
 
-        if (p.force_kill) {
-          log('Not restarting due to kill because file changed')
-        } else {
-          // Restart the app in 5 seconds
-          log('Restarting app')
-          running_apps[app_folder].process = undefined
-          setTimeout(function () { handle_app_change(app_folder) }, 5000)
-        }
-      })
-    // })
+      if (p.force_kill) {
+        log('Not restarting due to kill because file changed')
+      } else {
+        // Restart the app in 5 seconds
+        log('Restarting app')
+        running_apps[app_folder].process = undefined
+        setTimeout(function () { handle_app_change(app_folder) }, 5000)
+      }
+    })
   }
-
-  // function done (p) {
-  //   running_apps[app_folder].restarting = false
-  //   running_apps[app_folder].process = p
-  // }
 }
 
 // Check for conf file
@@ -151,7 +141,13 @@ function get_directories (srcpath) {
 }
 
 var dirs = get_directories(root)
-for (var i = 0; i < dirs.length; i++) {
-  var d = path.join(root, dirs[i])
-  handle_app_change(d)
-}
+var seconds_to_wait = 0
+dirs.forEach(function (dir) {
+  var d = path.join(root, dir)
+  console.log('Loading app ' + d + ' at boot in ' + (seconds_to_wait+1) + ' seconds.')
+  setTimeout(function () {
+    console.log('Loading app ' + d + ' at boot')
+    handle_app_change(d)
+  }, (seconds_to_wait + 1) * 1000);
+  seconds_to_wait += 20
+})
