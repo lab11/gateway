@@ -125,7 +125,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
                             // We broadcast on "advertisement"
                             this.emit('advertisement', adv_obj);
-                            
+
                             // Tickle the watchdog now that we have successfully
                             // handled a pakcet.
                             watchdog.reset();
@@ -163,7 +163,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
                             if (!disconnect_error) {
                                 // Broadcast this on "data"
                                 this.emit('data', data_obj);
-                                
+
                                 // Tickle the watchdog now that we have successfully
                                 // handled a pakcet.
                                 watchdog.reset();
@@ -239,11 +239,24 @@ BleGateway.prototype.on_beacon = function (beacon) {
     if (beacon.type == 'url') {
         debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
 
+        // Check if we should rewrite this URL with our own URL shortener.
+        // Sorry rawgit.com guy :(
+        var need_fixing = ["/6EKY8W","/WRzp2g","/qtn9V9","/WRKqIy","/2W2FTt",
+                           "/BA1zPM","/8685Uw","/hWTo8W","/nCQV8C","/sbMMHT",
+                           "/9aD6Wi","/2ImXWJ","/dbhGnF","/3YACnH","/449K5X",
+                           "/jEKPu9","/xWppj1","/Edukt0"]
+        var short_url = beacon.url;
+        var url_path = url.parse(beacon.url).pathname;
+        if (need_fixing.indexOf(url_path) > -1) {
+            short_url = 'https://j2x.us' + url_path;
+            debug('Rewrote URL ' + beacon.url + ' to ' + short_url);
+        }
+
         // This is called when we successfully get the expanded URL.
         var got_expanded_url = function (err, full_url) {
             if (!err) {
                 // Save this URL expansion. OK to just overwrite it each time.
-                this._cached_urls[beacon.url] = full_url;
+                this._cached_urls[short_url] = full_url;
 
                 // Create space if this is a new beacon
                 if (!(beacon.id in this._device_to_data)) {
@@ -300,16 +313,16 @@ BleGateway.prototype.on_beacon = function (beacon) {
                 }
 
             } else {
-                debug('Error getting full URL (' + beacon.url + ') after several tries.');
+                debug('Error getting full URL (' + short_url + ') after several tries.');
             }
         };
 
-        if (beacon.url in this._cached_urls) {
+        if (short_url in this._cached_urls) {
             // We already know what this URL expands to. Just use that.
-            got_expanded_url.call(this, null, this._cached_urls[beacon.url]);
+            got_expanded_url.call(this, null, this._cached_urls[short_url]);
         } else {
             // Try to expand the URL up to 10 times.
-            async.retry(10, function (cb, r) { urlExpander.expand(beacon.url, cb); }, got_expanded_url.bind(this));
+            async.retry(10, function (cb, r) { urlExpander.expand(short_url, cb); }, got_expanded_url.bind(this));
         }
 
     }
