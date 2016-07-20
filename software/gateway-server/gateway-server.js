@@ -12,6 +12,9 @@ var bodyParser = require('body-parser');
 var prettyjson = require('prettyjson');
 var getmac     = require('getmac');
 var async      = require('async');
+var request    = require('request');
+
+var accessorHost = require('@terraswarm/accessors/hosts/common/commonHost.js');
 
 var expressWs  = require('express-ws')(express());
 var app = expressWs.app;
@@ -35,6 +38,7 @@ app.ws('/ws', function (req, res) { });
 
 var TOPIC_MAIN_STREAM = 'gateway-data';
 var TOPIC_NEARBY_STREAM = 'ble-nearby';
+var TOPIC_LOCAL_STREAM = 'gateway-local';
 
 // How many of the most recent advertisements should be displayed.
 var ADVERTISEMENTS_TO_KEEP = 10;
@@ -46,6 +50,9 @@ var other_devices = {};
 
 // Keep a list of which devices are nearby
 var nearby = [];
+
+// Keep track of any local data for devices. This lets us use accessors.
+var local = {};
 
 // Really rough way to do HTML to write this app quickly.
 var HTML_BEG = `
@@ -107,6 +114,9 @@ mqtt_client.on('connect', function () {
 	// Also subscribe to the list of nearby devices
 	mqtt_client.subscribe(TOPIC_NEARBY_STREAM);
 
+	// Also subscribe to the list of nearby devices
+	mqtt_client.subscribe(TOPIC_LOCAL_STREAM + '/#');
+
 	// Called when we get a packet from MQTT
 	mqtt_client.on('message', function (topic, message) {
 		if (topic == TOPIC_MAIN_STREAM) {
@@ -140,6 +150,25 @@ mqtt_client.on('connect', function () {
 		} else if (topic == TOPIC_NEARBY_STREAM) {
 			// message is array of BLE addresses
 			nearby = JSON.parse(message.toString());
+		} else if (topic.startsWith(TOPIC_LOCAL_STREAM)) {
+			var local_obj = JSON.parse(message.toString());
+			var device_id = local_obj._meta.device_id;
+
+			if (!(device_id in local)) {
+				local[device_id] = {accessor: undefined};
+
+				// If this is new, check for an accessor
+				var options = {method: 'HEAD', url: local_obj._meta.base_url + 'accessor.js'}
+    			console.log(options)
+				request.get(local_obj._meta.base_url + 'accessor.js', function (err, inmsg, response) {
+					if (inmsg.statusCode === 200) {
+						console.log('found accessor.js!');
+						// console.log(response);
+						local[device_id].accessor = response;
+					}
+				});
+			}
+			local[device_id].data = local_obj;
 		}
 	});
 });
@@ -266,6 +295,36 @@ app.get('/triumvi', function (req, res) {
 	res.send(out);
 });
 
+// Handle accessor actions
+app.get('/accessor/:device_id/:input_name/:value', function (req, res) {
+	var device_id = req.params.device_id;
+	var input_name = req.params.input_name;
+	var value = req.params.value;
+
+
+	if ('accessor_instance' in local[device_id]) {
+		var accessor = local[device_id].accessor_instance;
+
+		if (input_name in accessor.inputs) {
+			var input = accessor.inputs[input_name];
+
+			if (input.type === 'boolean') {
+				var val = value === 'true';
+				console.log('running input ' + input_name + ' with ' + val);
+
+				accessor.provideInput(input_name, val);
+				accessor.react()
+			}
+
+		}
+
+		res.send('maybe did something');
+
+	} else {
+		res.send('accessor not found');
+	}
+});
+
 // Show the unpacked advertisements for a device
 app.get('/:device', function (req, res) {
 	var device = req.params.device;
@@ -278,6 +337,7 @@ app.get('/:device', function (req, res) {
 
 		out += '<h2>Most Recent Packet</h2><ul>';
 		var last = devices[device][0];
+		var device_id = last._meta.device_id;
 
 		for (var key in last) {
 			var val = last[key];
@@ -302,6 +362,55 @@ app.get('/:device', function (req, res) {
 
 		out += '<h2>Statistics</h2>';
 		out += '<p>Incoming packets per second: ' + PPS.rate(device).toFixed(2) + '</p>';
+
+
+		// Accessors
+		if (device_id in local && local[device_id].accessor) {
+			// Oooh! We have an accessor for this device!
+			out += '<h2>Accessor</h2>';
+
+			// Load accessor into executable object
+			function accessor_fetch (name) {
+				return local[device_id].accessor
+			}
+
+			function require_remap (mod) {
+				return require('@terraswarm/accessors/hosts/node/node_modules/' + mod);
+			}
+
+			var instance = new accessorHost.instantiateAccessor(device,
+			                                                    local[device_id].data._meta.base_url + 'accessor.js',
+			                                                    accessor_fetch,
+			                                                    {require: require_remap});
+
+			// Store it
+			local[device_id].accessor_instance = instance;
+
+			// Get it running
+			instance.initialize();
+
+			// Set its parameters based on local data
+			for (var parameter_name in instance.parameters) {
+				if (parameter_name in local[device_id].data) {
+					console.log('setting parameter ' + parameter_name + ' to ' + local[device_id].data[parameter_name])
+					instance.setParameter(parameter_name, local[device_id].data[parameter_name]);
+				} else {
+					console.log('Parameter not in the local data blob. Hope the default is OK!');
+				}
+			}
+
+			// Create simple UI for interacting with it
+			for (var input_name in instance.inputs) {
+				var input = instance.inputs[input_name];
+				if (input.type === 'boolean') {
+					out += '<h3>' + input_name + '</h3>';
+					out += '<a href="accessor/' + device_id + '/' + input_name + '/true">True</a><br />';
+					out += '<a href="accessor/' + device_id + '/' + input_name + '/false">False</a><br />';
+				}
+			}
+
+			out += '<pre>' + local[device_id].accessor + '</pre>';
+		}
 	} else {
 		out += '<p>Not Found</p>'
 	}

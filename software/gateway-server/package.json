@@ -11,7 +11,8 @@
     "getmac": "^1.0.7",
     "mqtt": "^1.12.0",
     "nunjucks": "^2.3.0",
-    "prettyjson": "^1.1.3"
+    "prettyjson": "^1.1.3",
+    "request": "^2.73.0"
   },
   "devDependencies": {},
   "scripts": {
