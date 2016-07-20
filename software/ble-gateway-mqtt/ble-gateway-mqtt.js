@@ -41,6 +41,6 @@ mqtt_client.on('connect', function () {
     });
 
     BleGateway.on('local', function (local_obj) {
-        mqtt_client.publish(MQTT_TOPIC_NAME_LOCAL, JSON.stringify(local_obj));
+        mqtt_client.publish(MQTT_TOPIC_NAME_LOCAL + '/' + local_obj._meta.device_id, JSON.stringify(local_obj), {retain: true});
     });
 });
