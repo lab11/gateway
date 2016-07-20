@@ -109,7 +109,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
                 // Check if we have some way to parse the advertisement
                 if (parser.parser && parser.parser.parseAdvertisement) {
 
-                    var parse_advertisement_done = function (adv_obj) {
+                    var parse_advertisement_done = function (adv_obj, local_obj) {
 
                         // only continue if the result was valid
                         if (adv_obj) {
@@ -135,6 +135,21 @@ BleGateway.prototype.on_discover = function (peripheral) {
                             if ((am_submodule || !argv.noPublish) && parser.parser.publishAdvertisement) {
                                 parser.parser.publishAdvertisement(adv_obj);
                             }
+                        }
+
+                        // Local data is optional
+                        if (local_obj) {
+                            // Add a _meta key with some more information
+                            local_obj._meta = {
+                                received_time: received_time,
+                                device_id:     peripheral.id,
+                                receiver:      'ble-gateway',
+                                gateway_id:    this._gateway_id,
+                                base_url:      device.url
+                            };
+
+                            // We broadcast on "local"
+                            this.emit('local', local_obj);
                         }
                     };
 
@@ -353,6 +368,10 @@ if (require.main === module) {
 
     bleg.on('advertisement', function (adv_obj) {
         console.log(adv_obj);
+    });
+
+    bleg.on('local', function (local_obj) {
+        console.log(local_obj);
     });
 
     bleg.start();

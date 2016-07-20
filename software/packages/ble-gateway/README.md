@@ -72,6 +72,10 @@ The template of a `parse.js` file looks like:
 // This function is called by the gateway when a non-Eddystone advertisement
 // is received. The function should take the noble formatted advertisement,
 // parse it into a JavaScript object, and call done() with that object.
+// done() can also be called with a second optional object will only be used
+// locally on the gateway. This can be used to store and share data that
+// may be useful for interacting with the device, but should not be stored
+// outside of the device.
 var parseAdvertisement = function (advertisement, done) {};
 
 // This function allows you to return an object with data collected from
@@ -123,6 +127,31 @@ module.exports = {
 };
 ```
 
+Slightly more complex:
+
+```js
+var parse_advertisement = function (advertisement, cb) {
+
+    var name = advertisement.localName;
+    var service_uuid = parseInt(advertisement.serviceData[0].uuid, 16);
+
+    var out = {
+        name: name,
+        uuid: service_uuid
+    };
+
+    // Data that should only be on the gateway and never shared.
+    var local = {
+        manufacturer_data: advertisement.manufacturerData
+    };
+    cb(out, local);
+}
+
+module.exports = {
+    parseAdvertisement: parse_advertisement
+};
+```
+
 
 Extending the Gateway
 ---------------------
@@ -160,6 +189,11 @@ Gateway Usage
 npm install
 ./ble-gateway.js
 ```
+
+Changelog
+---------
+
+- Version `0.8.0`: Added `local` stream for data that should only be on the gateway.
 
 Questions
 ---------
