@@ -22,7 +22,7 @@ var argv = require('yargs')
  * CONFIGURATION OPTIONS
  ******************************************************************************/
 var MQTT_TOPIC_NAME = 'gateway-data';
-
+var MQTT_TOPIC_NAME_LOCAL = 'gateway-local'
 
 /*******************************************************************************
  * MAIN CODE
@@ -38,5 +38,9 @@ mqtt_client.on('connect', function () {
 
     BleGateway.on('advertisement', function (adv_obj) {
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(adv_obj));
+    });
+
+    BleGateway.on('local', function (local_obj) {
+        mqtt_client.publish(MQTT_TOPIC_NAME_LOCAL, JSON.stringify(local_obj));
     });
 });

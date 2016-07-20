@@ -1,6 +1,6 @@
 {
   "name": "ble-gateway-mqtt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Publish BLE packets to MQTT topic.",
   "main": "ble-gateway-mqtt.js",
   "scripts": {
