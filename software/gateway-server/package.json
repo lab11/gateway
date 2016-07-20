@@ -4,6 +4,7 @@
   "description": "View devices with gateway locally.",
   "main": "gateway-server.js",
   "dependencies": {
+    "accessors-js-ucb": "git+https://github.com/lab11/accessors-js-ucb.git",
     "async": "^1.5.2",
     "body-parser": "^1.15.0",
     "express": "^4.13.3",

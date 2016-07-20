@@ -14,7 +14,7 @@ var getmac     = require('getmac');
 var async      = require('async');
 var request    = require('request');
 
-var accessorHost = require('@terraswarm/accessors/hosts/common/commonHost.js');
+var accessorHost = require('accessors-js-ucb');
 
 var expressWs  = require('express-ws')(express());
 var app = expressWs.app;
@@ -375,7 +375,7 @@ app.get('/:device', function (req, res) {
 			}
 
 			function require_remap (mod) {
-				return require('@terraswarm/accessors/hosts/node/node_modules/' + mod);
+				return require('accessors-js-ucb/modules/' + mod);
 			}
 
 			var instance = new accessorHost.instantiateAccessor(device,
