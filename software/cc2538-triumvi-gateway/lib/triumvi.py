@@ -14,8 +14,8 @@ MAX_TRIUMVI_PKT_LEN = 16 # maximum triumvi packet length
 MIN_TRIUMVI_PKT_LEN = 14 # maximum triumvi packet length
 MAX_FLUSH_THRESHOLD = 32 # maximum trials before reset cc2538
 
-gateway_id = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
-
+# get MAC address of eth0 interface, used as the gateway id
+gateway_id = open('/sys/class/net/eth0/address').read()[:-1]
 
 condition = threading.Condition()
 
