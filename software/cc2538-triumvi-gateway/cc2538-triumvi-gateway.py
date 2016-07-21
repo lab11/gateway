@@ -6,6 +6,10 @@ import sys
 sys.path.append('/usr/local/lib/python2.7/site-packages')
 import os
 
+# make print statements unbuffered
+#    this makes them show up in the syslog
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
 # System dependencies
 import time
 import json
@@ -36,7 +40,7 @@ def watchdog_handler ():
 
 print("Starting triumvi packet collection")
 
-watchdog = watchdog.Watchdog(60, watchdog_handler)
+watchdog = watchdog.Watchdog(5*60, watchdog_handler)
 
 # Connect to the local MQTT broker
 client = mqtt.Client()
