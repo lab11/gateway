@@ -15,6 +15,9 @@ Listens for any BLE address and creates a data stream of <BLE Address, RSSI>.
 - [802.15.4 Monjolo](https://github.com/lab11/gateway/tree/master/software/ieee802154-monjolo-gateway):
 Listens for any [Monjolo](https://github.com/lab11/monjolo) 15.4 packets and adds them to the data
 stream.
+- [cc2538 Triumvi](https://github.com/lab11/gateway/tree/master/software/cc2538-triumvi-gateway):
+Listens for 802.15.4 packets from an attached cc2538 radio. Used to collect
+[Triumvi](https://github.com/lab11/g2) packets.
 
 ### Internal Services
 

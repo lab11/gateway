@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Triumvi packets from the cc2538.
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/cc2538-triumvi-gateway/cc2538-triumvi-gateway.py
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cc2538-triumvi-gateway
+
+[Install]
+WantedBy=multi-user.target
