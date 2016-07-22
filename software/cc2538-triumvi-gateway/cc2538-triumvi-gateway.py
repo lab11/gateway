@@ -14,8 +14,9 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 import time
 import json
 
-# Restart this when it breaks
-from lib import watchdog
+# Use systemd to watchdog process
+import sdnotify
+sd_watchdog = sdnotify.SystemdNotifier()
 
 # Library for getting data from the CC2538/Triumvi
 from lib import triumvi
@@ -26,7 +27,7 @@ import paho.mqtt.client as mqtt
 
 # Called on every packet from the Triumvi
 def callback (pkt):
-	watchdog.reset()
+	sd_watchdog.notify("WATCHDOG=1")
 	try:
 		json_pkt = json.dumps(pkt.dictionary)
 		client.publish('gateway-data', json_pkt)
@@ -34,13 +35,7 @@ def callback (pkt):
 		print('Error in callback with Triumvi packet')
 		print(e);
 
-def watchdog_handler ():
-	print("Watchdog expired. Haven't gotten a packet in a while.")
-	os._exit(1)
-
 print("Starting triumvi packet collection")
-
-watchdog = watchdog.Watchdog(5*60, watchdog_handler)
 
 # Connect to the local MQTT broker
 client = mqtt.Client()
