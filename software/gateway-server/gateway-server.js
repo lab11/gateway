@@ -14,7 +14,7 @@ var getmac     = require('getmac');
 var async      = require('async');
 var request    = require('request');
 
-var accessorHost = require('accessors-js-ucb');
+var accessorRPC  = require('accessors-rpc-web');
 
 var expressWs  = require('express-ws')(express());
 var app = expressWs.app;
@@ -33,8 +33,14 @@ app.use(function (req, res, next) {
 // Include the status page app
 app.use('/status', require('./status-app.js'));
 
+app.use('/accessors', accessorRPC.app);
+
 // Need a dummy endpoint for things to work
 app.ws('/ws', function (req, res) { });
+
+var nunjucksEnv = new nunjucks.Environment(
+	new nunjucks.FileSystemLoader(__dirname + '/templates'));
+
 
 var TOPIC_MAIN_STREAM = 'gateway-data';
 var TOPIC_NEARBY_STREAM = 'ble-nearby';
@@ -76,16 +82,16 @@ getmac.getMac(function (err, addr) {
 });
 
 // Get IP address
+
 function get_ip_addresses (cb) {
 	var os = require('os');
 	var ifaces = os.networkInterfaces();
 
-	var out = '';
-
+	var local_ip_addresses = [];
 	async.eachSeries(Object.keys(ifaces), function (ifname, done) {
 		if (ifname != 'lo') {
 			async.forEachOfSeries(ifaces[ifname], function (iface, index, done2) {
-				out += '<p>' + ifname + ':' + index + ' - ' + iface.address + '</p>';
+				local_ip_addresses.push({ifname: ifname, index: index, address: iface.address});
 				done2();
 			}, function (err) {
 				done();
@@ -94,7 +100,7 @@ function get_ip_addresses (cb) {
 			done();
 		}
 	}, function (err) {
-		cb(out);
+		cb(local_ip_addresses);
 	});
 }
 
@@ -104,7 +110,9 @@ function get_ip_addresses (cb) {
  ******************************************************************************/
 
 // Callback after we have found a MQTT broker.
-var mqtt_client = mqtt.connect('mqtt://localhost');
+// var mqtt_client = mqtt.connect('mqtt://localhost');
+// var mqtt_client = mqtt.connect('mqtt://141.212.11.202');
+var mqtt_client = mqtt.connect('mqtt://memristor-v2.eecs.umich.edu');
 mqtt_client.on('connect', function () {
     console.log('Connected to MQTT');
 
@@ -211,50 +219,29 @@ app.get('/', function (req, res) {
 
 	// Get IP addresses to show
 	get_ip_addresses(function (addrs) {
-		var out = HTML_BEG;
 
-		out += '<h2>Local Machine Info</h2>';
-		out += '<p>MAC Address: ' + macaddr + '</p>';
-		out += addrs;
-
-		// split up devices by nearby-ness
-		out += '<h2>Devices</h2>';
-		nearby_str = '<h4>Nearby</h4>';
-		nearby_str += '<ul>';
-		other_str = '<h4>Other</h4>';
-		other_str += '<ul>';
+		// Get device list for viewing
+		var display_devices = [];
 		var devices_sorted = Object.keys(devices).sort();
 		for (var i=0; i<devices_sorted.length; i++) {
-			var device = devices_sorted[i];
-			var adv_obj = devices[device][0];
-
-			// get the BLE address of each device
-			var id;
-			if ('_meta' in adv_obj) {
-				id = adv_obj._meta.device_id;
-			} else {
-				id = adv_obj.id;
-			}
-
-			// add device to appropriate list
-			if (nearby.indexOf(id) != -1) {
-				// device is nearby
-				nearby_str += '<li><a href="' + device + '">' + device + '</a></li>';
-			} else {
-				// device goes in other
-				other_str += '<li><a href="' + device + '">' + device + '</a></li>';
-			}
+			display_devices.push({
+				device_type: devices[devices_sorted[i]].device,
+				device_id: devices[devices_sorted[i]]._meta.device_id,
+				name: devices_sorted[i]
+			});
 		}
-		nearby_str += '</ul>';
-		other_str += '</ul>';
-		out += nearby_str + other_str;
 
-		out += '<h2>Statistics</h2>';
-		out += '<p>Incoming packets per second: ' + PPS.rate('overall').toFixed(2) + '</p>';
+		// Make the homepage
+		var tmpl = nunjucksEnv.getTemplate('index.nunjucks');
+		var html = tmpl.render({
+			mac_address: macaddr,
+			ip_addresses: addrs,
+			devices: display_devices,
+			pps: PPS.rate('overall')
+		});
 
-		out += HTML_END;
+		res.send(html);
 
-		res.send(out);
 	});
 });
 
@@ -333,6 +320,71 @@ app.get('/:device', function (req, res) {
 
 	out += '<h2>' + device + '</h2>';
 
+	var device_id = 'c098e5400040'
+
+
+	// Accessors
+		if (device_id in local && local[device_id].accessor) {
+			// Oooh! We have an accessor for this device!
+			out += '<h2>Accessor</h2>';
+
+			var html = accessorRPC.render_accessor_html(device_id,
+			                                            local[device_id].data._meta.base_url + 'accessor.js',
+			                                            local[device_id].accessor,
+			                                            local[device_id].data);
+
+			console.log(html)
+
+			out+=html;
+
+
+
+			// // Load accessor into executable object
+			// function accessor_fetch (name) {
+			// 	return local[device_id].accessor
+			// }
+
+			// function require_remap (mod) {
+			// 	return require('accessors-js-ucb/modules/' + mod);
+			// }
+
+			// var instance = new accessorHost.instantiateAccessor(device,
+			//                                                     local[device_id].data._meta.base_url + 'accessor.js',
+			//                                                     accessor_fetch,
+			//                                                     {require: require_remap});
+
+			// // Store it
+			// local[device_id].accessor_instance = instance;
+
+			// // Get it running
+			// instance.initialize();
+
+			// // Set its parameters based on local data
+			// for (var parameter_name in instance.parameters) {
+			// 	if (parameter_name in local[device_id].data) {
+			// 		console.log('setting parameter ' + parameter_name + ' to ' + local[device_id].data[parameter_name])
+			// 		instance.setParameter(parameter_name, local[device_id].data[parameter_name]);
+			// 	} else {
+			// 		console.log('Parameter not in the local data blob. Hope the default is OK!');
+			// 	}
+			// }
+
+			// // Create simple UI for interacting with it
+			// for (var input_name in instance.inputs) {
+			// 	var input = instance.inputs[input_name];
+			// 	if (input.type === 'boolean') {
+			// 		out += '<h3>' + input_name + '</h3>';
+			// 		out += '<a href="accessor/' + device_id + '/' + input_name + '/true">True</a><br />';
+			// 		out += '<a href="accessor/' + device_id + '/' + input_name + '/false">False</a><br />';
+			// 	}
+			// }
+
+			out += '<pre>' + local[device_id].accessor + '</pre>';
+		}
+
+
+
+
 	if (device in devices) {
 
 		out += '<h2>Most Recent Packet</h2><ul>';
@@ -364,53 +416,7 @@ app.get('/:device', function (req, res) {
 		out += '<p>Incoming packets per second: ' + PPS.rate(device).toFixed(2) + '</p>';
 
 
-		// Accessors
-		if (device_id in local && local[device_id].accessor) {
-			// Oooh! We have an accessor for this device!
-			out += '<h2>Accessor</h2>';
 
-			// Load accessor into executable object
-			function accessor_fetch (name) {
-				return local[device_id].accessor
-			}
-
-			function require_remap (mod) {
-				return require('accessors-js-ucb/modules/' + mod);
-			}
-
-			var instance = new accessorHost.instantiateAccessor(device,
-			                                                    local[device_id].data._meta.base_url + 'accessor.js',
-			                                                    accessor_fetch,
-			                                                    {require: require_remap});
-
-			// Store it
-			local[device_id].accessor_instance = instance;
-
-			// Get it running
-			instance.initialize();
-
-			// Set its parameters based on local data
-			for (var parameter_name in instance.parameters) {
-				if (parameter_name in local[device_id].data) {
-					console.log('setting parameter ' + parameter_name + ' to ' + local[device_id].data[parameter_name])
-					instance.setParameter(parameter_name, local[device_id].data[parameter_name]);
-				} else {
-					console.log('Parameter not in the local data blob. Hope the default is OK!');
-				}
-			}
-
-			// Create simple UI for interacting with it
-			for (var input_name in instance.inputs) {
-				var input = instance.inputs[input_name];
-				if (input.type === 'boolean') {
-					out += '<h3>' + input_name + '</h3>';
-					out += '<a href="accessor/' + device_id + '/' + input_name + '/true">True</a><br />';
-					out += '<a href="accessor/' + device_id + '/' + input_name + '/false">False</a><br />';
-				}
-			}
-
-			out += '<pre>' + local[device_id].accessor + '</pre>';
-		}
 	} else {
 		out += '<p>Not Found</p>'
 	}

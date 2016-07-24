@@ -1,66 +1,44 @@
 {% extends "base.nunjucks" %}
 
 {% block title %}
-Status
+SwarmGateway
 {% endblock %}
 
 {% block body %}
-<h1>Status</h1>
+<h1>SwarmGateway</h1>
 
-<div class="statuses">
-  {% for group, st in statuses %}
-  <ul class="list-group" data-group="{{ group }}">
-    <li class="list-group-item group-name">
-      <strong>{{ group }}</strong>
-    </li>
-    {% for key,val in st %}
-    <li class="list-group-item sub-component" data-key="{{ key }}">
-      <span class="status-key">{{ key }}</span>
-      <div class="pull-right status-value">
-        {{ val }}
-      </div>
-    </li>
+<p>
+  Learn more about the SwarmGateway in the <a href="https://github.com/terraswarm/urban-heartbeat-kit">Urban Heartbeat Kit</a>.
+</p>
+
+<div class="row">
+  <div class="col-md-6">
+    <h2>Devices</h2>
+    <ul>
+      {% for device in devices %}
+      <a href="{{ device.name }}">{{ device.device_type }} ({{ device.device_id }})</a>
+      {% endfor %}
+    </ul>
+
+
+  </div>
+
+  <div class="col-md-6">
+    <h2>Local Machine Info</h2>
+    <p>MAC Address: {{ mac_address }}</p>
+    {% for addr_group in ip_addresses %}
+    <p>{{ addr_group.ifname }}:{{ addr_group.index }} - {{ addr_group.address }}</p>
     {% endfor %}
-  </ul>
-  {% endfor %}
+  </div>
 </div>
 
-<script>
-var ws = new WebSocket('ws://'+window.location.host+'/ws');
+<div class="row">
+  <div class="col-md-6">
+    <h2>Statistics</h2>
+    <p>Incoming packets per second: {{ pps }}</p>
+  </div>
+</div>
 
-ws.onopen = function () { };
 
-ws.onmessage = function (evt) {
-  var status = JSON.parse(evt.data);
-
-  // Determine if group exists
-  var search_group = $('ul[data-group="' + status.group + '"]');
-  if (search_group.length == 0) {
-    // Create group
-    var new_group = '<ul class="list-group" data-group="' + status.group + '">';
-    new_group += '<li class="list-group-item group-name">';
-    new_group += '<strong>' + status.group + '</strong>';
-    new_group += '</li></ul>';
-    $('.statuses').append(new_group);
-
-    search_group = $('ul[data-group="' + status.group + '"]');
-  }
-
-  // Determine if status exists
-  var search_key = search_group.children('li[data-key="' + status.key + '"]');
-  if (search_key.length == 0) {
-    // create key
-    var new_key = '<li class="list-group-item sub-component" data-key="' + status.key +'">';
-    new_key += '<span class="status-key">' + status.key + '</span>';
-    new_key += '<div class="pull-right status-value">' + status.value + '</div>';
-    new_key += '</li>';
-    search_group.append(new_key);
-  } else {
-    // Update key
-    search_key.children('.status-key').text(status.key);
-    search_key.children('.status-value').text(status.value);
-  }
-}
-</script>
 
 {% endblock %}

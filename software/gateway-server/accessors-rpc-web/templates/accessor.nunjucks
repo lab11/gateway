@@ -1,0 +1,86 @@
+<div class="accessor" data-name="{{ accessor.name }}">
+
+  <div class="well bs-component">
+    <form class="form-horizontal">
+      <fieldset>
+
+        <legend>Controls</legend>
+
+        {#  layout:
+
+            |  2   | 8              | 2       |
+            | name | port interface | refresh |
+        #}
+
+        {% for input in accessor.inputs %}
+
+        <div class="port row" data-name="{{ input.name }}">
+
+          <label for="{{ input.name }}" class="col-sm-2 control-label">{{ input.name }}</label>
+
+          {% if input.type == "boolean" %}
+          {# CHECKBOX #}
+          <div class="col-sm-6">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" class="accessor-checkbox">
+              </label>
+            </div>
+          </div>
+
+          {% elif input.type in ["int", "number", "string"] %}
+          {# TEXT BOX #}
+          <div class="col-sm-4">
+            <input type="text" class="form-control port" value="{{ input.value }}"></input>
+          </div>
+
+          {% elif input.type == "json" %}
+          {# JUST A BIG OBJECT #}
+          <div class="col-sm-6">
+            <textarea></textarea>
+          </div>
+
+          {% else %}
+          <div class="col-sm-6">
+            <p class="from-control-static">Port has an unknown type ({{ port.type }}).</p>
+          </div>
+
+          {% endif %}
+
+
+        </div>
+        {% if not loop.last %}
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1 port-divider"></div>
+        </div>
+        {% endif %}
+
+        {% endfor %}
+
+
+        {% for output in accessor.outputs %}
+        <div class="port-group row" data-name="{{ output.name }}">
+        <label for="{{ output.name }}" class="col-sm-2 control-label">{{ output.name }}</label>
+          <div class="col-sm-6">
+            <p class="form-control-static">not set</p>
+          </div>
+        </div>
+        {% endfor %}
+
+
+
+
+        <div class="form-group">
+          <label class="col-sm-2 control-label"></label>
+          <div class="col-sm-10">
+            <button type="button" class="form-control accessor-button" data-accessorname="{{ accessor.clean_name }}" data-function="fire">React!</button>
+          </div>
+        </div>
+
+      </fieldset>
+    </form>
+    <span class="spinner" style="display:none"><img src="static/images/ajax-loader.gif" /></span>
+
+  </div>
+
+</div>
