@@ -1,0 +1,63 @@
+{% extends "base.nunjucks" %}
+
+{% block title %}
+{{ device_type }} - {{ device_id }} || SwarmGateway
+{% endblock %}
+
+{% block body %}
+<h1>Device: {{ device_type }}</h1>
+<p class="lead">ID: {{ device_id }}</p>
+
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Most Recent Packet</h3>
+      </div>
+      <div class="panel-body">
+        <ul>
+          {% for key,val in last_packet %}
+            {% if val|is_object %}
+            <li>{{ key }}: {{ val|dump }}</li>
+            {% else %}
+            <li>{{ key }}: {{ val }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Past Packets</h3>
+      </div>
+      <div id="past-packets" class="panel-body">
+        <pre>
+          {{ last_packet_list }}
+        </pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if accessor_html %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Accessor</h3>
+      </div>
+      <div class="panel-body">
+        {{ accessor_html|safe }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+
+{% endblock %}

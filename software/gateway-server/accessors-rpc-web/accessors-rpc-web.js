@@ -52,7 +52,7 @@ function render_accessor_html (device_name, accessor_url, accessor_code, paramet
 	// Set parameters
 	for (var parameter_name in accessor.parameters) {
 		if (parameter_name in parameters) {
-			console.log('setting parameter ' + parameter_name + ' to ' + parameters[parameter_name])
+			// console.log('setting parameter ' + parameter_name + ' to ' + parameters[parameter_name])
 			accessor.setParameter(parameter_name, parameters[parameter_name]);
 		}
 	}
@@ -78,8 +78,8 @@ function render_accessor_html (device_name, accessor_url, accessor_code, paramet
 		outputs.push(new_output);
 	}
 
-	console.log(inputs)
-	console.log(outputs)
+	// console.log(inputs)
+	// console.log(outputs)
 
 	var nunjucks_params = {
 		name: device_name,
@@ -87,7 +87,7 @@ function render_accessor_html (device_name, accessor_url, accessor_code, paramet
 		outputs: outputs
 	}
 
-	console.log(nunjucks)
+	// console.log(nunjucks)
 
 	var tmpl = nunjucksEnv.getTemplate('accessor.nunjucks');
 	var html = tmpl.render({

@@ -41,6 +41,11 @@ app.ws('/ws', function (req, res) { });
 var nunjucksEnv = new nunjucks.Environment(
 	new nunjucks.FileSystemLoader(__dirname + '/templates'));
 
+nunjucksEnv.addFilter('is_object', function(obj) {
+  return typeof obj === 'object';
+});
+
+
 
 var TOPIC_MAIN_STREAM = 'gateway-data';
 var TOPIC_NEARBY_STREAM = 'ble-nearby';
@@ -155,9 +160,11 @@ mqtt_client.on('connect', function () {
 
 			// Limit to only so many advertisements
 			devices[name] = devices[name].slice(0, ADVERTISEMENTS_TO_KEEP);
+
 		} else if (topic == TOPIC_NEARBY_STREAM) {
 			// message is array of BLE addresses
 			nearby = JSON.parse(message.toString());
+
 		} else if (topic.startsWith(TOPIC_LOCAL_STREAM)) {
 			var local_obj = JSON.parse(message.toString());
 			var device_id = local_obj._meta.device_id;
@@ -167,11 +174,8 @@ mqtt_client.on('connect', function () {
 
 				// If this is new, check for an accessor
 				var options = {method: 'HEAD', url: local_obj._meta.base_url + 'accessor.js'}
-    			console.log(options)
 				request.get(local_obj._meta.base_url + 'accessor.js', function (err, inmsg, response) {
 					if (inmsg.statusCode === 200) {
-						console.log('found accessor.js!');
-						// console.log(response);
 						local[device_id].accessor = response;
 					}
 				});
@@ -224,9 +228,10 @@ app.get('/', function (req, res) {
 		var display_devices = [];
 		var devices_sorted = Object.keys(devices).sort();
 		for (var i=0; i<devices_sorted.length; i++) {
+			var last = devices[devices_sorted[i]][0];
 			display_devices.push({
-				device_type: devices[devices_sorted[i]].device,
-				device_id: devices[devices_sorted[i]]._meta.device_id,
+				device_type: last.device,
+				device_id: last._meta.device_id,
 				name: devices_sorted[i]
 			});
 		}
@@ -313,117 +318,38 @@ app.get('/accessor/:device_id/:input_name/:value', function (req, res) {
 });
 
 // Show the unpacked advertisements for a device
-app.get('/:device', function (req, res) {
+app.get('/device/:device', function (req, res) {
 	var device = req.params.device;
-
-	var out = HTML_BEG;
-
-	out += '<h2>' + device + '</h2>';
-
-	var device_id = 'c098e5400040'
-
-
-	// Accessors
-		if (device_id in local && local[device_id].accessor) {
-			// Oooh! We have an accessor for this device!
-			out += '<h2>Accessor</h2>';
-
-			var html = accessorRPC.render_accessor_html(device_id,
-			                                            local[device_id].data._meta.base_url + 'accessor.js',
-			                                            local[device_id].accessor,
-			                                            local[device_id].data);
-
-			console.log(html)
-
-			out+=html;
-
-
-
-			// // Load accessor into executable object
-			// function accessor_fetch (name) {
-			// 	return local[device_id].accessor
-			// }
-
-			// function require_remap (mod) {
-			// 	return require('accessors-js-ucb/modules/' + mod);
-			// }
-
-			// var instance = new accessorHost.instantiateAccessor(device,
-			//                                                     local[device_id].data._meta.base_url + 'accessor.js',
-			//                                                     accessor_fetch,
-			//                                                     {require: require_remap});
-
-			// // Store it
-			// local[device_id].accessor_instance = instance;
-
-			// // Get it running
-			// instance.initialize();
-
-			// // Set its parameters based on local data
-			// for (var parameter_name in instance.parameters) {
-			// 	if (parameter_name in local[device_id].data) {
-			// 		console.log('setting parameter ' + parameter_name + ' to ' + local[device_id].data[parameter_name])
-			// 		instance.setParameter(parameter_name, local[device_id].data[parameter_name]);
-			// 	} else {
-			// 		console.log('Parameter not in the local data blob. Hope the default is OK!');
-			// 	}
-			// }
-
-			// // Create simple UI for interacting with it
-			// for (var input_name in instance.inputs) {
-			// 	var input = instance.inputs[input_name];
-			// 	if (input.type === 'boolean') {
-			// 		out += '<h3>' + input_name + '</h3>';
-			// 		out += '<a href="accessor/' + device_id + '/' + input_name + '/true">True</a><br />';
-			// 		out += '<a href="accessor/' + device_id + '/' + input_name + '/false">False</a><br />';
-			// 	}
-			// }
-
-			out += '<pre>' + local[device_id].accessor + '</pre>';
-		}
-
-
-
 
 	if (device in devices) {
 
-		out += '<h2>Most Recent Packet</h2><ul>';
 		var last = devices[device][0];
 		var device_id = last._meta.device_id;
 
-		for (var key in last) {
-			var val = last[key];
-
-			// Decide if we should show a graph link
-			var graph = '';
-			if (key != 'id' && !isNaN(val)) {
-				graph = ' (<a href="/graph?id=' + last._meta.device_id + '&field=' + key + '">graph</a>)';
-			}
-
-			if (typeof val === 'object') {
-				// Display a JSON version of this
-				out += '<li>' + key + ': ' + JSON.stringify(val) + '</li>';
-			} else {
-				out += '<li>' + key + ': ' + val + graph + '</li>';
-			}
+		// Accessors
+		var accessor_html = '';
+		if (device_id in local && local[device_id].accessor) {
+			accessor_html = accessorRPC.render_accessor_html(device_id,
+				local[device_id].data._meta.base_url + 'accessor.js',
+				local[device_id].accessor,
+				local[device_id].data);
 		}
-		out += '</ul>'
 
-		out += '<h2>Last 10 Packets</h2>';
-		out += '<pre>' + prettyjson.render(devices[device], {noColor: true}) + '</pre>';
+		// Make the device page
+		var tmpl = nunjucksEnv.getTemplate('device.nunjucks');
+		var html = tmpl.render({
+			device_type: last.device,
+			device_id: device_id,
+			last_packet: last,
+			last_packet_list: prettyjson.render(devices[device], {noColor: true}),
+			accessor_html: accessor_html
+		});
 
-		out += '<h2>Statistics</h2>';
-		out += '<p>Incoming packets per second: ' + PPS.rate(device).toFixed(2) + '</p>';
-
-
-
+		res.send(html);
 	} else {
-		out += '<p>Not Found</p>'
+		res.send('Device not found')
 	}
 
-	out += HTML_END;
-
-	res.send(out);
 });
 
 

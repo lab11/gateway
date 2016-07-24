@@ -1,0 +1,4 @@
+#past-packets {
+	overflow-y: auto;
+	height: 500px;
+}
