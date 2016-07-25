@@ -27,9 +27,7 @@
         </ul>
       </div>
     </div>
-  </div>
 
-  <div class="col-md-6">
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">Past Packets</h3>
@@ -41,11 +39,9 @@
       </div>
     </div>
   </div>
-</div>
 
-{% if accessor_html %}
-<div class="row">
   <div class="col-md-6">
+    {% if accessor_html %}
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">Accessor</h3>
@@ -54,9 +50,9 @@
         {{ accessor_html|safe }}
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
-{% endif %}
 
 
 

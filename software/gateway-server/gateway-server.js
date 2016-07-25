@@ -14,7 +14,7 @@ var getmac     = require('getmac');
 var async      = require('async');
 var request    = require('request');
 
-var accessorRPC  = require('accessors-rpc-web');
+var accessorRPC  = require('./accessors-rpc-web');
 
 var expressWs  = require('express-ws')(express());
 var app = expressWs.app;
@@ -65,21 +65,6 @@ var nearby = [];
 // Keep track of any local data for devices. This lets us use accessors.
 var local = {};
 
-// Really rough way to do HTML to write this app quickly.
-var HTML_BEG = `
-<html>
-	<head>
-		<title>Swarm Gateway</title>
-		<style>p{margin:0;}</style>
-	</head>
-	<body>
-		<h1>SwarmGateway</h1>
-		<p>
-			Learn more about the SwarmGateway in the <a href="https://github.com/terraswarm/urban-heartbeat-kit">Urban Heartbeat Kit</a>.
-		</p>
-		`;
-var HTML_END = '</body></html>';
-
 // Pre-fetch the mac address
 var macaddr = '';
 getmac.getMac(function (err, addr) {
@@ -87,7 +72,6 @@ getmac.getMac(function (err, addr) {
 });
 
 // Get IP address
-
 function get_ip_addresses (cb) {
 	var os = require('os');
 	var ifaces = os.networkInterfaces();

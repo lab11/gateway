@@ -1,4 +1,6 @@
-<div class="accessor" data-name="{{ accessor.name }}">
+<div class="accessor" data-name="{{ name }}">
+
+  <div class="accessor-alerts"></div>
 
   <div class="well bs-component">
     <form class="form-horizontal">
@@ -12,9 +14,9 @@
             | name | port interface | refresh |
         #}
 
-        {% for input in accessor.inputs %}
+        {% for input in inputs %}
 
-        <div class="port row" data-name="{{ input.name }}">
+        <div class="port row accessor-input" data-name="{{ input.name }}">
 
           <label for="{{ input.name }}" class="col-sm-2 control-label">{{ input.name }}</label>
 
@@ -23,7 +25,7 @@
           <div class="col-sm-6">
             <div class="checkbox">
               <label>
-                <input type="checkbox" class="accessor-checkbox">
+                <input type="checkbox" class="accessor-input-element">
               </label>
             </div>
           </div>
@@ -31,13 +33,13 @@
           {% elif input.type in ["int", "number", "string"] %}
           {# TEXT BOX #}
           <div class="col-sm-4">
-            <input type="text" class="form-control port" value="{{ input.value }}"></input>
+            <input type="text" class="form-control accessor-input-element" value="{{ input.value }}"></input>
           </div>
 
           {% elif input.type == "json" %}
           {# JUST A BIG OBJECT #}
           <div class="col-sm-6">
-            <textarea></textarea>
+            <textarea class="accessor-input-element"></textarea>
           </div>
 
           {% else %}
@@ -57,8 +59,7 @@
 
         {% endfor %}
 
-
-        {% for output in accessor.outputs %}
+        {% for output in outputs %}
         <div class="port-group row" data-name="{{ output.name }}">
         <label for="{{ output.name }}" class="col-sm-2 control-label">{{ output.name }}</label>
           <div class="col-sm-6">
@@ -70,14 +71,15 @@
 
         <div class="form-group">
           <div class="col-sm-12">
-            <button type="button" class="form-control accessor-button" data-accessorname="{{ accessor.clean_name }}" data-function="fire">React!</button>
+            <button type="button" class="form-control accessor-react">React!</button>
           </div>
         </div>
 
       </fieldset>
     </form>
-    <span class="spinner" style="display:none"><img src="static/images/ajax-loader.gif" /></span>
 
   </div>
 
 </div>
+
+<script src="/accessors/static/js/accessor.jquery.js"></script>
