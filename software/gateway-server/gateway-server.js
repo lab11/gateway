@@ -271,36 +271,6 @@ app.get('/triumvi', function (req, res) {
 	res.send(out);
 });
 
-// Handle accessor actions
-app.get('/accessor/:device_id/:input_name/:value', function (req, res) {
-	var device_id = req.params.device_id;
-	var input_name = req.params.input_name;
-	var value = req.params.value;
-
-
-	if ('accessor_instance' in local[device_id]) {
-		var accessor = local[device_id].accessor_instance;
-
-		if (input_name in accessor.inputs) {
-			var input = accessor.inputs[input_name];
-
-			if (input.type === 'boolean') {
-				var val = value === 'true';
-				console.log('running input ' + input_name + ' with ' + val);
-
-				accessor.provideInput(input_name, val);
-				accessor.react()
-			}
-
-		}
-
-		res.send('maybe did something');
-
-	} else {
-		res.send('accessor not found');
-	}
-});
-
 // Show the unpacked advertisements for a device
 app.get('/device/:device', function (req, res) {
 	var device = req.params.device;
