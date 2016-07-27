@@ -10,7 +10,7 @@ class mySPI(object):
         self.spi.mode(mraa.SPI_MODE3)
         # first write a dummy byte
         self.spi.writeByte(0)
-    
+
     def setFrequency(self, freq):
         self.spi.frequency(freq)
 
@@ -30,4 +30,4 @@ class mySPI(object):
         self.cs.write(0)
         miso = self.spi.write(data)
         self.cs.write(1)
-        return list(miso)
+        return miso

@@ -10,37 +10,32 @@ import os
 #    this makes them show up in the syslog
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-# System dependencies
-import time
-import json
-
 # Use systemd to watchdog process
 import sdnotify
 sd_watchdog = sdnotify.SystemdNotifier()
 
 # Library for getting data from the CC2538/Triumvi
-from lib import triumvi
+from lib import receive
 
 # MQTT
 import paho.mqtt.client as mqtt
 
 
 # Called on every packet from the Triumvi
-def callback (pkt):
+def callback (raw_bytes):
 	sd_watchdog.notify("WATCHDOG=1")
 	try:
-		json_pkt = json.dumps(pkt.dictionary)
-		client.publish('gateway-data', json_pkt)
+		client.publish('ieee802154-raw', raw_bytes)
 	except Exception as e:
-		print('Error in callback with Triumvi packet')
+		print('Error in callback with raw packet')
 		print(e);
 
-print("Starting triumvi packet collection")
+print("Starting 802.15.4 packet collection")
 
 # Connect to the local MQTT broker
 client = mqtt.Client()
 client.connect('localhost', 1883, 60)
 print("Connected to mqtt at localhost")
 
-# Start getting Triumvi Packets
-triumvi.triumvi(callback)
+# Start getting 15.4 Packets
+receive.receive(callback)
