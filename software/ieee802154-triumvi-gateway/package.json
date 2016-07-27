@@ -24,6 +24,7 @@
     "async": "^1.5.2",
     "getmac": "^1.0.7",
     "mqtt": "^1.12.0",
+    "node-aes-ccm": "^1.0.2",
     "raw-socket": "git+https://github.com/lab11/node-raw-socket.git#address-family",
     "watchout": "0.0.5"
   }
