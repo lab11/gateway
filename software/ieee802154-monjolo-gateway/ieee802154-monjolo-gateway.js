@@ -126,7 +126,7 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 							_meta: {
 								received_time: new Date().toISOString(),
 								device_id: src,
-								receive: 'ieee802154-monjolo-gateway',
+								receiver: 'ieee802154-monjolo-gateway',
 								gateway_id: gateway_id
 							},
 							device: MONJOLO_TYPES[monjolo_version],
