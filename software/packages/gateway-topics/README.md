@@ -28,3 +28,18 @@ Get all data for a type of sensor
 ---------------------------------
 
     $ mosquitto_sub -h <mqtt broker ip address> -t device/<device type>/+
+
+
+Usage
+-----
+
+```js
+var GatewayTopics = require('gateway-topics');
+
+var obj = {
+	device: 'DeviceName',
+	<other fields>: <other values>
+};
+
+GatewayTopics.publish(obj);
+```
