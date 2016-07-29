@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Triumvi packets
+After=mosquitto.service sockets.target
+
+[Service]
+ExecStart=/home/debian/gateway/software/ieee802154-triumvi-gateway/ieee802154-triumvi-gateway.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ieee802154-triumvi-gateway
+
+[Install]
+WantedBy=multi-user.target
