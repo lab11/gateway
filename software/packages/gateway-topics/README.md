@@ -1,7 +1,7 @@
 Gateway to MQTT Topics
 ==========================
 
-Re-send the global stream `gateway-data` to individual
+Send the global stream `gateway-data` to individual
 MQTT topics:
 
     device/<device type>/<device id>

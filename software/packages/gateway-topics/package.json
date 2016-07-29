@@ -1,10 +1,9 @@
 {
-  "name": "ble-gateway-mqtt-topics",
+  "name": "gateway-topics",
   "version": "0.1.0",
   "description": "Split global data stream up by device.",
-  "main": "ble-gateway-mqtt-topics.js",
+  "main": "gateway-topics.js",
   "dependencies": {
-    "mqtt": "^1.12.0"
   },
   "devDependencies": {},
   "scripts": {

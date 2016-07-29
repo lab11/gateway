@@ -7,9 +7,10 @@
  *  - MQTT
  ******************************************************************************/
 
-var BleGateway = require('ble-gateway');
-var mqtt       = require('mqtt');
+var BleGateway    = require('ble-gateway');
+var GatewayTopics = require('gateway-topics');
 
+var mqtt  = require('mqtt');
 var debug = require('debug')('ble-gateway-mqtt');
 
 var argv = require('yargs')
@@ -22,7 +23,7 @@ var argv = require('yargs')
  * CONFIGURATION OPTIONS
  ******************************************************************************/
 var MQTT_TOPIC_NAME = 'gateway-data';
-var MQTT_TOPIC_NAME_LOCAL = 'gateway-local'
+var MQTT_TOPIC_NAME_LOCAL = 'gateway-local';
 
 /*******************************************************************************
  * MAIN CODE
@@ -38,6 +39,9 @@ mqtt_client.on('connect', function () {
 
     BleGateway.on('advertisement', function (adv_obj) {
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(adv_obj));
+
+        // Also publish on /device
+        GatewayTopics.publish(mqtt_client, adv_obj);
     });
 
     BleGateway.on('local', function (local_obj) {

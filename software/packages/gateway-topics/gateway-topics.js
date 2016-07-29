@@ -1,6 +1,4 @@
-#!/usr/bin/env node
 /*
-
 Takes the stream of packets from the BLE gateway and makes individual
 streams out of them.
 
@@ -26,14 +24,6 @@ streams out of them.
   this purpose.
 */
 
-// Try to shutup some of the annoying avahi warnings.
-process.env['AVAHI_COMPAT_NOWARN'] = 1;
-
-var mqtt = require('mqtt');
-
-
-// Main data topic
-var TOPIC_MAIN_STREAM = 'gateway-data';
 
 // Topic prefix for all data-specific topics that are created
 var TOPIC_PREFIX_DEVICE = 'device/';
@@ -52,38 +42,27 @@ var advertising_topics = [];
 var topic_timeouts = {};
 
 
-// Callback after we have found a MQTT broker.
-var mqtt_client = mqtt.connect('mqtt://localhost');
-mqtt_client.on('connect', function () {
-    console.log('Connected to MQTT');
+// Called with packet to publish on /device topic
+function publish (mqtt_client, adv_obj) {
 
-    // On connect we subscribe to all formatted data packets
-    mqtt_client.subscribe(TOPIC_MAIN_STREAM);
+    // We only know how to handle packets in a certain format (contain
+    // key named "device")
+    if ('device' in adv_obj) {
 
-    // Called when we get a packet from MQTT
-    mqtt_client.on('message', function (topic, message) {
-        // message is Buffer
-        var adv_obj = JSON.parse(message.toString());
+        var topic_name_device = TOPIC_PREFIX_DEVICE + adv_obj.device + '/' + adv_obj._meta.device_id;
+        if (advertising_topics.indexOf(topic_name_device) == -1) {
+            advertising_topics.push(topic_name_device);
 
-        // We only know how to handle packets in a certain format (contain
-        // key named "device")
-        if ('device' in adv_obj) {
-
-            var topic_name_device = TOPIC_PREFIX_DEVICE + adv_obj.device + '/' + adv_obj._meta.device_id;
-            if (advertising_topics.indexOf(topic_name_device) == -1) {
-                advertising_topics.push(topic_name_device);
-
-                // Publish new topics list
-                publish_advertising_topics();
-            }
-
-            // Actually publish this to a topic stream
-            mqtt_client.publish(topic_name_device, message);
-
-            // Keep track of this so we get rid of old, stale topics
-            update_timeout(topic_name_device);
+            // Publish new topics list
+            publish_advertising_topics();
         }
-    });
+
+        // Actually publish this to a topic stream
+        mqtt_client.publish(topic_name_device, JSON.stringify(adv_obj));
+
+        // Keep track of this so we get rid of old, stale topics
+        update_timeout(topic_name_device);
+    }
 
     //
     // Helper functions for managing known topics
@@ -114,4 +93,9 @@ mqtt_client.on('connect', function () {
         mqtt_client.publish(TOPIC_TOPICS, JSON.stringify(advertising_topics), {retain: true});
     }
 
-});
+}
+
+
+module.exports = {
+    publish: publish
+};
