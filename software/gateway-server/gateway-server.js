@@ -99,9 +99,7 @@ function get_ip_addresses (cb) {
  ******************************************************************************/
 
 // Callback after we have found a MQTT broker.
-// var mqtt_client = mqtt.connect('mqtt://localhost');
-// var mqtt_client = mqtt.connect('mqtt://141.212.11.202');
-var mqtt_client = mqtt.connect('mqtt://memristor-v2.eecs.umich.edu');
+var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client.on('connect', function () {
     console.log('Connected to MQTT');
 
