@@ -40,6 +40,22 @@ The gateway is being developed as a part of the
 More documentation on how to use a running gateway can be found there.
 
 
+Super Quick Start
+--------------
+
+If you have a SwarmGateway, you can get data from it quickly. Install
+[Mosquitto](https://mosquitto.org/), then:
+
+    mosquitto_sub -h swarmgateway.local -t gateway-data
+
+to get the full data stream. If you are not on the same network, pass `-h`
+the correct IP address.
+
+You can also see a load a status page in a web browser:
+[swarmgateway.local](http://swarmgateway.local).
+
+
+
 
 Related Projects
 ----------------
