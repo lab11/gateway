@@ -5,8 +5,10 @@ Software for the Lab11 gateway platform.
 
 <img src="https://www.gliffy.com/go/publish/image/10262809/L.png">
 
-Goals
------
+Information
+-----------
+
+### Goals
 
 This project has several goals:
 
@@ -25,15 +27,13 @@ and in a self-describing data format.
 be local to the gateway or cloud hosted endpoints.
 
 
-Software Stack
---------------
+### Software Stack
 
 The gateway stack is a series of discrete modules linked
 by MQTT. Roughly, each folder in `/software` is a
 separate module.
 
-Parent Project
---------------
+### Parent Project
 
 The gateway is being developed as a part of the
 [Urban Heartbeat Kit Project](https://github.com/terraswarm/urban-heartbeat-kit).
