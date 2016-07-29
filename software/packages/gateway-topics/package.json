@@ -4,6 +4,7 @@
   "description": "Split global data stream up by device.",
   "main": "gateway-topics.js",
   "dependencies": {
+    "mqtt": "^1.13.0"
   },
   "devDependencies": {},
   "scripts": {

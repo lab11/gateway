@@ -6,6 +6,8 @@ var expressBodyParser = require('body-parser');
 var getmac = require('getmac');
 var mqtt = require('mqtt');
 
+var GatewayTopics = require('gateway-topics');
+
 var _app = express();
 _app.use(expressBodyParser.urlencoded({extended: false}));
 
@@ -48,6 +50,9 @@ _app.post('/wattsup', function (req, res) {
 		}
 	};
 	_mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+
+	// Also publish on /device
+    GatewayTopics.publish(out);
 
 	// Keep the load on
 	res.send('[0]')

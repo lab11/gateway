@@ -24,6 +24,8 @@ streams out of them.
   this purpose.
 */
 
+var mqtt = require('mqtt');
+
 
 // Topic prefix for all data-specific topics that are created
 var TOPIC_PREFIX_DEVICE = 'device/';
@@ -42,8 +44,21 @@ var advertising_topics = [];
 var topic_timeouts = {};
 
 
+// Receive the global list from other receivers to ensure we are not
+// removing other valid devices.
+var _mqtt_client = mqtt.connect('mqtt://localhost');
+_mqtt_client.on('connect', function () {
+    _mqtt_client.subscribe(TOPIC_TOPICS);
+
+    _mqtt_client.on('message', function (topic, message) {
+        var topic_list = JSON.parse(message.toString());
+
+        advertising_topics = topic_list;
+    });
+});
+
 // Called with packet to publish on /device topic
-function publish (mqtt_client, adv_obj) {
+function publish (adv_obj) {
 
     // We only know how to handle packets in a certain format (contain
     // key named "device")
@@ -58,7 +73,7 @@ function publish (mqtt_client, adv_obj) {
         }
 
         // Actually publish this to a topic stream
-        mqtt_client.publish(topic_name_device, JSON.stringify(adv_obj));
+        _mqtt_client.publish(topic_name_device, JSON.stringify(adv_obj));
 
         // Keep track of this so we get rid of old, stale topics
         update_timeout(topic_name_device);
@@ -90,7 +105,7 @@ function publish (mqtt_client, adv_obj) {
     }
 
     function publish_advertising_topics () {
-        mqtt_client.publish(TOPIC_TOPICS, JSON.stringify(advertising_topics), {retain: true});
+        _mqtt_client.publish(TOPIC_TOPICS, JSON.stringify(advertising_topics), {retain: true});
     }
 
 }

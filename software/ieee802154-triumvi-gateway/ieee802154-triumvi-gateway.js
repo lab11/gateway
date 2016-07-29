@@ -12,6 +12,8 @@ var ccm      = require('node-aes-ccm');
 
 var mqtt     = require('mqtt');
 
+var GatewayTopics = require('gateway-topics');
+
 /*******************************************************************************
  * Constants
  ******************************************************************************/
@@ -165,6 +167,7 @@ function parse_packet (buffer) {
 	}
 
 	_mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+	GatewayTopics.publish(out);
 }
 
 

@@ -9,6 +9,8 @@ var watchout = require('watchout');
 
 var mqtt     = require('mqtt');
 
+var GatewayTopics = require('gateway-topics');
+
 /*******************************************************************************
  * Constants
  ******************************************************************************/
@@ -135,6 +137,7 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 						};
 
 						mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+						GatewayTopics.publish(out);
 
 						// ping the watchdog
 						//  We're doing it here rather than at packet receieve because no

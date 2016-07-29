@@ -41,7 +41,7 @@ mqtt_client.on('connect', function () {
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(adv_obj));
 
         // Also publish on /device
-        GatewayTopics.publish(mqtt_client, adv_obj);
+        GatewayTopics.publish(adv_obj);
     });
 
     BleGateway.on('local', function (local_obj) {
