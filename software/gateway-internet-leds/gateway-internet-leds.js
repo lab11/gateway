@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Map Internet connectivity and packet rate to
+// Map Internet connectivity and packet rate to LEDs
 
 var dns  = require('dns');
 var exec = require('child_process').exec;
