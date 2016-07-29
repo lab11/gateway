@@ -15,16 +15,16 @@ Listens for any BLE address and creates a data stream of <BLE Address, RSSI>.
 - [802.15.4 Monjolo](https://github.com/lab11/gateway/tree/master/software/ieee802154-monjolo-gateway):
 Listens for any [Monjolo](https://github.com/lab11/monjolo) 15.4 packets and adds them to the data
 stream.
-- [cc2538 Triumvi](https://github.com/lab11/gateway/tree/master/software/cc2538-triumvi-gateway):
-Listens for 802.15.4 packets from an attached cc2538 radio. Used to collect
+- [802.15.4 Triumvi](https://github.com/lab11/gateway/tree/master/software/ieee802154-triumvi-gateway):
+Listens for 802.15.4 packets from an attached cc2538 radio or through a Linux socket. Used to collect
 [Triumvi](https://github.com/lab11/g2) packets.
+- [HTTP Watts Up?](https://github.com/lab11/gateway/tree/master/software/http-wattsup-gateway):
+Provide a webserver for listening for Watts Up? .net POST messages.
 
 ### Internal Services
 
 These process data locally:
 
-- [Gateway Topics](https://github.com/lab11/gateway/tree/master/software/gateway-mqtt-topics):
-Takes the main stream of formatted data and makes per-device streams.
 - [Gateway Publish](https://github.com/lab11/gateway/tree/master/software/gateway-publish):
 Takes the main MQTT stream and re-publishes it as UDP packets and as a WebSocket.
 - [Gateway Server](https://github.com/lab11/gateway/tree/master/software/gateway-server):
@@ -61,6 +61,8 @@ of the gateway's data.
 - [DDNS](https://github.com/lab11/gateway/tree/master/software/ddns):
 Make the gateway publish to a BIND DNS server to register a hostname
 for the gateway.
+- [Gateway Internet LEDs](https://github.com/lab11/gateway/tree/master/software/gateway-internet-leds):
+Set LED color based on status of gateway.
 
 
 ## Requirements
