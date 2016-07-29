@@ -25,7 +25,9 @@
     "getmac": "^1.0.7",
     "mqtt": "^1.12.0",
     "node-aes-ccm": "^1.0.2",
+    "onoff": "^1.1.1",
     "raw-socket": "git+https://github.com/lab11/node-raw-socket.git#address-family",
+    "spi": "^0.2.0",
     "watchout": "0.0.5"
   }
 }

@@ -24,8 +24,6 @@ var ETH_P_IEEE802154 = 0x00F6;
 
 var MQTT_TOPIC_NAME = 'gateway-data';
 
-var MQTT_CC2538_RAW = 'ieee802154-raw';
-
 
 /*******************************************************************************
  * Global State
@@ -270,17 +268,122 @@ _mqtt_client.on('connect', function () {
 
 			} else {
 				// Use the other (CC2538) version!
-				console.log('Pulling 15.4 packets from MQTT. Topic: ' + MQTT_CC2538_RAW);
+				console.log('Pulling 15.4 packets from CC2538');
 
-				// This pulls for a CC2538 topic.
-				_mqtt_client.subscribe(MQTT_CC2538_RAW);
-				_mqtt_client.on('message', function (topic, message) {
-					if (topic === MQTT_CC2538_RAW) {
+				var SPI = require('spi');
+				var gpio = require('onoff');
+
+				// Constants
+
+				var CC2538_SPI_REQ_DATA = 0;
+				var CC2538_SPI_GET_LENGTH = 1;
+				var CC2538_SPI_GET_DATA = 2;
+
+				var MIN_TRIUMVI_PKT_LEN = 14;
+
+				// Init
+
+				// Options for connecting to the CC2538
+				var spi_options = {
+					mode: SPI.MODE['MODE_3'],
+					maxSpeed: 2000000
+				};
+
+				// Hopefully this path doesn't change
+				var spi = new SPI.Spi('/dev/spidev5.1', spi_options);
+				spi.open()
+
+				// Need a GPIO for the CS line. Apparently the built in CS line won't work.
+				var spi_cs = gpio.Gpio(110, 'out');
+				spi_cs.writeSync(1);
+
+				// Also have a GPIO that does a reset of sorts
+				var cc2538_reset = gpio.Gpio(41, 'out');
+
+				// And the "fifth SPI line" an interrupt line for the CC2538
+				var cc2538_interrupt = new gpio.Gpio(43, 'in', 'rising');
+
+				// Need this on init for some reason
+				spi.write(new Buffer([0]));
+
+				// Then do a CC2538 reset
+				cc2538_reset.writeSync(0);
+				cc2538_reset.writeSync(1);
+
+				function handle_interrupt (err, value) {
+
+					// This is magic that makes things work
+					spi.write(new Buffer([0]));
+
+					// Write a 0 to effectively wake the CC2538 up
+					spi_cs.writeSync(0);
+					spi.write(new Buffer([CC2538_SPI_REQ_DATA]));
+					spi_cs.writeSync(1);
+
+					// Wait for the CC2538 to be ready
+					while (cc2538_interrupt.readSync() == 1);
+
+
+					var length_buffer = new Buffer(1);
+
+					spi.write(new Buffer([0]));
+					spi_cs.writeSync(0);
+					spi.transfer(new Buffer([CC2538_SPI_GET_LENGTH]), length_buffer);
+					spi_cs.writeSync(1);
+
+
+					if (length_buffer[0] < MIN_TRIUMVI_PKT_LEN) {
+
+						// Flush
+						spi.write(new Buffer([0]));
+
+						spi_cs.writeSync(0);
+						spi.write(new Buffer([CC2538_SPI_GET_DATA, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+						spi_cs.writeSync(1);
+
+
+					} else {
+
+						var len = length_buffer[0];
+
+						var send = new Buffer(len);
+						var recv = new Buffer(len);
+						var to_read = len;
+						var index = 0;
+
+						send[0] = CC2538_SPI_GET_DATA;
+						send[1] = len-1;
+
+						spi.write(new Buffer(1));
+
+						// Read the packet in 20 byte chunks.
+						// Longer buffers cause the whole thing to hang.
+						spi_cs.writeSync(0);
+						while (to_read > 0) {
+
+							var byte_count = 20;
+							if (to_read < 20) {
+								var byte_count = to_read;
+							}
+							to_read -= byte_count;
+
+							spi.transfer(send.slice(index, index+byte_count), recv.slice(index, index+byte_count));
+
+							index += byte_count
+						}
+						spi_cs.writeSync(1);
+
 						watchdog.reset();
-
-						parse_packet(message);
+						parse_packet(recv);
 					}
-				});
+
+					if (cc2538_interrupt.readSync() == 1) {
+						handle_interrupt(null, 10);
+					}
+
+				}
+
+				cc2538_interrupt.watch(handle_interrupt);
 			}
 		});
 	});
