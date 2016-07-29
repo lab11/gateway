@@ -1,0 +1,19 @@
+{
+  "name": "gateway-internet-leds",
+  "version": "0.1.0",
+  "description": "Set LED color based on gateway status.",
+  "main": "gateway-internet-leds.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme"
+}
