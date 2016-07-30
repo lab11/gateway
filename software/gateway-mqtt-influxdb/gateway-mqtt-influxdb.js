@@ -82,7 +82,7 @@ var influx_client = influx({
 });
 */
 
-var influx_poster = InfluxPoster({
+var influx_poster = new InfluxPoster({
     host: config.host,
     database: config.database,
     port: config.port,
@@ -90,7 +90,7 @@ var influx_poster = InfluxPoster({
     username: config.username,
     password: config.password,
     prefix: config.prefix,
-}, 10, 0);
+}, 1000, 0);
 
 
 /*
@@ -279,7 +279,8 @@ function mqtt_on_connect() {
                             timestamp
                         ];
 
-                        InfluxPoster.write_data(point);
+
+                        influx_poster.write_data(point);
                     }
                 }
             }

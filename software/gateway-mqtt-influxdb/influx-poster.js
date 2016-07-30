@@ -70,11 +70,12 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
 
     this._post_url = url.format({
         protocol: config.protocol,
-        hostname: config.hostname,
+        hostname: config.host,
         port:     config.port,
         pathname: config.prefix + 'write',
         query:    query,
     });
+    console.log(this._post_url);
 
     // start timer
     if (this._max_time > 0) {
@@ -96,6 +97,7 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
 // Note 2: Ensure that timestamp is already in the correct format
 // https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/
 InfluxPoster.prototype.write_data = function (point, callback) {
+    debug("Writing data point");
 
     //XXX: do error checking somehow...
     var key = point[0];
@@ -105,7 +107,7 @@ InfluxPoster.prototype.write_data = function (point, callback) {
 
     // properly escape or remove invalid characters
     function fixup_tag (s) {
-        s.replace(/ /g, '\\ ').replace(/,/g, '\\,').replace(/=/g, '\\=').replace(/"/g, '');
+        return s.replace(/ /g, '\\ ').replace(/,/g, '\\,').replace(/=/g, '\\=').replace(/"/g, '');
     }
 
     // parse data into proper format
@@ -127,12 +129,14 @@ InfluxPoster.prototype.write_data = function (point, callback) {
     }
 
     line += ' ';
+    var first_time = true;
     for (var field_name in fields) {
         var field_value = fields[field_name];
 
-        if (i > 0) {
+        if (!first_time) {
             line += ',';
         }
+        first_time = false;
 
         line += fixup_tag(field_name);
         line += '=';
@@ -154,7 +158,7 @@ InfluxPoster.prototype.write_data = function (point, callback) {
 
     // check if we should post data
     if (this._max_lines > 0 &&
-            this._data_lines.length >= this.max_lines) {
+            this._data_lines.length >= this._max_lines) {
         this.post_data(callback);
 
     } else {
@@ -165,30 +169,33 @@ InfluxPoster.prototype.write_data = function (point, callback) {
 };
 
 InfluxPoster.prototype.post_data = function (callback) {
+    debug("Posting data!");
+
     if (this._data_lines.length > 0) {
+        var post_body = this._data_lines.join('\n');
         var options = {
             method: 'POST',
             url: this._post_url,
-            body: this._data_lines.join('\n'),
+            body: post_body,
         };
 
+        // clear data array
+        // this does drop data if there is an error,
+        //  but better than letting it pile up until we run out of memory
+        this._data_lines = [];
+
         var that = this;
-        //XXX: turning off for testing
-        console.log(options);  // testing
-        this._data_lines = []; // testing
-        /*
+        console.log("About to POST");
         request(options, function (err, response) {
+
+            console.log(response.statusCode);
+
             if (err) {
                 debug(err);
                 debug(response);
 
                 //XXX: emit the error as an event
             }
-
-            // clear data array
-            // this does drop data if there is an error,
-            //  but better than letting it pile up until we run out of memory
-            that._data_lines = [];
 
             // restart timer
             if (that._max_time > 0) {
@@ -199,7 +206,6 @@ InfluxPoster.prototype.post_data = function (callback) {
                 callback();
             }
         });
-        */
 
     } else {
         // no data, continue immediately
