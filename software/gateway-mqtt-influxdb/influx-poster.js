@@ -1,0 +1,218 @@
+var request = require('request');
+var url = require('url');
+var debug = require('debug')('influx-poster');
+
+// user_config: configuration dictionary for influx database with the following keys
+//  mandatory
+//      host     - hostname for influxDB server
+//      database - specific database name to post to
+//  optional
+//      port      - influxDB server port, default 8086
+//      protocol  - POST method (http or https), default http
+//      username  - username of database, default ''
+//      password  - password for database, default ''
+//      prefix    - path prefix before command, default ''
+//      precision - precision key for influx, default 'ms'
+//      retention_policy - retention_policy key for influx, default ''
+// maximum_lines: maximum number of lines to be stored before posting
+// maximum_time: maximum amount of time before posting
+var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
+    debug("Creating new InfluxPoster");
+
+    // handle input arguments
+    config = {
+        host: '',
+        database: '',
+        port: 8086,
+        protocol: 'http',
+        username: '',
+        password: '',
+        prefix: '',
+        precision: 'ms',
+        retention_policy: '',
+    };
+    if (user_config && typeof user_config == 'object' &&
+            'host' in user_config && 'database' in user_config) {
+        config.host     = user_config.host;
+        config.database = user_config.database;
+        if ('port'      in user_config) config.port      = user_config.port;
+        if ('protocol'  in user_config) config.protocol  = user_config.protocol;
+        if ('username'  in user_config) config.username  = user_config.username;
+        if ('password'  in user_config) config.password  = user_config.password;
+        if ('prefix'    in user_config) config.prefix    = user_config.prefix;
+        if ('precision' in user_config) config.precision = user_config.precision;
+        if ('retention_policy' in user_config) config.retention_policy = user_config.retention_policy;
+    } else {
+        return new Error("Invalid configuration");
+    }
+    this._max_lines = 0;
+    if (maximum_lines && typeof maximum_lines == 'number' && maximum_lines > 0) {
+        this._max_lines = maximum_lines;
+    }
+    this._max_time = 0;
+    if (maximum_time && typeof maximum_time == 'number' && maximum_time > 0) {
+        this._max_time = maximum_time;
+    }
+
+    // if neither a max_lines nor a max_time were selected,
+    //  just post every 30 seconds
+    if (this._max_lines == 0 && this._max_time == 0) {
+        this._max_time = 30*1000;
+    }
+
+    // create influx query
+    var query = {};
+    query.db = config.database;
+    if (config.username  != '') query.u = config.username;
+    if (config.password  != '') query.p = config.password;
+    if (config.precision != '') query.precision = config.precision;
+    if (config.retention_policy != '') query.rp = config.retention_policy;
+
+    this._post_url = url.format({
+        protocol: config.protocol,
+        hostname: config.hostname,
+        port:     config.port,
+        pathname: config.prefix + 'write',
+        query:    query,
+    });
+
+    // start timer
+    if (this._max_time > 0) {
+        setTimeout(this.post_data, this._max_time);
+    }
+
+    this._data_lines = [];
+};
+
+// expects a data point array in the following format
+//  [
+//      key,        // mandatory
+//      { tags },   // optional, may be empty dict
+//      { fields }, // at least one field is mandatory
+//      timestamp,  // optional, may omit
+//  ]
+// Note 1: Ensure that all values in `fields` are already the type you want
+//  them to be in influxDB. Boolean, Float, and String are valid
+// Note 2: Ensure that timestamp is already in the correct format
+// https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/
+InfluxPoster.prototype.write_data = function (point, callback) {
+
+    //XXX: do error checking somehow...
+    var key = point[0];
+    var tags = point[1];
+    var fields = point[2];
+    var timestamp = point[3];
+
+    // properly escape or remove invalid characters
+    function fixup_tag (s) {
+        s.replace(/ /g, '\\ ').replace(/,/g, '\\,').replace(/=/g, '\\=').replace(/"/g, '');
+    }
+
+    // parse data into proper format
+    var line = '';
+    line += fixup_tag(key);
+
+    if (tags) {
+        // tags should be sorted for best performance, but we're a _bit_ less
+        //  performant than the server is, so we'll just let it work a little
+        //  harder here
+        for (var tag_name in tags) {
+            var tag_value = '' + tags[tag_name];
+
+            line += ',';
+            line += fixup_tag(tag_name);
+            line += '=';
+            line += fixup_tag(tag_value);
+        }
+    }
+
+    line += ' ';
+    for (var field_name in fields) {
+        var field_value = fields[field_name];
+
+        if (i > 0) {
+            line += ',';
+        }
+
+        line += fixup_tag(field_name);
+        line += '=';
+
+        if (typeof field_value === 'string') {
+            line += '"' + field_value.replace(/"/g, '\\"') + '"';
+        } else {
+            line += field_value;
+        }
+    }
+
+    if (timestamp) {
+        line += ' ';
+        line += timestamp;
+    }
+
+    // append data to _data_lines
+    this._data_lines.push(line);
+
+    // check if we should post data
+    if (this._max_lines > 0 &&
+            this._data_lines.length >= this.max_lines) {
+        this.post_data(callback);
+
+    } else {
+        if (callback) {
+            callback();
+        }
+    }
+};
+
+InfluxPoster.prototype.post_data = function (callback) {
+    if (this._data_lines.length > 0) {
+        var options = {
+            method: 'POST',
+            url: this._post_url,
+            body: this._data_lines.join('\n'),
+        };
+
+        var that = this;
+        //XXX: turning off for testing
+        console.log(options);  // testing
+        this._data_lines = []; // testing
+        /*
+        request(options, function (err, response) {
+            if (err) {
+                debug(err);
+                debug(response);
+
+                //XXX: emit the error as an event
+            }
+
+            // clear data array
+            // this does drop data if there is an error,
+            //  but better than letting it pile up until we run out of memory
+            that._data_lines = [];
+
+            // restart timer
+            if (that._max_time > 0) {
+                setTimeout(that.post_data, that._max_time);
+            }
+
+            if (callback) {
+                callback();
+            }
+        });
+        */
+
+    } else {
+        // no data, continue immediately
+
+        // restart timer
+        if (this._max_time > 0) {
+            setTimeout(this.post_data, this._max_time);
+        }
+
+        if (callback) {
+            callback();
+        }
+    }
+};
+
+module.exports = InfluxPoster;

@@ -15,7 +15,8 @@ var util    = require('util');
 
 var mqtt    = require('mqtt');
 
-var influx  = require('influx');
+//var influx  = require('influx');
+var InfluxPoster = require('./influx-poster');
 
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
@@ -70,6 +71,7 @@ if ('password' in argv) config.password = argv.password;
 if ('prefix'   in argv) config.prefix   = argv.prefix;
 
 
+/*
 var influx_client = influx({
     host : config.host,
     port : config.port,
@@ -78,7 +80,20 @@ var influx_client = influx({
     username : config.username,
     password : config.password,
 });
+*/
 
+var influx_poster = InfluxPoster({
+    host: config.host,
+    database: config.database,
+    port: config.port,
+    protocol: config.protocol,
+    username: config.username,
+    password: config.password,
+    prefix: config.prefix,
+}, 10, 0);
+
+
+/*
 // Hack to switch where `write`s go. This lets us publish to our intermediate
 // receiver which adds the meta data and forwards it on to the database.
 var old_url_function = influx_client.url;
@@ -88,6 +103,8 @@ influx_client.url = function (endpoint, options, query) {
     }
     return old_url_function.call(influx_client, endpoint, options, query)
 }
+*/
+
 
 console.log("Using influx at " + config.protocol + "://" + config.host +
         ":" + config.port + "  db=" + config.database)
@@ -211,7 +228,7 @@ function mqtt_on_connect() {
             var device_class = adv_obj['device'];
             delete adv_obj.device;
 
-            var timestamp  = new Date(adv_obj['_meta']['received_time'])
+            var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
             var receiver   = adv_obj['_meta']['receiver'];
             var gateway_id = adv_obj['_meta']['gateway_id'];
 
@@ -224,9 +241,10 @@ function mqtt_on_connect() {
 
                 // Only publish if there is some data
                 if (Object.keys(adv_obj).length > 0) {
-                    for (var measurement in adv_obj) {
-                        var fields = fix_measurement(adv_obj[measurement]);
+                    for (var key in adv_obj) {
+                        var fields = fix_measurement(adv_obj[key]);
 
+                        /*
                         // Library needs time as a field
                         fields.time = timestamp;
 
@@ -245,11 +263,29 @@ function mqtt_on_connect() {
                             measurements[measurement] = [];
                         }
                         measurements[measurement].push(point);
+                        */
+
+                        var tags = {
+                            device_id: device_id,
+                            device_class: device_class,
+                            receiver: receiver,
+                            gateway_id: gateway_id,
+                        };
+
+                        var point = [
+                            key,
+                            tags,
+                            fields,
+                            timestamp
+                        ];
+
+                        InfluxPoster.write_data(point);
                     }
                 }
             }
 
         } else if (topic.startsWith('occupancy/')) {
+            /*
             if (argv.v) {
                 console.log("Got occupancy message: " + message);
             }
@@ -284,11 +320,13 @@ function mqtt_on_connect() {
                 measurements['occupancy'] = [];
             }
             measurements['occupancy'].push(point);
+            */
         }
     });
 };
 
 
+/*
 function post_data() {
     if (argv.v) {
         console.log("Preparing to post:");
@@ -323,7 +361,7 @@ function post_data() {
     setTimeout(post_data, RATE_LIMIT_MILLISECONDS);
 }
 setTimeout(post_data, RATE_LIMIT_MILLISECONDS);
-
+*/
 
 if ('remote' in argv) {
     var mqtt_url = 'mqtt://' + argv['remote'];
