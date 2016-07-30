@@ -1,0 +1,26 @@
+{% extends "base.nunjucks" %}
+
+{% block title %}
+Triuvmi
+{% endblock %}
+
+{% block body %}
+<h1>Triuvmi</h1>
+
+<p>
+  Triumvi is an energy-harvesting true power meter.
+</p>
+<p>
+  This page will update as Triumvi packets come in.
+</p>
+
+<div class="row">
+  <div class="col-md-12">
+    <div id="meters"></div>
+  </div>
+</div>
+
+<script language='javascript' src='/static/js/browserMqtt.js'></script>
+<script language='javascript' src='/static/js/triumvi.js'></script>
+
+{% endblock %}

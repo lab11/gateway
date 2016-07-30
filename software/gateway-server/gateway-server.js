@@ -99,7 +99,12 @@ function get_ip_addresses (cb) {
  ******************************************************************************/
 
 // Callback after we have found a MQTT broker.
-var mqtt_client = mqtt.connect('mqtt://localhost');
+var mqtt_url = 'mqtt://localhost';
+var remote_index = process.argv.indexOf('--remote');
+if (remote_index > -1 && process.argv.length > remote_index+1) {
+	mqtt_url = 'mqtt://' + process.argv[remote_index+1];
+}
+var mqtt_client = mqtt.connect(mqtt_url);
 mqtt_client.on('connect', function () {
     console.log('Connected to MQTT');
 
@@ -254,19 +259,9 @@ app.get('/graph', function (req, res) {
 // Show a graph of a value in real time
 app.get('/triumvi', function (req, res) {
 
-	var out = `<html>
-				 <head>
-					<title>Triumvi Display</title>
-					<style>p, body, html {margin:0;}</style>
-					<script type="text/javascript" src="static/js/jquery-2.2.1.min.js"></script>
-				</head>
-				<body>
-					<div id="meters"></div>
-					<script language='javascript' src='/static/js/triumvi.js'></script>
-				</body>
-			</html>`;
-
-	res.send(out);
+	var tmpl = nunjucksEnv.getTemplate('triumvi.nunjucks');
+	var html = tmpl.render();
+	res.send(html);
 });
 
 // Show the unpacked advertisements for a device
