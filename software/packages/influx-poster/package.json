@@ -1,0 +1,23 @@
+{
+  "name": "influx-poster",
+  "version": "1.0.0",
+  "description": "POST data to InfluxDB in batches",
+  "main": "influx-poster.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lab11/gateway.git"
+  },
+  "keywords": [
+    "InfluxDB"
+  ],
+  "author": "Branden Ghena",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "request": "^2.74.0",
+    "url": "^0.11.0"
+  }
+}
