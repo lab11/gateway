@@ -1,6 +1,8 @@
+// Takes in data, converts to InfluxDB format, and batches POSTs to an InfluxDB server
+
 var request = require('request');
-var url = require('url');
-var debug = require('debug')('influx-poster');
+var url     = require('url');
+var debug   = require('debug')('influx-poster');
 
 // user_config: configuration dictionary for influx database with the following keys
 //  mandatory

@@ -5,39 +5,19 @@ Takes the stream of packets from the BLE gateway and publishes them to
 influxdb.
 */
 
-var argv    = require('minimist')(process.argv.slice(2));
-
-var fs      = require('fs');
-
-var ini     = require('ini');
-var request = require('request');
-var util    = require('util');
-
-var mqtt    = require('mqtt');
-
-//var influx  = require('influx');
-var InfluxPoster = require('./influx-poster');
+var argv         = require('minimist')(process.argv.slice(2));
+var fs           = require('fs');
+var ini          = require('ini');
+var mqtt         = require('mqtt');
+var InfluxPoster = require('influx-poster');
 
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
 var TOPIC_OCCUPANCY_STREAM = 'occupancy/+';
 
 // How long to batch data for before posting
-var RATE_LIMIT_MILLISECONDS = 5000;
-
-// Keep track of last transmission time to rate limit data packets
-var last_transmission_times = {};
-
-// Dictionary of points, indexed by measurement type
-// n.b. on vocab:
-//  - The node library uses the word 'series' where influxdb uses
-//    'measurement', we use the influx terms here
-//  - A 'point' is a single sample, it's made of a measurement (i.e.
-//    temperature_celcius), a value (i.e. 27.2), and some tags (i.e.
-//    device_class='BLEES',...)
-//  - A 'series' in influxdb terms is automatically, dynamically created by the
-//    db engine and is defined by a unique set of {measurement, {tags}}
-var measurements = {};
+var DATA_LIMIT_LINES = 200000;
+var DATA_LIMIT_TIME  = 15*1000;
 
 
 // Read in the config file to get the parameters. If the parameters are not set
@@ -70,18 +50,6 @@ if ('username' in argv) config.username = argv.username;
 if ('password' in argv) config.password = argv.password;
 if ('prefix'   in argv) config.prefix   = argv.prefix;
 
-
-/*
-var influx_client = influx({
-    host : config.host,
-    port : config.port,
-    protocol : config.protocol,
-    database : config.database,
-    username : config.username,
-    password : config.password,
-});
-*/
-
 var influx_poster = new InfluxPoster({
     host: config.host,
     database: config.database,
@@ -90,21 +58,7 @@ var influx_poster = new InfluxPoster({
     username: config.username,
     password: config.password,
     prefix: config.prefix,
-}, 200000, 15*1000);
-
-
-/*
-// Hack to switch where `write`s go. This lets us publish to our intermediate
-// receiver which adds the meta data and forwards it on to the database.
-var old_url_function = influx_client.url;
-influx_client.url = function (endpoint, options, query) {
-    if (endpoint == 'write') {
-        endpoint = config.prefix + 'write';
-    }
-    return old_url_function.call(influx_client, endpoint, options, query)
-}
-*/
-
+}, DATA_LIMIT_LINES, DATA_LIMIT_TIME);
 
 console.log("Using influx at " + config.protocol + "://" + config.host +
         ":" + config.port + "  db=" + config.database)
@@ -242,35 +196,14 @@ function mqtt_on_connect() {
                 // Only publish if there is some data
                 if (Object.keys(adv_obj).length > 0) {
                     for (var key in adv_obj) {
-                        var fields = fix_measurement(adv_obj[key]);
-
-                        /*
-                        // Library needs time as a field
-                        fields.time = timestamp;
-
-                        // Create the point structure as the influx library
-                        // wants it.
-                        var point = [
-                                fields,
-                                {
-                                    device_id: device_id,
-                                    device_class: device_class,
-                                    receiver: receiver,
-                                    gateway_id: gateway_id,
-                                }
-                        ];
-                        if (! (measurement in measurements) ) {
-                            measurements[measurement] = [];
-                        }
-                        measurements[measurement].push(point);
-                        */
-
                         var tags = {
                             device_id: device_id,
                             device_class: device_class,
                             receiver: receiver,
                             gateway_id: gateway_id,
                         };
+
+                        var fields = fix_measurement(adv_obj[key]);
 
                         var point = [
                             key,
@@ -279,14 +212,12 @@ function mqtt_on_connect() {
                             timestamp
                         ];
 
-
                         influx_poster.write_data(point);
                     }
                 }
             }
 
         } else if (topic.startsWith('occupancy/')) {
-            /*
             if (argv.v) {
                 console.log("Got occupancy message: " + message);
             }
@@ -304,65 +235,31 @@ function mqtt_on_connect() {
                 confidence = occupancy_msg.confidence;
             }
 
+            var key = 'occupancy';
+
+            var tags = {
+                device_id: device_id,
+                device_class: device_class,
+                gateway_id: gateway_id,
+            };
+
+            var fields = {
+                occupied: occupancy_msg.occupied,
+                confidence: confidence,
+            };
+
             var point = [
-                {
-                    occupied: occupancy_msg.occupied,
-                    confidence: confidence
-                },
-                {
-                    device_id: device_id,
-                    device_class: device_class,
-                    gateway_id: gateway_id,
-                },
-                {time: timestamp},
+                key,
+                tags,
+                fields,
+                timestamp
             ];
 
-            if (!('occupancy' in measurements)) {
-                measurements['occupancy'] = [];
-            }
-            measurements['occupancy'].push(point);
-            */
+            influx_poster.write_data(point);
         }
     });
 };
 
-
-/*
-function post_data() {
-    if (argv.v) {
-        console.log("Preparing to post:");
-        console.log(util.inspect(measurements, false, null));
-    }
-
-    // Only publish if we have something to send
-    if (Object.keys(measurements).length > -1) {
-        // This API is comically poorly named. Sorry. This function is called
-        // writeSeries, it does not write a single series, rather, it writes arrays
-        // of points, indexed by measurement type, worry not.
-        influx_client.writeSeries(measurements, function(err,response) {
-            if (err != null) {
-                console.log(err);
-                console.log(response);
-            } else {
-                if (argv.v) {
-                    console.log("Posted data successfully.");
-                }
-            }
-        });
-    }
-
-    // Clear out array
-    // XXX: Possibly should only do this if post succeeded?
-    // Okay, remarkably it looks like the writeSeries function clears the array
-    // automatically, which doesn't seem like the greatest idea to me, so we'll
-    // clear it again ourselves, just in case this library ever stops doing
-    // that
-    measurements = {};
-
-    setTimeout(post_data, RATE_LIMIT_MILLISECONDS);
-}
-setTimeout(post_data, RATE_LIMIT_MILLISECONDS);
-*/
 
 if ('remote' in argv) {
     var mqtt_url = 'mqtt://' + argv['remote'];
