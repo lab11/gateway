@@ -90,7 +90,7 @@ var influx_poster = new InfluxPoster({
     username: config.username,
     password: config.password,
     prefix: config.prefix,
-}, 1000, 0);
+}, 200000, 15*1000);
 
 
 /*

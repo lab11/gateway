@@ -19,6 +19,9 @@ var debug = require('debug')('influx-poster');
 var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
     debug("Creating new InfluxPoster");
 
+    // Store data to be posted
+    this._data_lines = [];
+
     // handle input arguments
     config = {
         host: '',
@@ -75,14 +78,15 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
         pathname: config.prefix + 'write',
         query:    query,
     });
-    console.log(this._post_url);
+    debug("Influx POST URL: " + this._post_url);
 
     // start timer
     if (this._max_time > 0) {
-        setTimeout(this.post_data, this._max_time);
+        var that = this;
+        setTimeout(function () {
+            that.post_data();
+        }, this._max_time);
     }
-
-    this._data_lines = [];
 };
 
 // expects a data point array in the following format
@@ -97,9 +101,7 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
 // Note 2: Ensure that timestamp is already in the correct format
 // https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/
 InfluxPoster.prototype.write_data = function (point, callback) {
-    debug("Writing data point");
 
-    //XXX: do error checking somehow...
     var key = point[0];
     var tags = point[1];
     var fields = point[2];
@@ -178,6 +180,7 @@ InfluxPoster.prototype.post_data = function (callback) {
             url: this._post_url,
             body: post_body,
         };
+        debug("POSTing " + this._data_lines.length + " lines at " + Date.now()/1000);
 
         // clear data array
         // this does drop data if there is an error,
@@ -185,21 +188,22 @@ InfluxPoster.prototype.post_data = function (callback) {
         this._data_lines = [];
 
         var that = this;
-        console.log("About to POST");
         request(options, function (err, response) {
 
-            console.log(response.statusCode);
-
             if (err) {
-                debug(err);
+                debug("Influx POST error: " + err);
                 debug(response);
 
-                //XXX: emit the error as an event
+                // should do something with the error here...
+            } else {
+                debug("POST successful at " + Date.now()/1000)
             }
 
             // restart timer
             if (that._max_time > 0) {
-                setTimeout(that.post_data, that._max_time);
+                setTimeout(function () {
+                   that.post_data();
+                }, that._max_time);
             }
 
             if (callback) {
@@ -212,7 +216,10 @@ InfluxPoster.prototype.post_data = function (callback) {
 
         // restart timer
         if (this._max_time > 0) {
-            setTimeout(this.post_data, this._max_time);
+            var that = this;
+            setTimeout(function () {
+                that.post_data();
+            }, this._max_time);
         }
 
         if (callback) {
