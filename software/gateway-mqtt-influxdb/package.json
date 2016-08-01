@@ -5,6 +5,7 @@
   "main": "gateway-mqtt-influxdb.js",
   "dependencies": {
     "influx": "^4.2.0",
+    "influx-poster": "^1.0.0",
     "ini": "^1.3.4",
     "mqtt": "^1.11.0",
     "util": "^0.10.3"
