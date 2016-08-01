@@ -55,7 +55,7 @@ function on_data (data) {
 
 Initialize influx-poster.
 
-`user_config`: configuration dictionary for influx database with the following keys
+**`user_config`**: configuration dictionary for influx database with the following keys
 
     mandatory
 
@@ -72,9 +72,9 @@ Initialize influx-poster.
         precision - precision key for influx, default 'ms'
         retention_policy - retention_policy key for influx, default ''
 
-`maximum_lines`: maximum number of lines to be stored before posting
+**`maximum_lines`**: maximum number of lines to be stored before posting
 
-`maximum_time`: maximum amount of time before posting, in milliseconds.
+**`maximum_time`**: maximum amount of time before posting, in milliseconds.
 
 If neither `maximum_lines` nor `maximum_time` are specified, `maximum_time` defaults to 30 seconds.
 
@@ -83,7 +83,7 @@ If neither `maximum_lines` nor `maximum_time` are specified, `maximum_time` defa
 
 Stores a data point to be automatically written when either `maximum_lines` or `maximum_time` is met.
 
-`point`: data array in the following format
+**`point`**: data array in the following format
 
         [
             key,        // mandatory
@@ -92,14 +92,15 @@ Stores a data point to be automatically written when either `maximum_lines` or `
             timestamp,  // optional, may omit
         ]
 
-    Ensure that all values in `fields` are already the type you want them to be
-    in influxDB. Boolean, Float, and String are valid.
-    
-    Ensure that timestamp is already in the correct format based on the
-    `precision` configuration setting.
+Ensure that all values in `fields` are already the type you want them to be
+in influxDB. Boolean, Float, and String are valid.
 
-    See [https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/](https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/)
+Ensure that timestamp is already in the correct format based on the
+`precision` configuration setting.
 
-`callback`: function to be called once complete
+See [https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/](https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/)
+
+
+**`callback`**: function to be called once complete
 
 
