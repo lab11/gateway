@@ -298,7 +298,7 @@ _mqtt_client.on('connect', function () {
 
 				// Need a GPIO for the CS line. Apparently the built in CS line won't work.
 				// Also need to make sure it is in GPIO mode
-				fs.writeFileSync('/sys/kernel/debug/gpio_debug/gpio110', 'mode0');
+				fs.writeFileSync('/sys/kernel/debug/gpio_debug/gpio110/current_pinmux', 'mode0');
 				var spi_cs = gpio.Gpio(110, 'out');
 				spi_cs.writeSync(1);
 
