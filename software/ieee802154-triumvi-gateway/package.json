@@ -22,6 +22,7 @@
   "homepage": "https://github.com/lab11/gateway#readme",
   "dependencies": {
     "async": "^1.5.2",
+    "gateway-topics": "^0.1.0",
     "getmac": "^1.0.7",
     "mqtt": "^1.12.0",
     "node-aes-ccm": "^1.0.2",

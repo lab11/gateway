@@ -302,6 +302,11 @@ _mqtt_client.on('connect', function () {
 				var spi_cs = gpio.Gpio(110, 'out');
 				spi_cs.writeSync(1);
 
+				// Need to make CS1 a GPIO for things to work. Don't know why.
+				fs.writeFileSync('/sys/kernel/debug/gpio_debug/gpio111/current_pinmux', 'mode0');
+				var spi_cs1 = gpio.Gpio(111, 'out');
+				spi_cs1.writeSync(1);
+
 				// Also have a GPIO that does a reset of sorts
 				var cc2538_reset = gpio.Gpio(41, 'out');
 
@@ -388,7 +393,13 @@ _mqtt_client.on('connect', function () {
 
 				}
 
+				// Wait for interrupts from the CC2538
 				cc2538_interrupt.watch(handle_interrupt);
+
+				// Check if the radio is already ready with a packet
+				if (cc2538_interrupt.readSync() == 1) {
+					handle_interrupt(null, 10);
+				}
 			}
 		});
 	});
