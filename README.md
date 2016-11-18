@@ -1,7 +1,25 @@
 Gateway
 =======
 
-Software for the Lab11 gateway platform.
+Gateways provide valuable networking, computational, and storage support for the
+Internet of Things. This gateway platform is an extensible architecture that
+supports multiple communication protocols, backend storage options, system
+monitoring tools, and user interaction options, while enabling rapid
+prototyping of new gateway services. Two core ideas underly this gateway
+architecture: 1) devices should be automtically supported when in range of the gateways, and
+2) data streams provided by the gateway should be easily interpretable.
+
+This gateway provides many common services for embedded devices and sensors,
+an environment for running applications local to the gateway,
+and standard MQTT topics for retreiving the data streams. To promote
+scalability, each node points to a method for interpreting its own data
+and appending metadata. This allows the gateway to automatically adapt
+to new devices without being manually configured. After devices are
+discovered and their data packets are interpretted, the gateway
+creates a data stream which can be published to the cloud, displayed to users,
+or fed to an application.
+
+
 
 <img src="https://www.gliffy.com/go/publish/image/10262809/L.png">
 
