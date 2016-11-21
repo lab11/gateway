@@ -1,20 +1,16 @@
 
 // Functions for converting advertisement to data packet.
 var _device_to_data = {};
+
+// Track which URLs we have converted to parsers, so we can tell between
+// the first time a packet is seen and if it was cached from a previous run.
 var _known_urls = {};
 
 // Keep a map of URL -> parse.js parsers so we don't have to re-download
 // parse.js for the same devices.
 var _parsers = {};
 
-// // Keep track of shortened URLs to the full expanded URL so we don't
-// // have to query each time we get a short URL
-// var _cached_urls = {};
-
-// // Keep track of when we last fetched parse.js for a node so that we get
-// // a possible new copy periodically.
-// var _device_id_ages = {};
-
+// ID for this gateway. Required for _meta section of packets.
 var _gateway_id = 'unknown';
 
 // Hardcoded constant for the timeout window to check for a new parse.js
@@ -23,8 +19,6 @@ var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
 // Hardcoded constant for the name of the JavaScript that has the functions
 // we care about for this gateway.
 var FILENAME_PARSE = 'parse.js'
-
-// var _BUFFER = undefined;
 
 var app = {
     // Application Constructor
@@ -37,12 +31,6 @@ var app = {
     // Bind any cordova events here. Common events are:
     // 'pause', 'resume', etc.
     onDeviceReady: function() {
-
-        // _BUFFER = __Buffer;
-
-        // var bllll = require('./BLEES');
-        // console.log(BLEES)
-        // console.log(BLEES.parseAdvertisement)
 
         // Set the gateway ID when things are running.
         _gateway_id = device.uuid;
@@ -58,37 +46,18 @@ var app = {
                 console.log('Failed to restart BLE: ' + err);
             });
         });
-
-
-
-
-
-
-
     },
 
+    // Called for each BLE advertisement
     on_discover: function (evothings_device) {
 
+        // Increment count of total BLE advertisements seen.
         var count = parseInt($('#total-packets').text()) + 1;
         $('#total-packets').text(count);
 
-
-
-
-        // console.log("\n\nGot packet");
-        // console.log(JSON.stringify(evothings_device));
-
-        // var k = evothings.ble.parseAdvertisementData(peripheral);
-
-        // console.log(k);
-        // console.log(JSON.stringify(k));
-
+        // Convert the evothings format to what we consider standard: the
+        // Noble advertisement interface.
         var peripheral = app.convert_to_noble(evothings_device);
-        // console.log(peripheral);
-        // console.log(JSON.stringify(peripheral));
-
-
-
 
         // Get the time
         var received_time = new Date().toISOString();
@@ -96,7 +65,8 @@ var app = {
         // We have seen an eddystone packet from the same address
         if (peripheral.address in _device_to_data) {
 
-            // console.log('Understood: ' + peripheral.address)
+            // Increment the number of packets where we recognize the address
+            // as having a corresponding eddystone packet.
             var count = parseInt($('#understood-packets').text()) + 1;
             $('#understood-packets').text(count);
 
@@ -107,27 +77,16 @@ var app = {
             if (device.request_url in _parsers) {
                 var parser_name = _parsers[device.request_url];
 
-// console.log(' USING PARSER ' + parser_name + ' for ' + peripheral.address);
-// if (app[parser_name]) {
-//     console.log('first passes')
-// }
-// if (app[parser_name].parseAdvertisement) {
-//     console.log('second pases')
-// }
-
                 // Check if we have some way to parse the advertisement
                 if (app[parser_name] && app[parser_name].parseAdvertisement) {
 
                     var parse_advertisement_done = function (adv_obj, local_obj) {
-
-
-
                         // only continue if the result was valid
                         if (adv_obj) {
 
+                            // Increment the number of parsed packets.
                             var count = parseInt($('#parsed-packets').text()) + 1;
                             $('#parsed-packets').text(count);
-
 
                             adv_obj.id = peripheral.id;
 
@@ -169,16 +128,14 @@ var app = {
                         }
                     };
 
-
-// console.log(' CALL THE PARSER ' + parser_name);
                     // Call the device specific advertisement parse function.
                     // Give it the done callback.
                     try {
+                        // Increment the number of packets we tried to parse.
                         var count = parseInt($('#attempted-packets').text()) + 1;
                         $('#attempted-packets').text(count);
 
-
-                        // add the device ID for parsers to see
+                        // Add the device ID for parsers to see.
                         peripheral.advertisement.advertiser_id = peripheral.id;
                         app[parser_name].parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
                     } catch (e) {
@@ -199,7 +156,6 @@ var app = {
 
             // Make sure we do this at least once
             if (device_in_cache && (peripheral.address in _device_to_data)) {
-                // console.log('Skipping ' + peripheral.address);
                 return;
             }
 
@@ -211,28 +167,6 @@ var app = {
             if (!(peripheral.address in _device_to_data)) {
                 _device_to_data[peripheral.address] = {};
             }
-
-
-
-
-
-            // if (peripheral.address in _known_devices) return;
-            // _known_devices[peripheral.address] = true;
-
-
-            // // We keep a list of the last time we looked in to each device.
-            // // We only check on a device periodically to not overwhelm any
-            // // processing.
-            // if (beacon.id in _device_id_ages) {
-            //     if ((now - _device_id_ages[beacon.id]) < PARSE_JS_CACHE_TIME_IN_MS) {
-            //         return;
-            //     }
-            // }
-            // _device_id_ages[beacon.id] = now;
-
-            // // Now take short URL and get the expanded URL.
-
-
 
             // Check to see if we know how to expand this URL. On the first
             // pass we enforce the timeout. If we can't fetch the correct
@@ -252,8 +186,6 @@ var app = {
                     got_expanded_url.call(this, long_url);
 
                 } else {
-                    // console.log('Skipping ' + long_url);
-
                     // If we skip this, we still need to make sure it
                     // happens at least once.
                     if (!('request_url' in _device_to_data[peripheral.address])) {
@@ -265,36 +197,18 @@ var app = {
                 }
 
             } else {
-                // console.log('not known long url')
-                // TODO: NEED ACTUAL URL EXPANDER
-// console.log('EXPAND IT ('  + short_url + ') YEAH YEAH ');
-                // urlExpander.expand(short_url, got_expanded_url_internet.bind(this));
-
-        // $.ajax(short_url, {
-        //     success: function (data, status, xhr) {
-        //         console.log('first')
-        //         console.log(status);
-        //         console.log(xhr);
-        //         console.log(xhr.getResponseHeader('Location'));
-        //         console.log(xhr.getAllResponseHeaders());
-        //         console.log(xhr.responseURL);
-        //     }
-        // });
+                // Expand the URL to get the full URL. Use XMLHttpRequest
+                // because it has access to .responseURL.
 
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', short_url, true);
-                xhr.onload = xml_expanded_url_cb.bind(this);
+                xhr.onload = function () {
+                    got_expanded_url_internet.call(this, null, xhr.responseURL);
+                };
                 xhr.addEventListener('error', function () {
                     got_expanded_url_internet(true, null);
                 });
                 xhr.send(null);
-
-                function xml_expanded_url_cb () {
-                    // TODO: WHAT TO PUT AS THE ERROR?!?
-                    got_expanded_url_internet.call(this, null, xhr.responseURL);
-                }
-
-
             }
 
             // Called when the URL expander was able to resolve the short
@@ -324,9 +238,6 @@ var app = {
             // This is called after we have the url expanded and now need to
             // get parser.
             function got_expanded_url (full_url) {
-
-
-
                 // Get only the base (not index.html, for instance)
                 var base_url = app.get_base_url(full_url);
 
@@ -347,33 +258,15 @@ var app = {
                     console.log('Fetching ' + request_url + ' (' + peripheral.address + ')');
 
                     $.ajax(request_url, {
-                        success: parse_js_jquery_get_cb,
+                        success: function (data) {
+                            console.log('Got ' + request_url + ' (' + peripheral.address + ')');
+                            got_parse_js_internet.call(this, null, data);
+                        },
                         error: function () {
                             got_parse_js_internet(true, null);
                         },
                         cache: false,
                     });
-
-                    function parse_js_jquery_get_cb (data) {
-                        console.log('Got ' + request_url + ' (' + peripheral.address + ')');
-                        // TODO HOW TO SET ERROR?
-                        got_parse_js_internet.call(this, null, data);
-
-                    }
-
-                    // TODO: MAKE THIS FETCH ACTUALLY WORK
-
-                //     // Now see if we can get parse.js
-                //     // async.retry({tries: 10, interval: 400}, function (cb, r) {
-                //         request(request_url, function (err, response, body) {
-                //             // We want to error if err or 503
-                //             var request_err = (err || response.statusCode==503);
-                //             cb(request_err, response);
-                //         });
-                //     // }, got_parse_js.bind(this));
-                // } else {
-                //     debug('Using cached parse.js for ' + beacon.id);
-                // }
                 }
 
                 // This is called after we successfully try to fetch parse.js
@@ -396,10 +289,6 @@ var app = {
 
 
                 function got_parse_js (parse_js_text) {
-                    // console.log('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + peripheral.address + ')');
-
-
-
                     // Make the downloaded JS an actual function
                     // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
                     try {
@@ -407,35 +296,12 @@ var app = {
                         console.log('Loading parse.js into code: ' + name);
                         app.require_from_string(parse_js_text, name);
                         _parsers[request_url] = name;
-
-                        // console.log('DID IT TAKE??')
-                        // console.log(app['TESTEROK']);
-                        // console.log(app['TESTEROK'].parseAdvertisement);
-                        // console.log('NO?')
-
                     } catch (e) {
-                        console.log('hit this????????')
+                        console.log('Error parsing JS to instantiate parse.js')
                     }
-
                 };
-
-
-
-
             };
-
-            // If we are processing a device's eddystone packet, always
-            // expand the URL. We could
-
-
-
         }
-
-
-
-
-
-
     },
 
     on_scan_error: function (error_code) {
@@ -443,11 +309,6 @@ var app = {
     },
 
     parsedAdvertisement: function (adv_obj) {
-        // console.log(adv_obj);
-        // console.log(JSON.stringify(adv_obj));
-        // $('#packets').prepend('<div>' + JSON.stringify(adv_obj) + '</div>');
-
-
         if ('device' in adv_obj) {
             var device = adv_obj.device.replace(/^[a-z]/gi, '');
             if ($('#device-' + device).length == 0) {
@@ -457,8 +318,6 @@ var app = {
             count += 1;
             $('#device-' + device).text(count);
         }
-
-
     },
 
     parsedLocal: function (local_obj) {
@@ -484,16 +343,11 @@ var app = {
     },
 
     require_from_string: function (src, name) {
-        // var before = '(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module \'"+o+"\'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){';
-        // var after = '},{}]},{},[1]);'
         var before1 = '(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{app.';
         var before2 = ' = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module \'"+o+"\'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){';
         var after = '},{}]},{},[1])(1)});'
 
         var eval_str = before1 + name + before2 + src + after;
-        // console.log(eval_str);
-        // var k = eval(eval_str);
-        // console.log(k);
 
         $("body").append($("<script />", {
           html: eval_str
