@@ -13,7 +13,7 @@ function cache_load_from_file () {
 }
 
 function cache_store (key, value) {
-	_cache[key] = [new Date.now(), value];
+	_cache[key] = [Date.now(), value];
 
 	var to_store = JSON.stringify(_cache);
 
@@ -21,15 +21,15 @@ function cache_store (key, value) {
 }
 
 function cache_load (key, enforce_timeout) {
-	var now = new Date.now();
+	var now = Date.now();
 
 	if (!(key in _cache)) {
-		return undefined;
+		return null;
 	}
 
 	// If we want to timeout this record, then check if it's too old.
 	if (enforce_timeout && (now - _cache[key][0] > CACHE_TIMEOUT)) {
-		return undefined;
+		return null;
 	}
 
 	return _cache[key][1];
