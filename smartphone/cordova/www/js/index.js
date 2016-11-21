@@ -51,8 +51,12 @@ var app = {
         // And get our cache back
         cache_load_from_file(function () {
             // Start scanning for BLE packets
-            evothings.ble.stopScan();
-            evothings.ble.startScan(app.on_discover, app.on_scan_error);
+            evothings.ble.reset(function () {
+                console.log('Successfully restarted BLE');
+                evothings.ble.startScan(app.on_discover, app.on_scan_error);
+            }, function (err) {
+                console.log('Failed to restart BLE: ' + err);
+            });
         });
 
 
@@ -64,6 +68,13 @@ var app = {
     },
 
     on_discover: function (evothings_device) {
+
+        var count = parseInt($('#total-packets').text()) + 1;
+        $('#total-packets').text(count);
+
+
+
+
         // console.log("\n\nGot packet");
         // console.log(JSON.stringify(evothings_device));
 
@@ -85,6 +96,10 @@ var app = {
         // We have seen an eddystone packet from the same address
         if (peripheral.address in _device_to_data) {
 
+            // console.log('Understood: ' + peripheral.address)
+            var count = parseInt($('#understood-packets').text()) + 1;
+            $('#understood-packets').text(count);
+
             // Lookup the correct device to get its parser URL identifier
             var device = _device_to_data[peripheral.address];
 
@@ -105,8 +120,15 @@ var app = {
 
                     var parse_advertisement_done = function (adv_obj, local_obj) {
 
+
+
                         // only continue if the result was valid
                         if (adv_obj) {
+
+                            var count = parseInt($('#parsed-packets').text()) + 1;
+                            $('#parsed-packets').text(count);
+
+
                             adv_obj.id = peripheral.id;
 
                             // Add a _meta key with some more information
@@ -152,6 +174,10 @@ var app = {
                     // Call the device specific advertisement parse function.
                     // Give it the done callback.
                     try {
+                        var count = parseInt($('#attempted-packets').text()) + 1;
+                        $('#attempted-packets').text(count);
+
+
                         // add the device ID for parsers to see
                         peripheral.advertisement.advertiser_id = peripheral.id;
                         app[parser_name].parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
