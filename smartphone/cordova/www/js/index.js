@@ -1,6 +1,7 @@
 
 // Functions for converting advertisement to data packet.
 var _device_to_data = {};
+var _known_urls = {};
 
 // Keep a map of URL -> parse.js parsers so we don't have to re-download
 // parse.js for the same devices.
@@ -48,11 +49,13 @@ var app = {
         console.log("Gateway ID: " + _gateway_id)
 
         // And get our cache back
-        cache_load_from_file();
+        cache_load_from_file(function () {
+            // Start scanning for BLE packets
+            evothings.ble.stopScan();
+            evothings.ble.startScan(app.on_discover, app.on_scan_error);
+        });
 
-        // Start scanning for BLE packets
-        evothings.ble.stopScan();
-        evothings.ble.startScan(app.on_discover, app.on_scan_error);
+
 
 
 
@@ -89,13 +92,13 @@ var app = {
             if (device.request_url in _parsers) {
                 var parser_name = _parsers[device.request_url];
 
-console.log(' USING PARSER ' + parser_name + ' for ' + peripheral.address);
-if (app[parser_name]) {
-    console.log('first passes')
-}
-if (app[parser_name].parseAdvertisement) {
-    console.log('second pases')
-}
+// console.log(' USING PARSER ' + parser_name + ' for ' + peripheral.address);
+// if (app[parser_name]) {
+//     console.log('first passes')
+// }
+// if (app[parser_name].parseAdvertisement) {
+//     console.log('second pases')
+// }
 
                 // Check if we have some way to parse the advertisement
                 if (app[parser_name] && app[parser_name].parseAdvertisement) {
@@ -145,7 +148,7 @@ if (app[parser_name].parseAdvertisement) {
                     };
 
 
-console.log(' CALL THE PARSER ' + parser_name);
+// console.log(' CALL THE PARSER ' + parser_name);
                     // Call the device specific advertisement parse function.
                     // Give it the done callback.
                     try {
@@ -164,20 +167,32 @@ console.log(' CALL THE PARSER ' + parser_name);
 
         var url = app.parse_eddystone_url(peripheral);
         if (url) {
-        // if (url && url == 'http://j2x.us/sbMMHT') {
-            // This is an Eddystone URL packet
-            // console.log('Found eddystone: ' + peripheral.address + ' ' + url);
-
             // See if we still have this device cached and don't need to
-            // parse this eddystone packet
+            // parse this eddystone packet.
             var device_in_cache = cache_load(peripheral.address, true);
-// console.log("cahce: " + device_in_cache)
-            if (device_in_cache) return;
-// console.log('This eddystone not in cache or old in cache')
+
+            // Make sure we do this at least once
+            if (device_in_cache && (peripheral.address in _device_to_data)) {
+                // console.log('Skipping ' + peripheral.address);
+                return;
+            }
 
             // Not in cache, so add it and process. Either for the first time
             // or to make sure nothing has changed.
-            cache_store(peripheral.address, true);
+            cache_store(peripheral.address, url);
+
+            // Create space if this is a new beacon
+            if (!(peripheral.address in _device_to_data)) {
+                _device_to_data[peripheral.address] = {};
+            }
+
+
+
+
+
+            // if (peripheral.address in _known_devices) return;
+            // _known_devices[peripheral.address] = true;
+
 
             // // We keep a list of the last time we looked in to each device.
             // // We only check on a device periodically to not overwhelm any
@@ -201,7 +216,30 @@ console.log(' CALL THE PARSER ' + parser_name);
             var short_url = url;
             var long_url = cache_load(short_url, true);
 
-            if (!long_url) {
+            if (long_url) {
+                if (!(long_url in _known_urls)) {
+                    // Mark this URL as known, so we don't bother reprocessing
+                    // it until it's timed out of the cache.
+                    _known_urls[long_url] = true;
+
+                    // Go ahead with handling this URL
+                    got_expanded_url.call(this, long_url);
+
+                } else {
+                    // console.log('Skipping ' + long_url);
+
+                    // If we skip this, we still need to make sure it
+                    // happens at least once.
+                    if (!('request_url' in _device_to_data[peripheral.address])) {
+                        var base_url = app.get_base_url(long_url);
+                        var request_url = base_url + FILENAME_PARSE;
+                        _device_to_data[peripheral.address]['url'] = base_url;
+                        _device_to_data[peripheral.address]['request_url'] = request_url;
+                    }
+                }
+
+            } else {
+                // console.log('not known long url')
                 // TODO: NEED ACTUAL URL EXPANDER
 // console.log('EXPAND IT ('  + short_url + ') YEAH YEAH ');
                 // urlExpander.expand(short_url, got_expanded_url_internet.bind(this));
@@ -220,18 +258,17 @@ console.log(' CALL THE PARSER ' + parser_name);
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', short_url, true);
                 xhr.onload = xml_expanded_url_cb.bind(this);
+                xhr.addEventListener('error', function () {
+                    got_expanded_url_internet(true, null);
+                });
                 xhr.send(null);
 
                 function xml_expanded_url_cb () {
                     // TODO: WHAT TO PUT AS THE ERROR?!?
-                    got_expanded_url_internet.call(this, null, xhr.responseURL)
+                    got_expanded_url_internet.call(this, null, xhr.responseURL);
                 }
 
 
-            } else {
-// console.log('HAD CACHED LONG URL');
-                // Go ahead with handling this URL
-                got_expanded_url.call(this, long_url);
             }
 
             // Called when the URL expander was able to resolve the short
@@ -262,10 +299,7 @@ console.log(' CALL THE PARSER ' + parser_name);
             // get parser.
             function got_expanded_url (full_url) {
 
-                // Create space if this is a new beacon
-                if (!(peripheral.address in _device_to_data)) {
-                    _device_to_data[peripheral.address] = {};
-                }
+
 
                 // Get only the base (not index.html, for instance)
                 var base_url = app.get_base_url(full_url);
@@ -277,7 +311,7 @@ console.log(' CALL THE PARSER ' + parser_name);
                 var request_url = base_url + FILENAME_PARSE;
                 _device_to_data[peripheral.address]['request_url'] = request_url;
 
-                // See if we have a copy of that parser cached
+                // See if we have a copy of that parser cached.
                 var parse_js_text = cache_load(request_url, true);
                 if (parse_js_text) {
                     got_parse_js.call(this, parse_js_text);
@@ -286,9 +320,16 @@ console.log(' CALL THE PARSER ' + parser_name);
                     // Don't have this one yet, so lets get it
                     console.log('Fetching ' + request_url + ' (' + peripheral.address + ')');
 
-                    $.get(request_url, parse_js_jquery_get_cb.bind(this));
+                    $.ajax(request_url, {
+                        success: parse_js_jquery_get_cb,
+                        error: function () {
+                            got_parse_js_internet(true, null);
+                        },
+                        cache: false,
+                    });
 
                     function parse_js_jquery_get_cb (data) {
+                        console.log('Got ' + request_url + ' (' + peripheral.address + ')');
                         // TODO HOW TO SET ERROR?
                         got_parse_js_internet.call(this, null, data);
 
@@ -329,8 +370,7 @@ console.log(' CALL THE PARSER ' + parser_name);
 
 
                 function got_parse_js (parse_js_text) {
-                    console.log('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + peripheral.address + ')');
-                    // console.log(parse_js_text);
+                    // console.log('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + peripheral.address + ')');
 
 
 
@@ -338,6 +378,7 @@ console.log(' CALL THE PARSER ' + parser_name);
                     // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
                     try {
                         var name = request_url.replace(/[^a-z]/gi, '');
+                        console.log('Loading parse.js into code: ' + name);
                         app.require_from_string(parse_js_text, name);
                         _parsers[request_url] = name;
 
@@ -376,8 +417,22 @@ console.log(' CALL THE PARSER ' + parser_name);
     },
 
     parsedAdvertisement: function (adv_obj) {
-        console.log(adv_obj);
-        console.log(JSON.stringify(adv_obj));
+        // console.log(adv_obj);
+        // console.log(JSON.stringify(adv_obj));
+        // $('#packets').prepend('<div>' + JSON.stringify(adv_obj) + '</div>');
+
+
+        if ('device' in adv_obj) {
+            var device = adv_obj.device.replace(/^[a-z]/gi, '');
+            if ($('#device-' + device).length == 0) {
+                $('#packets').append('<div>'+adv_obj.device+': <span id="device-'+device+'">0</span></div>');
+            }
+            var count = parseInt($('#device-' + device).text());
+            count += 1;
+            $('#device-' + device).text(count);
+        }
+
+
     },
 
     parsedLocal: function (local_obj) {
