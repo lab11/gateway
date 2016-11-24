@@ -18,7 +18,10 @@ var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
 
 // Hardcoded constant for the name of the JavaScript that has the functions
 // we care about for this gateway.
-var FILENAME_PARSE = 'parse.js'
+var FILENAME_PARSE = 'parse.js';
+
+// Settings for influx
+var _influx_settings = {};
 
 var app = {
     // Application Constructor
@@ -32,20 +35,66 @@ var app = {
     // 'pause', 'resume', etc.
     onDeviceReady: function() {
 
+        $('#influx-save').click(function () {
+            _influx_settings.host = $('#influx-host').val();
+            _influx_settings.database = $('#influx-database').val();
+            _influx_settings.port = $('#influx-port').val();
+            _influx_settings.protocol = $('#influx-protocol').val();
+            _influx_settings.username = $('#influx-username').val();
+            _influx_settings.password = $('#influx-password').val();
+            _influx_settings.prefix = $('#influx-prefix').val();
+            _influx_settings.enable = $('#influx-enable').prop('checked');
+
+            plugins.appPreferences.store(function () {
+                console.log('Saved Influx settings successfully.');
+            }, function (err) {
+                console.log('Failed to save influx settings.');
+            }, 'influx-settings', JSON.stringify(_influx_settings));
+        });
+
+
+
         // Set the gateway ID when things are running.
         _gateway_id = device.uuid;
-        console.log("Gateway ID: " + _gateway_id)
+        console.log("Gateway ID: " + _gateway_id);
 
-        // And get our cache back
-        cache_load_from_file(function () {
-            // Start scanning for BLE packets
-            evothings.ble.reset(function () {
-                console.log('Successfully restarted BLE');
-                evothings.ble.startScan(app.on_discover, app.on_scan_error);
-            }, function (err) {
-                console.log('Failed to restart BLE: ' + err);
+        // Get all influx related settings
+        plugins.appPreferences.fetch(function (value) {
+            if (value == '') value = '{}';
+            _influx_settings = JSON.parse(value);
+            console.log('GOT INFLUX SETTINGS');
+            console.log(value);
+            console.log(_influx_settings);
+
+            // Update UI with saved settings
+            if (_influx_settings.enable) $('#influx-enable').prop('checked', true);
+            $('#influx-host').val(_influx_settings.host);
+            $('#influx-database').val(_influx_settings.database);
+            $('#influx-port').val(_influx_settings.port);
+            $('#influx-protocol').val(_influx_settings.protocol);
+            $('#influx-username').val(_influx_settings.username);
+            $('#influx-password').val(_influx_settings.password);
+            $('#influx-prefix').val(_influx_settings.prefix);
+
+            start_ble_gateway();
+        }, function (err) {
+            console.log('Error loading influx settings: ' + err);
+
+            start_ble_gateway();
+        }, 'influx-settings');
+
+        function start_ble_gateway () {
+            // And get our cache back
+            cache_load_from_file(function () {
+                // Start scanning for BLE packets
+                evothings.ble.reset(function () {
+                    console.log('Successfully restarted BLE');
+                    evothings.ble.startScan(app.on_discover, app.on_scan_error);
+                }, function (err) {
+                    console.log('Failed to restart BLE: ' + err);
+                });
             });
-        });
+        }
     },
 
     // Called for each BLE advertisement
@@ -318,11 +367,23 @@ var app = {
             count += 1;
             $('#device-' + device).text(count);
         }
+
+
+        if (_influx_settings.enable == true) {
+            app.influx_packet(adv_obj);
+        }
     },
 
     parsedLocal: function (local_obj) {
         console.log(local_obj);
     },
+
+
+    influx_packet: function (adv_obj) {
+
+    },
+
+
 
     // HELPER FUNCTIONS
     get_base_url: function (full_url) {
