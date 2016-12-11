@@ -7,6 +7,10 @@
  *  - MQTT
  ******************************************************************************/
 
+// Allow noble and bleno to co-exist. If this is not set, noble will block
+// any master's ability to see services provided by a bleno app.
+process.env.NOBLE_MULTI_ROLE = 1;
+
 var BleGateway    = require('ble-gateway');
 var GatewayTopics = require('gateway-topics');
 
