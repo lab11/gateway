@@ -28,8 +28,7 @@ var _notify_callback = null;
 
 
 
-// var mqtt_client = mqtt.connect('mqtt://localhost');
-var mqtt_client = mqtt.connect('mqtt://141.212.11.192');
+var mqtt_client = mqtt.connect('mqtt://localhost');
 
 mqtt_client.on('connect', function () {
 	// Subscribe to all Triumvi packets
