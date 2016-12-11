@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+var os    = require('os');
+
 var mqtt  = require('mqtt');
 var bleno = require('bleno');
 var debug = require('debug')('gateway-triumvi-ble');
@@ -7,7 +9,7 @@ var debug = require('debug')('gateway-triumvi-ble');
 
 var MQTT_TOPIC_NAME = 'device/Triumvi/+';
 
-var DEVICE_NAME         = 'triumvi_data';
+var DEVICE_NAME         = 'triumvi_gateway';
 var SERVICE_UUID        = '774a035eb8d24f0c9d3247901afef8e0';
 var CHARACTERISTIC_UUID = '774a035eb8d24f0c9d3247901afef8e1';
 
@@ -69,7 +71,42 @@ bleno.on('stateChange', function(state) {
 	debug('on -> stateChange: ' + state);
 
 	if (state === 'poweredOn') {
-		bleno.startAdvertising(DEVICE_NAME, [SERVICE_UUID]);
+		var ifaces  = os.networkInterfaces();
+		var found = false;
+		Object.keys(ifaces).forEach(function (ifname) {
+			ifaces[ifname].forEach(function (iface) {
+				if ('IPv4' !== iface.family || iface.internal !== false || found === true) {
+					// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+					return;
+				}
+
+				// We have found the first non-local IPv4 address. Advertise it.
+				console.log('Advertising http://' + iface.address);
+
+				// Ok lets generate some advertising data.
+				// We just hack this in for now. No real reason to cobble all of
+				// the code together to format this in a generic way.
+				var ip = iface.address;
+				var buf_ip = Buffer.from(ip);
+				var buf_flags = Buffer.from([2, 0x01, 0x06]);
+				var buf_short_services = Buffer.from([3, 0x03, 0xAA, 0xFE]); // eddystone
+				var buf_eddystone = Buffer.from([ip.length+6, 0x16, 0xAA, 0xFE, 0x10, 0xEB, 0x02]); // eddystone header
+				var adv_data = Buffer.concat([buf_flags, buf_short_services, buf_eddystone, buf_ip]);
+
+				// We also want a name, so generate a scan response.
+				var name = DEVICE_NAME;
+				var buf_name = Buffer.from(name);
+				var buf_device_name = Buffer.from([name.length+1, 0x09]);
+				var scan_data = Buffer.concat([buf_device_name, buf_name]);
+
+				// Tell bleno to use this data.
+				bleno.startAdvertisingWithEIRData(adv_data, scan_data);
+
+				found = true;
+			});
+		});
+
+
 	} else {
 		bleno.stopAdvertising();
 	}
