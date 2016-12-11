@@ -7,7 +7,7 @@ them as a BLE characteristic.
 BLE Information
 ---------------
 
-This service advertises using the name `triumvi_data`.
+This service advertises using the name `triumvi_gateway`.
 
 - Service ID: `774a035e-b8d2-4f0c-9d32-47901afef8e0`
   - Characteristic ID: `774a035e-b8d2-4f0c-9d32-47901afef8e1`
