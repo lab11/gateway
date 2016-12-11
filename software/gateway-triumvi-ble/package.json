@@ -1,0 +1,16 @@
+{
+  "name": "gateway-triumvi-ble",
+  "version": "1.0.0",
+  "description": "Publish Triumvi on BLE ======================",
+  "main": "gateway-triumvi-ble.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bleno": "^0.4.1",
+    "debug": "^2.3.3",
+    "mqtt": "^2.1.3"
+  }
+}
