@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 var fs         = require('fs');
+var path       = require('path');
 
 var express    = require('express');
 var nunjucks   = require('nunjucks');
@@ -42,6 +43,32 @@ try {
  * API Services
  ******************************************************************************/
 
+// Delete .csv / .json files older than 1 hour.
+function delete_old_data_files () {
+	fs.readdir('.', function (err, files) {
+		files.forEach(function (file, index) {
+
+			// Make sure it is .csv or .json
+			if (['.json', '.csv'].indexOf(path.extname(file)) >= 0) {
+				fs.stat(path.join('.', file), function (err, stat) {
+					if (err) return console.error(err);
+
+					var endTime, now;
+					now = new Date().getTime();
+					endTime = new Date(stat.ctime).getTime() + 3600000;
+
+					if (now > endTime) {
+						console.log('deleting ' + path.join('.', file))
+						fs.unlink(path.join('.', file), function(err) {
+							if (err) return console.error(err);
+							console.log('successfully deleted ' + path.join('.', file));
+						});
+					}
+				});
+			}
+		});
+	});
+}
 
 /*******************************************************************************
  * ROUTES
@@ -78,11 +105,21 @@ app.get('/triumvi/data', function (req, res) {
 
 	function get_panel_circuit_ids (cb) {
 		db.all('SELECT DISTINCT panel_id FROM triumvi WHERE panel_id NOT NULL ORDER BY panel_id', function (err, rows) {
+			if (err) {
+				console.log('Error: Could not get panel IDs.');
+				console.log(err);
+				return;
+			}
 			for (var i=0; i<rows.length; i++) {
 				data.panel_ids.push(rows[i].PANEL_ID);
 			}
 
 			db.all('SELECT DISTINCT circuit_id FROM triumvi WHERE panel_id NOT NULL ORDER BY circuit_id', function (err, rows) {
+				if (err) {
+					console.log('Error: Could not get circuit IDs.');
+					console.log(err);
+					return;
+				}
 				for (var i=0; i<rows.length; i++) {
 					data.circuit_ids.push(rows[i].CIRCUIT_ID);
 				}
@@ -100,6 +137,10 @@ app.get('/triumvi/data', function (req, res) {
 
 app.post('/triumvi/data/download', function (req, res) {
 	console.log(req.body)
+
+	// On each call to generate new data, delete any old data dumps that
+	// we don't need anymore.
+	delete_old_data_files();
 
 	var query = 'SELECT ';
 	var group_by = '';

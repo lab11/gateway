@@ -27,7 +27,7 @@ Triuvmi Data Download
 
             <div class="col-md-4 triumvi-select-box">
               <label>
-                <input type="radio" name="which" value="panel-circuit">
+                <input type="radio" name="which" value="panel-circuit" checked="checked">
                 Panel and Circuit
 
                 <div class="row" style="margin-top: 20px; font-weight: normal;">
@@ -128,7 +128,7 @@ Triuvmi Data Download
 
           <div class="radio">
             <label>
-              <input type="radio" name="resolution" value="15min" checked>
+              <input type="radio" name="resolution" value="15min" checked="checked">
               15 minute interval data
             </label>
           </div>
@@ -163,7 +163,7 @@ Triuvmi Data Download
 
           <div class="radio">
             <label>
-              <input type="radio" name="format" value="csv" checked>
+              <input type="radio" name="format" value="csv" checked="checked">
               CSV
             </label>
           </div>
