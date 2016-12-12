@@ -134,6 +134,12 @@ Triuvmi Data Download
           </div>
           <div class="radio">
             <label>
+              <input type="radio" name="resolution" value="5min">
+              5 minute interval data
+            </label>
+          </div>
+          <div class="radio">
+            <label>
               <input type="radio" name="resolution" value="1min">
               1 minute interval data
             </label>
