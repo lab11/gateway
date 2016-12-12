@@ -1,0 +1,18 @@
+{
+  "name": "gateway-triumvi-server",
+  "version": "1.0.0",
+  "description": "Gateway Local Server View =========================",
+  "main": "gateway-triumvi-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.1.4",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "nunjucks": "^3.0.0",
+    "sqlite3": "^3.1.8"
+  }
+}

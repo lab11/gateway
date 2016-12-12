@@ -1,0 +1,194 @@
+{% extends "base.nunjucks" %}
+
+{% block title %}
+Triuvmi Data Download
+{% endblock %}
+
+{% block body %}
+<div class="row" style="margin-top: 15px;">
+  <div class="jumbotron col-md-12">
+    <h1>Triumvi Data Download</h1>
+    <p>Use the options below to download the Triumvi power meter data.</p>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-body">
+    <form action="/triumvi/data/download" method="post">
+
+      {# How to select which triumvis #}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select Which Triumvis</h3>
+        </div>
+        <div class="panel-body">
+
+          <div class="row">
+
+            <div class="col-md-4 triumvi-select-box">
+              <label>
+                <input type="radio" name="which" value="panel-circuit">
+                Panel and Circuit
+
+                <div class="row" style="margin-top: 20px; font-weight: normal;">
+                  <div class="col-md-4">Panel</div>
+                  <div class="col-md-8">
+                    <select class="form-control" name="panel">
+                    {% for panel_id in panel_ids %}
+                      <option value="{{ panel_id }}">{{ panel_id }}</option>
+                    {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row" style="font-weight: normal;"">
+                  <div class="col-md-4">Circuit</div>
+                  <div class="col-md-8">
+                    <select class="form-control" name="circuit">
+                    {% for circuit_id in circuit_ids %}
+                      <option value="{{ circuit_id }}">{{ circuit_id }}</option>
+                    {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+              </label>
+            </div>
+
+            <div class="col-md-4 triumvi-select-box">
+              <label>
+                <input type="radio" name="which" value="triumvi-id">
+                Triumvi ID
+
+                <div class="row" style="margin-top: 20px; font-weight: normal;">
+                  <div class="col-md-3">Triumvi ID</div>
+                  <div class="col-md-9">
+                    <select class="form-control" name="triumvi-id">
+                    {% for triumvi_id in triumvi_ids %}
+                      <option value="{{ triumvi_id }}">{{ triumvi_id }}</option>
+                    {% endfor %}
+                    </select>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div class="col-md-4" style="text-align: center;">
+              <label>
+                <input type="radio" name="which" value="all">
+                All
+
+                <div style="margin-top: 20px;">
+                  <span style="font-weight: normal;">
+                    Select all Triumvis
+                  </span>
+                </div>
+              </label>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      {# Date range for the data #}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Choose a Date Range</h3>
+        </div>
+        <div class="panel-body">
+
+          <div class="row">
+            <div class="form-group">
+              <label for="start" class="col-sm-1 control-label">Start</label>
+              <div class="col-md-6">
+                <input type="text" class="form-control" id="start" name="start" />
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label for="start" class="col-sm-1 control-label">End</label>
+              <div class="col-md-6">
+                <input type="text" class="form-control" id="end" name="end" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {# Data resolution #}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select the Resolution of the Data</h3>
+        </div>
+        <div class="panel-body">
+
+          <div class="radio">
+            <label>
+              <input type="radio" name="resolution" value="15min" checked>
+              15 minute interval data
+            </label>
+          </div>
+          <div class="radio">
+            <label>
+              <input type="radio" name="resolution" value="1min">
+              1 minute interval data
+            </label>
+          </div>
+          <div class="radio">
+            <label>
+              <input type="radio" name="resolution" value="all">
+              Full resolution
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      {# File Type #}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select a File Format for the Data</h3>
+        </div>
+        <div class="panel-body">
+
+          <div class="radio">
+            <label>
+              <input type="radio" name="format" value="csv" checked>
+              CSV
+            </label>
+          </div>
+          <div class="radio">
+            <label>
+              <input type="radio" name="format" value="json">
+              JSON
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+
+      <button class="btn btn-default btn-primary" type="submit">Download the Data</button>
+
+
+
+
+    </form>
+  </div>
+</div>
+
+<script src="/static/js/moment.min.js"></script>
+<script src="/static/js/bootstrap-datetimepicker.min.js"></script>
+
+<script type="text/javascript">
+  $(function () {
+    $('#start').datetimepicker();
+    $('#end').datetimepicker();
+  });
+</script>
+
+{% endblock %}

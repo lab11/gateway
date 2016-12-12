@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/css/bootstrap-3.3.7.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="/static/css/swarmgateway.css">
+
+    <script src="/static/js/jquery-2.2.1.min.js"></script>
+    <script src="/static/js/bootstrap-3.3.7.min.js"></script>
+
+    <title>{% block title %}{% endblock %}</title>
+  </head>
+
+  <body>
+    <div class="container">
+      {% block body %}
+      {% endblock %}
+    </div>
+  </body>
+
+</html>
