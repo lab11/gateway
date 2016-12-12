@@ -7,6 +7,7 @@
 var fs         = require('fs');
 var path       = require('path');
 
+var debug      = require('debug')('gateway-triumvi-server');
 var express    = require('express');
 var nunjucks   = require('nunjucks');
 var bodyParser = require('body-parser');
@@ -40,7 +41,7 @@ try {
 
 
 /*******************************************************************************
- * API Services
+ * Helper Functions
  ******************************************************************************/
 
 // Delete .csv / .json files older than 1 hour.
@@ -74,7 +75,7 @@ function delete_old_data_files () {
  * ROUTES
  ******************************************************************************/
 
-// Display a list of found devices
+// Hopefully will be a useful Triumvi visualization/UI
 app.get('/', function (req, res) {
 	var tmpl = nunjucksEnv.getTemplate('index.nunjucks');
 	var html = tmpl.render();
@@ -136,12 +137,13 @@ app.get('/triumvi/data', function (req, res) {
 });
 
 app.post('/triumvi/data/download', function (req, res) {
-	console.log(req.body)
+	debug(req.body);
 
 	// On each call to generate new data, delete any old data dumps that
 	// we don't need anymore.
 	delete_old_data_files();
 
+	// Generate a query based on the input parameters from the webpage.
 	var query = 'SELECT ';
 	var group_by = '';
 	var param = {};
@@ -204,13 +206,11 @@ app.post('/triumvi/data/download', function (req, res) {
 	filename += '.' + req.body.format;
 
 
+	debug(query);
+	debug(param);
 
 
-	console.log(query)
-	console.log(param)
-	console.log(filename)
-
-
+	// Run the query and save the results to a file.
 
 	// Headers for the CSV file.
 	var HEADERS = ['TRIUMVI_ID', 'TIMESTAMP', 'POWER_WATTS', 'POWER_FACTOR',
@@ -269,7 +269,7 @@ app.post('/triumvi/data/download', function (req, res) {
 			fs.writeSync(file, str);
 		}
 	}, function () {
-		console.log('done');
+		// Generate a download for the user.
 		fs.closeSync(file);
 		res.download(filename);
 	});
