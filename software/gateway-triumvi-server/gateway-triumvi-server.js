@@ -11,6 +11,7 @@ var nunjucks   = require('nunjucks');
 var bodyParser = require('body-parser');
 var sqlite3    = require('sqlite3');
 var async      = require('async');
+var ini        = require('ini');
 
 
 var app = express();
@@ -23,8 +24,18 @@ app.use(bodyParser.urlencoded({ extended: true}));
 
 var nunjucksEnv = nunjucks.configure(__dirname + '/templates', {watch: true});
 
-var config = {};
-config.database_file = '/home/bradjc/git/gateway/software/gateway-triumvi-sqlite/triumvi.sqlite';
+// Read in the config file to get the sqlite db filename
+try {
+    var config_file = fs.readFileSync('/etc/swarm-gateway/triumvi-sqlite.conf', 'utf-8');
+    var config = ini.parse(config_file);
+    if (config.database_file == undefined || config.database_file == '') {
+        throw new Exception('no settings');
+    }
+} catch (e) {
+	console.log(e)
+    console.log('Could not find /etc/swarm-gateway/triumvi-sqlite.conf or not configured correctly.');
+    process.exit(1);
+}
 
 
 /*******************************************************************************

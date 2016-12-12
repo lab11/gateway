@@ -1,0 +1,14 @@
+{% extends "base.nunjucks" %}
+
+{% block title %}
+Triumvi Gateway
+{% endblock %}
+
+{% block body %}
+<h1>Placeholder for nice UI</h1>
+
+<p>
+  <a href="/triumvi/data">Download Triumvi Data</a>.
+</p>
+
+{% endblock %}
