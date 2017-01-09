@@ -1,0 +1,13 @@
+[Unit]
+Description=Reboot gateway if it stops getting packets.
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-mqtt-reboot/gateway-mqtt-reboot.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-mqtt-reboot
+
+[Install]
+WantedBy=multi-user.target
