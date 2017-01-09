@@ -32,7 +32,7 @@ setInterval(function () {
 	if (now - last_packet_timestamp >= MAXIMUM_PACKET_INTERVAL) {
 		console.log('Been ' + now - last_packet_timestamp + ' ms since last packet. Rebooting.');
 		// reboot
-		cp.exec('sudo shutdown -r now', function (err, stderr, stdout) {
+		child_process.exec('sudo shutdown -r now', function (err, stderr, stdout) {
 			console.log('Called reboot.');
 		});
 	}
