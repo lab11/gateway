@@ -3,7 +3,7 @@ Description=Store Triumvi packets to SQLite DB.
 After=mosquitto.service
 
 [Service]
-ExecStart=/home/debian/gateway/software/gateway-triumvi-ble/gateway-triumvi-sqlite.js
+ExecStart=/home/debian/gateway/software/gateway-triumvi-sqlite/gateway-triumvi-sqlite.js
 Restart=always
 StandardOutput=syslog
 StandardError=syslog
