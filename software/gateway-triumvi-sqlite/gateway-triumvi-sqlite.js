@@ -28,7 +28,7 @@ var INSERT = 'INSERT INTO triumvi VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
 
 
-// Read in the config file to get the log filename
+// Read in the config file to get the sqlite db filename
 try {
     var config_file = fs.readFileSync('/etc/swarm-gateway/triumvi-sqlite.conf', 'utf-8');
     var config = ini.parse(config_file);
@@ -53,8 +53,7 @@ db.run(CREATE_TABLE, function (err) {
 		console.log('Created table!');
 
 		// Get the MQTT connection
-		// var mqtt_client = mqtt.connect('mqtt://localhost');
-		var mqtt_client = mqtt.connect('mqtt://141.212.11.192');
+		var mqtt_client = mqtt.connect('mqtt://localhost');
 		mqtt_client.on('connect', function () {
 			// Setup database insert statement
 			var insert = db.prepare(INSERT);
