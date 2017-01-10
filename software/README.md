@@ -55,6 +55,8 @@ These provide other useful services:
 Broadcast the gateway's IP address as a BLE packet.
 - [BLE Nearby](https://github.com/lab11/gateway/tree/master/software/ble-nearby):
 Use nearby gateways to decide which devices are nearest to which gateway.
+- [BLE Influx](https://github.com/lab11/gateway/tree/master/software/ble-influx):
+Collect raw BLE advertisements and directly post data to InfluxDB.
 - [App Runner](https://github.com/lab11/gateway/tree/master/software/app-runner):
 Automatically start and restart scripts and other applications that make use
 of the gateway's data.

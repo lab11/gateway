@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish BLE data to Influxdb
+After=bluetooth.target mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/ble-influxdb/ble-influxdb.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ble-influxdb
+
+[Install]
+WantedBy=multi-user.target

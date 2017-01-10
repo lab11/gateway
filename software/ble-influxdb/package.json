@@ -1,0 +1,24 @@
+{
+  "name": "ble-influxdb",
+  "version": "1.0.0",
+  "description": "Forward BLE data to influxdb instance",
+  "main": "ble-influxdb.js",
+  "dependencies": {
+    "influx-poster": "^1.0.0",
+    "ini": "^1.3.4",
+    "minimist": "^1.2.0",
+    "noble": "^1.7.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "BLE",
+    "influxdb",
+    "lab11",
+    "terraswarm"
+  ],
+  "author": "Branden Ghena",
+  "license": "ISC"
+}
