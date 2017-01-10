@@ -165,8 +165,8 @@ noble.on('discover', function (peripheral) {
     var adv_obj = {
         'device': 'BLEPacket',
         'ble_id': peripheral.id,
-        'rx_time': now,
-        'seq_num': -1,
+        'receive_time': now,
+        'sequence_number': -1,
         'device_type': 'unknown',
         'rssi': peripheral.rssi,
     };
@@ -192,7 +192,7 @@ noble.on('discover', function (peripheral) {
                         if (manufacturer_id == 0x02E0 && service_id == 0x12) {
                             var sensor_data = advertisement.manufacturerData.slice(3);
                             if (sensor_data.length >= 15) {
-                                adv_obj.seq_num = sensor_data.readUIntLE(11,4);
+                                adv_obj.sequence_number = sensor_data.readUIntLE(11,4);
                             }
                         }
                     }
@@ -222,7 +222,7 @@ noble.on('discover', function (peripheral) {
                         if (version_num >= 1) {
 
                             // parse sequence number from advertisement
-                            adv_obj.seq_num = data.readUIntBE(1,4);
+                            adv_obj.sequence_number = data.readUIntBE(1,4);
                         }
                     }
                 }
@@ -254,7 +254,7 @@ noble.on('discover', function (peripheral) {
                             var version = advertisement.manufacturerData.readUInt8(3);
                             var data = advertisement.manufacturerData.slice(4);
                             if (version == 1 && data.length == 9) {
-                                adv_obj.seq_num = data.readUIntLE(5,4);
+                                adv_obj.sequence_number = data.readUIntLE(5,4);
                             }
                         }
                     }
@@ -333,8 +333,7 @@ noble.on('discover', function (peripheral) {
                     timestamp
                 ];
 
-                console.log(point);
-                //XXX: influx_poster.write_data(point);
+                influx_poster.write_data(point);
             }
         }
     }
@@ -351,7 +350,7 @@ var startScanningOnPowerOn = function() {
 };
 
 // Pre-fetch the mac address
-var.this_gateway_id = '';
+var this_gateway_id = '';
 getmac.getMac((err, addr) => {
     this_gateway_id = addr;
 
