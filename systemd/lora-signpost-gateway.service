@@ -3,7 +3,7 @@ Description=Collect LoRa packets
 After=mosquitto.service
 
 [Service]
-ExecStart=/home/debian/signpost/software/receiver/lora_receive/lora-signpost-gateway.js
+ExecStart=/home/debian/gateway/software/lora-signpost-gateway/lora-signpost-gateway.js
 Restart=always
 StandardOutput=syslog
 StandardError=syslog
