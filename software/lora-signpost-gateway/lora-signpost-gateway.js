@@ -261,6 +261,21 @@ function parse (buf) {
 				_meta: get_meta(addr)
 			}
 		}
+                else if (message_type = 0x03) {
+                    var battery_voltage = buf.readUInt16BE(9);
+                    var battery_current = buf.readUInt16BE(11);
+                    var solar_voltage = buf.readUInt16BE(13);
+                    var solar_current = buf.readUInt16BE(15);
+
+                    return {
+                        device: "signpost_bat_sol_status",
+                        battery_voltage_mV: battery_voltage,
+                        battery_current_uA: battery_current,
+                        solar_voltage_mV: solar_voltage,
+                        solar_current_uA: solar_current,
+                        _meta: get_meta(addr)
+		    }
+                }
 	} else if (module == 0x31) {
 		if (message_type == 0x01) {
 			var chan11 = buf.readInt8(9);
