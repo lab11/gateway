@@ -262,9 +262,9 @@ function parse (buf) {
 			}
         } else if (message_type = 0x03) {
             var battery_voltage = buf.readUInt16BE(9);
-            var battery_current = buf.readUInt32BE(11);
+            var battery_current = buf.readInt32BE(11);
             var solar_voltage = buf.readUInt16BE(15);
-            var solar_current = buf.readUInt32BE(17);
+            var solar_current = buf.readInt32BE(17);
 
             return {
                 device: "signpost_bat_sol_status",
