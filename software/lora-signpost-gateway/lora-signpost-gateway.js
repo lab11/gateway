@@ -265,6 +265,9 @@ function parse (buf) {
             var battery_current = buf.readInt32BE(11);
             var solar_voltage = buf.readUInt16BE(15);
             var solar_current = buf.readInt32BE(17);
+            var battery_percent = buf.readUInt8(21);
+            var battery_energy = buf.readUInt16BE(22);
+            var battery_capacity = buf.readUInt16BE(24);
 
             return {
                 device: "signpost_bat_sol_status",
@@ -272,6 +275,9 @@ function parse (buf) {
                 battery_current_uA: battery_current,
                 solar_voltage_mV: solar_voltage,
                 solar_current_uA: solar_current,
+                battery_percent_remaining: battery_percent,
+                battery_coulombs_remaining_mAh: battery_energy,
+                battery_coulombs_full_mAh: battery_capacity,
                 _meta: get_meta(addr)
             }
         }
