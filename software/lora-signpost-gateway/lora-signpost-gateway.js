@@ -2,6 +2,7 @@
 
 var iM880 = require('iM880-serial-comm');
 var mqtt = require('mqtt');
+var crc = require('crc');
 
 // Handle settings
 var fs = require('fs');
@@ -492,7 +493,25 @@ function parse (buf) {
 device.on('rx-msg', function(data) {
 	// print rx message without slip encoding or checksum
 	var buf = new Buffer(data.payload);
-	var pkt = parse(buf);
+        var recvcrc = buf.readUInt16BE(buf.length - 2);
+        var calccrc = crc.crc16ccitt(buf.slice(0, buf.length - 2));
+        var pkt;
+        if (recvcrc !== calccrc) {
+            console.log('crc check failed')
+            console.log('received:\t0x'+recvcrc.toString(16));
+            console.log('calculated:\t0x'+calccrc.toString(16));
+            pkt =
+            {
+                device: 'crc_check_failed',
+                buffer: buf.toString('hex'),
+                received_crc: recvcrc,
+                calculated_crc: calccrc
+            }
+        }
+        else {
+            pkt = parse(buf);
+            console.log('crc check succeeded')
+        }
 	if (pkt !== undefined) {
 		console.log(pkt);
 		mqtt_client.publish('gateway-data', JSON.stringify(pkt));
