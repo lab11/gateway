@@ -22,7 +22,7 @@ if ( ! ('device_group' in conf) ) {
   conf.device_group = 0x10;
 }
 if ( ! ('serial_port' in conf) ) {
-  conf.serial_port = '/dev/ttyUSB1';
+  conf.serial_port = '/dev/ttyUSB0';
 }
 if ( ! ('spreading_factor' in conf) ) {
   conf.spreading_factor = 11;
@@ -505,7 +505,8 @@ device.on('rx-msg', function(data) {
                 device: 'crc_check_failed',
                 buffer: buf.toString('hex'),
                 received_crc: recvcrc,
-                calculated_crc: calccrc
+                calculated_crc: calccrc,
+                _meta: get_meta(addr)
             }
         }
         else {
