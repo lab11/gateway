@@ -121,6 +121,14 @@ function get_meta (src_addr) {
 	}
 }
 
+function get_meta_no_addr () { 
+    return {
+		received_time: new Date().toISOString(),
+		receiver: 'lora',
+		gateway_id: 'gateway1'
+	}
+}
+
 function pad (s, len) {
 	for (var i=s.length; i<len; i++) {
 		s = '0' + s;
@@ -506,7 +514,7 @@ device.on('rx-msg', function(data) {
                 buffer: buf.toString('hex'),
                 received_crc: recvcrc,
                 calculated_crc: calccrc,
-                _meta: get_meta(addr)
+                _meta: get_meta_no_addr()
             }
         }
         else {
