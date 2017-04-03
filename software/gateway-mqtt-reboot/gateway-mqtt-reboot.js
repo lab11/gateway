@@ -29,6 +29,11 @@ mqtt_client.on('connect', function () {
 // Check every 10 seconds
 setInterval(function () {
 	now = new Date();
+
+    if(isNaN(now - last_packet_timestamp)) {
+        return;
+    }
+
 	if (now - last_packet_timestamp >= MAXIMUM_PACKET_INTERVAL) {
 		console.log('Been ' + now - last_packet_timestamp + ' ms since last packet. Rebooting.');
 		// reboot
