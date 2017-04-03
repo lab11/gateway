@@ -527,8 +527,9 @@ device.on('rx-msg', function(data) {
             console.log('crc check succeeded')
         }
 	if (pkt !== undefined) {
-		console.log(pkt);
-		mqtt_client.publish('gateway-data', JSON.stringify({pkt, receiver_info: lora_stats}));
-		mqtt_client.publish('signpost', JSON.stringify({pkt, receiver_info: lora_stats}));
+        var combined = {pkt, receiver_info: lora_stats};
+		console.log(combined);
+		mqtt_client.publish('gateway-data', JSON.stringify(combined));
+		mqtt_client.publish('signpost', JSON.stringify(combined));
 	}
 });
