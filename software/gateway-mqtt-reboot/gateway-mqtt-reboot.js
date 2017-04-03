@@ -11,7 +11,7 @@ var mqtt = require('mqtt');
 
 // Amount of time in ms without packets before rebooting.
 var MAXIMUM_PACKET_INTERVAL = 5 * 60 * 1000;
-
+var TIME_SHIFT_THRESHOLD = 1*60*60*1000;
 var last_packet_timestamp = new Date();
 
 
@@ -30,11 +30,7 @@ mqtt_client.on('connect', function () {
 setInterval(function () {
 	now = new Date();
 
-    if(isNaN(now - last_packet_timestamp)) {
-        return;
-    }
-
-	if (now - last_packet_timestamp >= MAXIMUM_PACKET_INTERVAL) {
+	if (now - last_packet_timestamp >= MAXIMUM_PACKET_INTERVAL && now - last_packet_timestamp < TIME_SHIFT_THRESHOLD) {
 		console.log('Been ' + now - last_packet_timestamp + ' ms since last packet. Rebooting.');
 		// reboot
 		child_process.exec('sudo shutdown -r now', function (err, stderr, stdout) {
