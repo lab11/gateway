@@ -504,6 +504,11 @@ device.on('rx-msg', function(data) {
         var recvcrc = buf.readUInt16BE(buf.length - 2);
         var calccrc = crc.crc16ccitt(buf.slice(0, buf.length - 2));
         var pkt;
+        var lora_stats;
+        lora_stats = {
+            snr: data.snr,
+            rssi: data.rssi
+        }
         if (recvcrc !== calccrc) {
             console.log('crc check failed')
             console.log('received:\t0x'+recvcrc.toString(16));
@@ -523,7 +528,7 @@ device.on('rx-msg', function(data) {
         }
 	if (pkt !== undefined) {
 		console.log(pkt);
-		mqtt_client.publish('gateway-data', JSON.stringify(pkt));
-		mqtt_client.publish('signpost', JSON.stringify(pkt));
+		mqtt_client.publish('gateway-data', JSON.stringify({pkt, receiver_info: lora_stats}));
+		mqtt_client.publish('signpost', JSON.stringify({pkt, receiver_info: lora_stats}));
 	}
 });
