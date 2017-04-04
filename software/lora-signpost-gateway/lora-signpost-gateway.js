@@ -98,9 +98,9 @@ var mqtt_client = mqtt.connect('mqtt://' + conf.mqtt_broker);
 
 // call the construction with and endpointID
 var device = new iM880(
+  conf.serial_port,
   conf.device_id,
   conf.device_group,
-  conf.serial_port,
   conf.spreading_factor);
 
 // wait for config-done message and print endpointID
@@ -527,9 +527,9 @@ device.on('rx-msg', function(data) {
             console.log('crc check succeeded')
         }
 	if (pkt !== undefined) {
-        var combined = {pkt, receiver_info: lora_stats};
-		console.log(combined);
-		mqtt_client.publish('gateway-data', JSON.stringify(combined));
-		mqtt_client.publish('signpost', JSON.stringify(combined));
+        pkt.receiver_info = lora_stats;
+        console.log(pkt);
+		mqtt_client.publish('gateway-data', JSON.stringify(pkt));
+		mqtt_client.publish('signpost', JSON.stringify(pkt));
 	}
 });

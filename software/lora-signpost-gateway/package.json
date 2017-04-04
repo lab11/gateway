@@ -9,7 +9,7 @@
   "author": "Brad Campbell",
   "license": "ISC",
   "dependencies": {
-    "iM880-serial-comm": "^3.0.0",
+    "iM880-serial-comm": "^4.1.0",
     "mqtt": "^2.5.0",
     "crc": "^3.4.4"
   }
