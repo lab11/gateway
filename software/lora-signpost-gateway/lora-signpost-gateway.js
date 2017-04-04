@@ -27,6 +27,9 @@ if ( ! ('serial_port' in conf) ) {
 if ( ! ('spreading_factor' in conf) ) {
   conf.spreading_factor = 11;
 }
+if ( ! ('bandwidth' in conf) ) {
+  conf.bandwidth = 125000;
+}
 if ( ! ('stats_interval_milliseconds' in conf) ) {
   conf.stats_interval_milliseconds = 1000 * 10;
 }
@@ -101,7 +104,8 @@ var device = new iM880(
   conf.serial_port,
   conf.device_id,
   conf.device_group,
-  conf.spreading_factor);
+  conf.spreading_factor,
+  conf.bandwidth);
 
 // wait for config-done message and print endpointID
 var msg = new Uint8Array([ 9, 8, 10, 67 ]);
@@ -506,6 +510,8 @@ device.on('rx-msg', function(data) {
         var pkt;
         var lora_stats;
         lora_stats = {
+            spreading_factor: conf.spreading_factor,
+            bandwidth: conf.bandwidth,
             snr_db: data.snr,
             rssi_dbm: data.rssi
         }
