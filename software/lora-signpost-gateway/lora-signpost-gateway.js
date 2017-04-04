@@ -25,7 +25,7 @@ if ( ! ('serial_port' in conf) ) {
   conf.serial_port = '/dev/ttyUSB0';
 }
 if ( ! ('spreading_factor' in conf) ) {
-  conf.spreading_factor = 11;
+  conf.spreading_factor = 7;
 }
 if ( ! ('bandwidth' in conf) ) {
   conf.bandwidth = 125000;
@@ -571,7 +571,7 @@ function rotate_settings() {
     var d = new Date();
 
     //account for leap seconds to sync with radio
-    var epoch = d.getTime() + 18000;
+    var epoch = d.getTime() + 3000;
 
     var secondsSinceLastTrigger = epoch % (SETTING_SWITCH_TIME_MINUTES * 60000);
     var secondsUntilNextTrigger = (SETTING_SWITCH_TIME_MINUTES * 60000) - secondsSinceLastTrigger;
