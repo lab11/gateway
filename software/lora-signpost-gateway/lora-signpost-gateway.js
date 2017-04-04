@@ -36,11 +36,18 @@ if ( ! ('stats_interval_milliseconds' in conf) ) {
 if ( ! ('mqtt_broker' in conf) ) {
   conf.mqtt_broker = 'localhost';
 }
+if ( ! ('rotate' in conf) ) {
+  conf.rotate = false;
+}
 
 // Stats while running
 var stats_start = Date.now();
 var stats_lifetime = {};
 var stats_lasttime = {};
+
+//settings for rotating the different lora channels
+SETTING_SWITCH_TIME_MINUTES = 2;
+var lora_settings = [[7,125000],[8,125000],[9,125000],[10,125000],[8,500000]];
 
 function stats_new_packet (buf) {
 	var signpost_id = buf[5];
@@ -113,6 +120,9 @@ var msg = new Uint8Array([ 9, 8, 10, 67 ]);
 device.on('config-done', function (statusmsg) {
   // Print the result of configuring the dongle
   console.log('Configuration status: ' + statusmsg);
+  if(conf.rotate == true) {
+    rotate_settings();
+  }
 });
 
 
@@ -539,3 +549,30 @@ device.on('rx-msg', function(data) {
 		mqtt_client.publish('signpost', JSON.stringify(pkt));
 	}
 });
+
+function rotate_settings() {
+
+    var d = new Date();
+
+    //account for leap seconds to sync with radio
+    var epoch = d.getTime() + 18000;
+
+    var secondsSinceLastTrigger = epoch % (SETTING_SWITCH_TIME_MINUTES * 60000);
+    var secondsUntilNextTrigger = (SETTING_SWITCH_TIME_MINUTES * 60000) - secondsSinceLastTrigger;
+    
+    setTimeout(function() {
+        //calculate the setting index based on the time
+        var now = new Date();
+        var mins = now.getMinutes();
+        //plus one to account for gps time
+        var setting_index = ((mins+1)/SETTING_SWITCH_TIME_MINUTES) % lora_settings.length;
+
+        //set the settings
+        conf.spreading_factor = lora_settings[setting_index][0];
+        conf.bandwidth = lora_settings[setting_index][1];
+
+        console.log("Rotating settings to sf: " + conf.spreading_factor + " bandwidth: " + conf.bandwidth);
+        device.configure(conf.device_id,conf.device_group,conf.spreading_factor,conf.bandwidth);
+
+    }, secondsUntilNextTrigger);
+}
