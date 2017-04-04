@@ -224,20 +224,14 @@ function parse (buf) {
 			var energy_module7 = buf.readUInt16BE(23);
 
 			return {
-				device: "signpost_status",
-				module0_enabled: true,
-				module1_enabled: true,
-				module2_enabled: true,
-				module5_enabled: true,
-				module6_enabled: true,
-				module7_enabled: true,
-				controller_energy_mAh: energy_controller,
-				module0_energy_mAh: energy_module0,
-				module1_energy_mAh: energy_module1,
-				module2_energy_mAh: energy_module2,
-				module5_energy_mAh: energy_module5,
-				module6_energy_mAh: energy_module6,
-				module7_energy_mAh: energy_module7,
+				device: "signpost_energy_remaining",
+				controller_energy_remaining_mWh: energy_controller,
+				module0_energy_remaining_mWh: energy_module0,
+				module1_energy_remaining_mWh: energy_module1,
+				module2_energy_remaining_mWh: energy_module2,
+				module5_energy_remaining_mWh: energy_module5,
+				module6_energy_remaining_mWh: energy_module6,
+				module7_energy_remaining_mWh: energy_module7,
 				_meta: get_meta(addr)
 			}
 		} else if (message_type == 0x02) {
@@ -283,7 +277,7 @@ function parse (buf) {
 				timestamp: utcDate.toISOString(),
 				_meta: get_meta(addr)
 			}
-        } else if (message_type = 0x03) {
+        } else if (message_type == 0x03) {
             var battery_voltage = buf.readUInt16BE(9);
             var battery_current = buf.readInt32BE(11);
             var solar_voltage = buf.readUInt16BE(15);
@@ -303,6 +297,28 @@ function parse (buf) {
                 battery_coulombs_full_mAh: battery_capacity,
                 _meta: get_meta(addr)
             }
+        } else if (message_type == 0x04) {
+            // Energy
+			var energy_module0 = buf.readUInt16BE(9);
+			var energy_module1 = buf.readUInt16BE(11);
+			var energy_module2 = buf.readUInt16BE(13);
+			var energy_controller = buf.readUInt16BE(15);
+			var energy_linux   = buf.readUInt16BE(17);
+			var energy_module5 = buf.readUInt16BE(19);
+			var energy_module6 = buf.readUInt16BE(21);
+			var energy_module7 = buf.readUInt16BE(23);
+
+			return {
+				device: "signpost_average_power",
+				controller_average_power_mW: energy_controller,
+				module0_average_power_mW: energy_module0,
+				module1_average_power_mW: energy_module1,
+				module2_average_power_mW: energy_module2,
+				module5_average_power_mW: energy_module5,
+				module6_average_power_mW: energy_module6,
+				module7_average_power_mW: energy_module7,
+				_meta: get_meta(addr)
+			}
         }
 	} else if (module == 0x31) {
 		if (message_type == 0x01) {
