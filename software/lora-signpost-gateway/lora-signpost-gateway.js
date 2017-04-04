@@ -506,8 +506,8 @@ device.on('rx-msg', function(data) {
         var pkt;
         var lora_stats;
         lora_stats = {
-            snr: data.snr,
-            rssi: data.rssi
+            snr_db: data.snr,
+            rssi_dbm: data.rssi
         }
         if (recvcrc !== calccrc) {
             console.log('crc check failed')
