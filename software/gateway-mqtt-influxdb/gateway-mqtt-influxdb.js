@@ -191,8 +191,8 @@ function mqtt_on_connect() {
                 }
             }
 
-            tags.device_id: device_id;
-            tags.device_class: device_class;
+            tags.device_id = device_id;
+            tags.device_class = device_class;
 
 
             // Continue on to post to influxdb
