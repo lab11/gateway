@@ -3,6 +3,7 @@
 var iM880 = require('iM880-serial-comm');
 var mqtt = require('mqtt');
 var crc = require('crc');
+var addr = require('os').networkInterfaces();
 
 // Handle settings
 var fs = require('fs');
@@ -127,20 +128,39 @@ device.on('config-done', function (statusmsg) {
 
 
 function get_meta (src_addr) {
-	return {
+    if(addr.eth0) {
+        return {
+		received_time: new Date().toISOString(),
+		device_id: src_addr,
+		receiver: 'lora',
+		gateway_id: addr.eth0[0].mac
+	    }
+    } else { 
+        return {
 		received_time: new Date().toISOString(),
 		device_id: src_addr,
 		receiver: 'lora',
 		gateway_id: 'gateway1'
-	}
+	    }
+    }
+
+	
 }
 
 function get_meta_no_addr () { 
-    return {
+    if(addr.eth0) {
+        return {
+		received_time: new Date().toISOString(),
+		receiver: 'lora',
+		gateway_id: addr.eth0[0].mac
+	    }
+    } else { 
+        return {
 		received_time: new Date().toISOString(),
 		receiver: 'lora',
 		gateway_id: 'gateway1'
-	}
+	    }
+    }
 }
 
 function pad (s, len) {
@@ -535,13 +555,6 @@ device.on('rx-msg', function(data) {
         var recvcrc = buf.readUInt16BE(buf.length - 2);
         var calccrc = crc.crc16ccitt(buf.slice(0, buf.length - 2));
         var pkt;
-        var lora_stats;
-        lora_stats = {
-            spreading_factor: conf.spreading_factor,
-            bandwidth: conf.bandwidth,
-            snr_db: data.snr,
-            rssi_dbm: data.rssi
-        }
         if (recvcrc !== calccrc) {
             console.log('crc check failed')
             console.log('received:\t0x'+recvcrc.toString(16));
@@ -560,7 +573,10 @@ device.on('rx-msg', function(data) {
             console.log('crc check succeeded')
         }
 	if (pkt !== undefined) {
-        pkt.receiver_info = lora_stats;
+        pkt.spreading_factor =  conf.spreading_factor,
+        pkt.bandwidth = conf.bandwidth,
+        pkt.snr_db = data.snr,
+        pkt.rssi_dbm = data.rssi
         console.log(pkt);
 		mqtt_client.publish('gateway-data', JSON.stringify(pkt));
 		mqtt_client.publish('signpost', JSON.stringify(pkt));
