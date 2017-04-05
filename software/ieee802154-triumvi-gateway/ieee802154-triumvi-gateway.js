@@ -62,6 +62,7 @@ var TRIUMVI_STATUSREG_BATTERYPACKET = 0x40;
 var TRIUMVI_STATUSREG_THREEPHASE    = 0x30;
 var TRIUMVI_STATUSREG_FRAMWRITE     = 0x08;
 var TRIUMVI_STATUSREG_POWERFACTOR   = 0x04;
+var TRIUMVI_STATUSREG_TIMESTAMP     = 0x02;
 
 // Parse a packet for a triumvi packet. We don't actually know this is triumvi,
 // so we have to be picky.
@@ -143,26 +144,47 @@ function parse_packet (buffer) {
 		// Get a list of what we should expect;
 		var status_byte = data.readUInt8(4);
 
+		if (status_byte & TRIUMVI_STATUSREG_EXTERNALVOLT) {
+			out.external_voltage_waveform = true;
+			out._meta.external_voltage_waveform = out.external_voltage_waveform;
+		}
+
 		if (status_byte & TRIUMVI_STATUSREG_BATTERYPACKET) {
 			out.battery_pack_attached = true;
 			out.panel_id = data.readUInt8(offset);
 			out.circuit_id = data.readUInt8(offset+1);
 			offset += 2;
+
+			out._meta.battery_pack_attached = out.battery_pack_attached;
+			out._meta.panel_id = out.panel_id;
+			out._meta.circuit_id = out.circuit_id;
 		}
 
 		if (status_byte & TRIUMVI_STATUSREG_POWERFACTOR) {
-			out.power_factor = data.readUInt16LE(offset);
-			out.voltage_rms_volts = data.readUInt16LE(offset+2);
-			out.current_rms_amps = data.readUInt16LE(offset+4);
+			out.power_factor = data.readUInt16LE(offset) / 1000;
+			out.voltage_rms_volts = data.readUInt8(offset+2);
+			out.ina_gain = data.readUInt8(offset+3);
+			out.current_rms_amps = data.readUInt16LE(offset+4) / 1000;
 			offset += 6;
 		}
 
 		if (status_byte & TRIUMVI_STATUSREG_THREEPHASE) {
 			out.three_phase_meter = true;
+			out._meta.three_phase_meter = out.three_phase_meter;
 		}
 
 		if (status_byte & TRIUMVI_STATUSREG_FRAMWRITE) {
 			out.fram_write = true;
+		}
+
+		if (status_byte & TRIUMVI_STATUSREG_TIMESTAMP) {
+			year   = 2000 + data.readUInt8(offset);
+			month  = data.readUInt8(offset+1);
+			day    = data.readUInt8(offset+2);
+			hour   = data.readUInt8(offset+3);
+			minute = data.readUInt8(offset+4);
+			second = data.readUInt8(offset+5);
+			out.sample_timestamp = new Date(year, month, day, hour, minute, second).toISOString();
 		}
 	}
 
