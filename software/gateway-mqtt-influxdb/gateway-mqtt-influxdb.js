@@ -183,15 +183,17 @@ function mqtt_on_connect() {
             delete adv_obj.device;
 
             var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
-
-            var tags = {
-                device_id: device_id,
-                device_class: device_class,
-            }
+            var tags = {}
 
             for (var key in adv_obj['_meta']) {
-                tags.key = adv_obj['_meta'][key];
+                if(key != 'device_id' && key != 'received_time') {
+                    tags[key] = adv_obj['_meta'][key];
+                }
             }
+
+            tags.device_id: device_id,
+            tags.device_class: device_class,
+
 
             // Continue on to post to influxdb
             if (device_id) {
