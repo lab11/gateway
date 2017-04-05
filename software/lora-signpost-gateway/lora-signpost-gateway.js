@@ -275,6 +275,7 @@ function parse (buf) {
 				longitude: longitude,
 				longitude_direction: longitude_direction,
 				timestamp: utcDate.toISOString(),
+                satellite_count: satellite_count,
 				_meta: get_meta(addr)
 			}
         } else if (message_type == 0x03) {
