@@ -573,8 +573,8 @@ device.on('rx-msg', function(data) {
             console.log('crc check succeeded')
         }
 	if (pkt !== undefined) {
-        pkt.spreading_factor =  conf.spreading_factor,
-        pkt.bandwidth = conf.bandwidth,
+        pkt._meta.spreading_factor =  conf.spreading_factor,
+        pkt._meta.bandwidth = conf.bandwidth,
         pkt.snr_db = data.snr,
         pkt.rssi_dbm = data.rssi
         console.log(pkt);
