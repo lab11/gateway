@@ -183,11 +183,21 @@ function mqtt_on_connect() {
             delete adv_obj.device;
 
             var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
-            var receiver   = adv_obj['_meta']['receiver'];
-            var gateway_id = adv_obj['_meta']['gateway_id'];
 
             // Continue on to post to influxdb
             if (device_id) {
+
+                // Add all keys that are in the _meta field to the
+                // tags section of the stored packet.
+                var tags = {};
+                for (var key in adv_obj['_meta']) {
+                    if (key != 'device_id' && key != 'received_time') {
+                        tags[key] = adv_obj['_meta'][key];
+                    }
+                }
+
+                tags.device_id = device_id;
+                tags.device_class = device_class;
 
                 // Delete meta key and possible id key
                 delete adv_obj._meta;
@@ -196,13 +206,6 @@ function mqtt_on_connect() {
                 // Only publish if there is some data
                 if (Object.keys(adv_obj).length > 0) {
                     for (var key in adv_obj) {
-                        var tags = {
-                            device_id: device_id,
-                            device_class: device_class,
-                            receiver: receiver,
-                            gateway_id: gateway_id,
-                        };
-
                         var fields = fix_measurement(adv_obj[key]);
 
                         var point = [
