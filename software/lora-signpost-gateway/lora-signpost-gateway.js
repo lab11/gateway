@@ -38,7 +38,7 @@ if ( ! ('mqtt_broker' in conf) ) {
   conf.mqtt_broker = 'localhost';
 }
 if ( ! ('rotate' in conf) ) {
-  conf.rotate = false;
+  conf.rotate = true;
 }
 
 // Stats while running
@@ -221,11 +221,11 @@ function parse (buf) {
 	}
 
 	// DISCARD DUPLICATES BASED ON SEQ NUMBER
-	var duplicate = check_duplicate(module, message_type, sequence_number);
+	/*var duplicate = check_duplicate(module, message_type, sequence_number);
 	if (duplicate) {
 		console.log('[' + module + ':'+ message_type +'] Duplicate (' + sequence_number + ')');
 		return undefined;
-	}
+	}*/
 
 	// Update stats
 	stats_new_packet(buf);
@@ -245,6 +245,7 @@ function parse (buf) {
 
 			return {
 				device: "signpost_energy_remaining",
+                sequence_number: sequence_number,
 				controller_energy_remaining_mWh: energy_controller,
 				module0_energy_remaining_mWh: energy_module0,
 				module1_energy_remaining_mWh: energy_module1,
@@ -290,6 +291,7 @@ function parse (buf) {
 
 			return {
 				device: 'signpost_gps',
+                sequence_number: sequence_number,
 				latitude: latitude,
 				latitude_direction: latitude_direction,
 				longitude: longitude,
@@ -309,6 +311,7 @@ function parse (buf) {
 
             return {
                 device: "signpost_bat_sol_status",
+                sequence_number: sequence_number,
                 battery_voltage_mV: battery_voltage,
                 battery_current_uA: battery_current,
                 solar_voltage_mV: solar_voltage,
@@ -331,6 +334,7 @@ function parse (buf) {
 
 			return {
 				device: "signpost_average_power",
+                sequence_number: sequence_number,
 				controller_average_power_mW: energy_controller,
 				module0_average_power_mW: energy_module0,
 				module1_average_power_mW: energy_module1,
@@ -383,6 +387,7 @@ function parse (buf) {
 
 			return {
 				device: 'signpost_2.4ghz_spectrum',
+                sequence_number: sequence_number,
 				channel_11: chan11,
 				channel_12: chan12,
 				channel_13: chan13,
@@ -413,6 +418,7 @@ function parse (buf) {
 
 			return {
 				device: 'signpost_ambient',
+                sequence_number: sequence_number,
 				temperature_c: temp,
 				humidity: humi,
 				light_lux: ligh,
@@ -443,6 +449,7 @@ function parse (buf) {
 
 			return {
 			    device: 'signpost_audio_frequency',
+                sequence_number: sequence_number,
                 "63Hz": f_63_hz,
                 '160Hz': f_160_hz,
                 '400Hz': f_400_hz,
@@ -461,6 +468,7 @@ function parse (buf) {
 
 			return {
 				device: 'signpost_microwave_radar',
+                sequence_number: sequence_number,
 				motion: motion,
 				'velocity_m/s': speed,
                 'motion_confidence': motion_confidence,
@@ -476,6 +484,7 @@ function parse (buf) {
 			var humidity_percent = buf.readUInt16BE(21);
 			return {
 				device: 'signpost_ucsd_air_quality',
+                sequence_number: sequence_number,
 				co2_ppm: co2_ppm,
 				VOC_PID_ppb: VOC_PID_ppb,
 				VOC_IAQ_ppb: VOC_IAQ_ppb,
@@ -527,6 +536,7 @@ function parse (buf) {
 			return {
                 //energy estimations on mWh/packet. packetcount*(ble/pack+lora/pack)
 			    device: 'signpost_radio_status',
+                sequence_number: sequence_number,
                 "controller_lora_packets_sent": controller,
                 "2.4gHz_spectrum_lora_packets_sent": rf,
                 "ambient_sensing_lora_packets_sent": ambient,
