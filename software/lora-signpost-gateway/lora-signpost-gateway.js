@@ -555,7 +555,15 @@ function parse (buf) {
 			    _meta: get_meta(addr)
 			}
 		}
-	}
+        if (message_type == 0x02) {
+
+			return {
+			    device: 'signpost_radio_test_packet',
+                sequence_number: sequence_number,
+			    _meta: get_meta(addr)
+			}
+	    }
+    }
 }
 
 // listen for new messages and print them
