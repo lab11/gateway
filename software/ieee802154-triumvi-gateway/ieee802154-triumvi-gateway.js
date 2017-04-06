@@ -179,7 +179,7 @@ function parse_packet (buffer) {
 
 		if (status_byte & TRIUMVI_STATUSREG_TIMESTAMP) {
 			year   = 2000 + data.readUInt8(offset);
-			month  = data.readUInt8(offset+1);
+			month  = data.readUInt8(offset+1)-1;
 			day    = data.readUInt8(offset+2);
 			hour   = data.readUInt8(offset+3);
 			minute = data.readUInt8(offset+4);
