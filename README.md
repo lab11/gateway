@@ -19,9 +19,8 @@ discovered and their data packets are interpretted, the gateway
 creates a data stream which can be published to the cloud, displayed to users,
 or fed to an application.
 
+![Gateway Architecture](media/gateway_arch.png)
 
-
-<img src="https://www.gliffy.com/go/publish/image/10262809/L.png">
 
 Information
 -----------
