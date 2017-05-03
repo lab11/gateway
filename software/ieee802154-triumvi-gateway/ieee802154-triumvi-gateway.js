@@ -60,6 +60,7 @@ var TRIUMVI_STATUSREG_THREEPHASE    = 0x30;
 var TRIUMVI_STATUSREG_FRAMWRITE     = 0x08;
 var TRIUMVI_STATUSREG_POWERFACTOR   = 0x04;
 var TRIUMVI_STATUSREG_TIMESTAMP     = 0x02;
+var TRIUMVI_STATUSREG_PKTCOUNTER    = 0x01;
 
 // Parse a packet for a triumvi packet. We don't actually know this is triumvi,
 // so we have to be picky.
@@ -129,8 +130,23 @@ function parse_packet (buffer) {
 		}
 	};
 
+	// Special function for parsing exponent in upper bits of encoded values
+	function exponent_transform (buf, offset, len) {
+		if (len == 4) {
+			var reading = buf.readUInt32LE(offset);
+			var exponent = (((reading & (0x3<<30))>>30) & 0x3);
+			reading &= ~(0x3<<30);
+		} else if (len == 2) {
+			var reading = buf.readUInt16LE(offset);
+			var exponent = (((reading & (0x3<<14))>>14) & 0x3);
+			reading &= ~(0x3<<14);
+		}
+		reading <<= (2*exponent);
+		return reading;
+	}
+
 	// We always have power
-	out.Power = data.readUInt32LE(0) / 1000.0;
+	out.Power = exponent_transform(data, 0, 4) / 1000.0;
 	out.power_watts = out.Power;
 
 	// Check if we have more
@@ -161,7 +177,7 @@ function parse_packet (buffer) {
 			out.power_factor = data.readUInt16LE(offset) / 1000;
 			out.voltage_rms_volts = data.readUInt8(offset+2);
 			out.ina_gain = data.readUInt8(offset+3);
-			out.current_rms_amps = data.readUInt16LE(offset+4) / 1000;
+			out.current_rms_amps = exponent_transform(data, offset+4, 2) / 1000;
 			offset += 6;
 		}
 
@@ -182,6 +198,12 @@ function parse_packet (buffer) {
 			minute = data.readUInt8(offset+4);
 			second = data.readUInt8(offset+5);
 			out.sample_timestamp = new Date(year, month, day, hour, minute, second).toISOString();
+			offset += 6;
+		}
+
+		if (status_byte & TRIUMVI_STATUSREG_PKTCOUNTER) {
+			out.counter = data.readUInt32LE(offset);
+			offset += 4;
 		}
 	}
 
@@ -300,6 +322,11 @@ _mqtt_client.on('connect', function () {
 				var CC2538_SPI_REQ_DATA = 0;
 				var CC2538_SPI_GET_LENGTH = 1;
 				var CC2538_SPI_GET_DATA = 2;
+				var CC2538_SPI_MASTER_RADIO_ON = 3;
+				var CC2538_SPI_MASTER_RADIO_OFF = 4;
+				var CC2538_SPI_RF_PACKET_SEND = 5;
+				var CC2538_SPI_MASTER_SET_TIME = 6;
+				var CC2538_SPI_MASTER_RST_RF_FIFO = 7;
 
 				var MIN_TRIUMVI_PKT_LEN = 14;
 
@@ -419,6 +446,24 @@ _mqtt_client.on('connect', function () {
 				if (cc2538_interrupt.readSync() == 1) {
 					handle_interrupt(null, 10);
 				}
+
+				// Setup a timer so that we update the CC2538 with the
+				// correct time periodically.
+				setInterval(function () {
+					var now = new Date;
+
+					// Write the timestamp out to the CC2538
+					spi.write(new Buffer([0]));
+					spi_cs.writeSync(0);
+					spi.write(new Buffer([CC2538_SPI_MASTER_SET_TIME, 7,
+						now.getUTCFullYear()-2000,
+						now.getUTCMonth()+1,
+						now.getUTCDate(),
+						now.getUTCHours(),
+						now.getUTCMinutes(),
+						now.getUTCSeconds()]));
+					spi_cs.writeSync(1);
+				})
 			}
 		});
 	});
