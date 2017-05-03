@@ -5,6 +5,16 @@ Buildroot is a system for getting a filesystem for a Linux platform.
 
 These steps will build an image (including the kernel) for a gateway.
 
+Setup
+-----
+
+The user visible version number is set in:
+
+    external/board/lab11/common/overlay/etc/issue.net
+
+Building the Image
+------------------
+
 First, make sure you have the submodule checked out:
 
     git submodule update --init buildroot
