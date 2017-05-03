@@ -18,10 +18,7 @@ var GatewayTopics = require('gateway-topics');
  * Constants
  ******************************************************************************/
 
-// One of 'edison' or 'BBB'
-var GATEWAY_TYPE = 'BBB';
-
-// Type to listen on to get raw 15.4 packets
+// Type to listen on to get raw 15.4 packets for CC2520.
 var ETH_P_IEEE802154 = 0x00F6;
 
 var MQTT_TOPIC_NAME = 'gateway-data';
