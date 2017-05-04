@@ -1,0 +1,24 @@
+diff --git a/drivers/tty/serial/mfd_trace.h b/drivers/tty/serial/mfd_trace.h
+index 49afd9bd92a..f4b269e6b4e 100644
+--- a/drivers/tty/serial/mfd_trace.h
++++ b/drivers/tty/serial/mfd_trace.h
+@@ -1,6 +1,6 @@
+ #undef TRACE_INCLUDE_PATH
+ #undef TRACE_INCLUDE_FILE
+-#define TRACE_INCLUDE_PATH .
++#define TRACE_INCLUDE_PATH ../../drivers/tty
+ #define TRACE_INCLUDE_FILE mfd_trace
+ 
+ #define TRACE_SYSTEM hsu
+diff --git a/sound/soc/intel/sst/sst_trace.h b/sound/soc/intel/sst/sst_trace.h
+index 8d34ef3575e..574d9c6b652 100644
+--- a/sound/soc/intel/sst/sst_trace.h
++++ b/sound/soc/intel/sst/sst_trace.h
+@@ -142,6 +142,6 @@ TRACE_EVENT(sst_fw_download,
+ 
+ /* This part must be outside protection */
+ #undef TRACE_INCLUDE_PATH
+-#define TRACE_INCLUDE_PATH .
++#define TRACE_INCLUDE_PATH ../../sound/soc/intel/sst
+ #define TRACE_INCLUDE_FILE sst_trace
+ #include <trace/define_trace.h>
