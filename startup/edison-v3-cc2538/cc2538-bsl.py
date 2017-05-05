@@ -48,7 +48,7 @@ import os
 import subprocess
 import struct
 import binascii
-import findTTY2
+import findTTY
 
 #version
 VERSION_STRING = "1.1"
@@ -660,7 +660,7 @@ if __name__ == "__main__":
             ports = sorted(ports)
             '''
             # find FDTI device
-            ports = findTTY2.findSerialDevice('ID_SERIAL=\'FTDI_')
+            ports = findTTY.findSerialDevice('ID_SERIAL=\'FTDI_')
 
             if ports:
                 # Found something - take it
