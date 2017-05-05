@@ -9,7 +9,7 @@ def findSerialDevice(stringToBeMatched):
         res2 = subprocess.check_output(['find', r, '-name', 'dev'])
         res2 = res2.split()
         for r2 in res2:
-            r2 = r2[:-3]
+            r2 = r2[:-4]
             res3 = subprocess.check_output(['udevadm', 'info', '-q', 'name', '-p', r2]).rstrip()
             if 'bus' in res3:
                 continue
