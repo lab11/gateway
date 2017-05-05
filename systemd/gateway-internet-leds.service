@@ -1,5 +1,5 @@
 [Unit]
-Description=Publish MQTT gateway packets to other mediums.
+Description=Set tri-color LED based on gateway connectivity.
 After=ble-gateway-mqtt.service
 
 [Service]

@@ -82,9 +82,13 @@ function check_internet () {
 function check_ble () {
     function get_ble_count (cb) {
         exec('hciconfig', function (err, stdout, stderr) {
-            var lines = stdout.split('\n');
-            var fields = lines[3].split(/(\s+)/);
-            var result = parseInt(fields[4].split(':')[1]);
+            if (stdout) {
+                var lines = stdout.split('\n');
+                var fields = lines[3].split(/(\s+)/);
+                var result = parseInt(fields[4].split(':')[1]);
+            } else {
+                var result = 0;
+            }
             cb(result)
         });
     }
