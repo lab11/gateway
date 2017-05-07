@@ -45,7 +45,7 @@ def main():
         sys.exit(0)
 
     # get cellular connection status
-    status = subprocess.check_output(['qmicli', '-d', '/dev/cdc-wdm0', '--wds-get-packet-service-status']).split()
+    status = subprocess.check_output(['qmicli', '-d', myDev, '--wds-get-packet-service-status']).split()
     status = status[-1][1:-1]
 
     # get interface name
