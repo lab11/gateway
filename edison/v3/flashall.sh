@@ -21,11 +21,14 @@ if [ ${#gateway_id} -ne 17 ]; then
 	exit
 fi
 
+# Copy the stock gateway env vars string file
+cp  u-boot/edison-gateway.txt  u-boot/edison-gateway-custom.txt
+
 # Replace the gateway ID in the u boot environment variables text strings file
-sed -i -E "s/gateway_id=(.*)$/gateway_id=$gateway_id/" u-boot/edison-gateway.txt
+sed -i -E "s/gateway_id=(.*)$/gateway_id=$gateway_id/" u-boot/edison-gateway-custom.txt
 
 # Create the binary we can flash onto the edison.
-mkenvimage -s 65536 -r -o u-boot/edison-gateway.bin u-boot/edison-gateway.txt
+mkenvimage -s 65536 -r -o u-boot/edison-gateway-custom.bin u-boot/edison-gateway-custom.txt
 
 LOG_FILENAME="flash.log"
 OUTPUT_LOG_CMD="2>&1 | tee -a ${LOG_FILENAME} | ( sed -n '19 q'; head -n 1; cat >/dev/null )"
