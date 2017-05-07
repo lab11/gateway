@@ -8,7 +8,16 @@ Dependencies
 
 Need `mkenvimage` to prepare environment variables for u-boot.
 
-    apt get install u-boot-tools
+    apt get install u-boot-tools dfu-util
+
+There are probably more that need to be added here that I have forgotten about.
+Please add them if you have issues.
+
+
+Images
+------
+
+Check owncloud.lab11.eecs.umich.edu for swarm gateway images.
 
 
 Usage
@@ -20,13 +29,6 @@ Usage
 
         miniterm.py /dev/ttyUSB0 115200
 
-3. Plug in power to the gateway. When the serial terminal gets to
-`Hit any key to stop autoboot: `, press a key. This happens very quickly.
-
-4. On the edison at the boot prompt, enter `run do_flash`:
-
-        boot > run do_flash
-
 5. On the host computer:
 
         ./flashall.sh c0:98:e5:c0:00:<gateway_id> <root of image to flash>
@@ -35,3 +37,9 @@ Usage
 
         ./flashall.sh c0:98:e5:c0:00:01 swarm-gateway-1.9.0.edison.umich.triumvi
 
+3. Plug in power to the gateway. The gateway should start flashing. If not,
+when the serial terminal gets to
+`Hit any key to stop autoboot: `, press a key. This happens very quickly.
+Then at the boot prompt, enter `run do_flash`:
+
+        boot > run do_flash
