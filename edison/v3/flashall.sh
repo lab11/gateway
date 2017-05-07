@@ -38,6 +38,16 @@ if [ ! -f $IMAGE_ROOT.root ]; then
     echo "Can't flash then."
     exit -1
 fi
+if [ ! -f $IMAGE_ROOT.home ]; then
+    echo "File $IMAGE_ROOT.home not found!"
+    echo "Can't flash then."
+    exit -1
+fi
+if [ ! -f $IMAGE_ROOT.boot ]; then
+    echo "File $IMAGE_ROOT.boot not found!"
+    echo "Can't flash then."
+    exit -1
+fi
 
 # Check that that tar files are extracted
 if [ ! -f ${IFWI_DFU_FILE}-00-dfu.bin ]; then
