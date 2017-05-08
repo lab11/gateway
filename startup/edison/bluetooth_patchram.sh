@@ -28,4 +28,3 @@ sleep 5
 
 hciconfig hci0 up
 hciconfig hci0 noscan
-
