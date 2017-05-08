@@ -66,6 +66,16 @@ for the gateway.
 - [Gateway Internet LEDs](https://github.com/lab11/gateway/tree/master/software/gateway-internet-leds):
 Set LED color based on status of gateway.
 
+### Triumvi
+
+A couple tools for Triumvi devices:
+
+- [Triumvi BLE](https://github.com/lab11/gateway/tree/master/software/gateway-triumvi-ble):
+Re-broadcast Triumvi data as a BLE service.
+- [Triumvi SQLite](https://github.com/lab11/gateway/tree/master/software/gateway-triumvi-sqlite):
+Store Triumvi packets localling in a SQLite database.
+- [Triumvi Data Download]((https://github.com/lab11/gateway/tree/master/software/gateway-triumvi-server):
+UI for downloading locally stored data.
 
 ## Requirements
 
