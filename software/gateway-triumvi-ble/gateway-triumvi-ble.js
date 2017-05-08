@@ -48,7 +48,7 @@ mqtt_client.on('connect', function () {
 			var end = Buffer.alloc(6);
 			end.writeUInt8(pkt.panel_id, 0);
 			end.writeUInt8(pkt.circuit_id, 1);
-			end.writeInt32LE(pkt.power_watts, 4);
+			end.writeInt32LE(pkt.power_watts, 2);
 
 			// Make them one
 			var all = Buffer.concat([id, end]);
