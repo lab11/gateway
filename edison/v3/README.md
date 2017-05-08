@@ -1,7 +1,7 @@
 Edison Gateway V3
 =================
 
-Files needed to flash edison.
+Files and tools to flash the Edison.
 
 Dependencies
 ------------
@@ -22,6 +22,8 @@ Check owncloud.lab11.eecs.umich.edu for swarm gateway images.
 
 Usage
 -----
+
+Follow these steps to program an Edison:
 
 1. Plug cables into both micro USB ports on the gateway.
 
