@@ -13,7 +13,7 @@
 echo 1 > /sys/devices/virtual/misc/watchdog/disable
 
 # Do setup on the first boot after flashing
-/home/debian/gateway/startup/edison/first_install.sh
+/home/debian/gateway/startup/edison/first-install.sh
 
 # Configure the CC2538
 /home/debian/gateway/startup/edison-v3-cc2538/flash_cc2538.sh
