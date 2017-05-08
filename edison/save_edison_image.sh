@@ -11,7 +11,7 @@
 # sudo ./save_edison_image.sh <version> <qualifiers>
 #
 # Example:
-# sudo ./save_edison_image.sh 1.10.0 edison-umich-triumvi
+# sudo ./save_edison_image.sh 1.10.0 edison_v3-umich-triumvi
 
 set -o pipefail
 set -e
@@ -25,17 +25,9 @@ NAME_ROOT=swarm-gateway-$VERSION-$QUALIFIERS.root
 NAME_HOME=swarm-gateway-$VERSION-$QUALIFIERS.home
 NAME_BOOT=swarm-gateway-$VERSION-$QUALIFIERS.boot
 
-
-# sed -i 's/#\/sbin\/third_/\/sbin\/first_/g' /etc/rc.local
-
-# mkdir /home/sdcard
-
 # Another copy of root to mount
 mkdir -p $SDCARD_PATH/rootcopy
 mount /dev/mmcblk0p8 $SDCARD_PATH/rootcopy
-
-# mount /dev/mmcblk1p1 /home/sdcard
-# mkdir /home/sdcard/image
 
 # Setup a filesystem in a file on the SD card to put the root filesystem in
 dd if=/dev/zero of=$SDCARD_PATH/$NAME_ROOT count=1500 bs=1M iflag=fullblock
@@ -49,7 +41,7 @@ mount $SDCARD_PATH/$NAME_ROOT $SDCARD_PATH/rootimage
 cp -r $SDCARD_PATH/rootcopy/* $SDCARD_PATH/rootimage/
 
 # Make it so that first_install.sh runs on boot
-sed -i -E "s/^(#*)(.*)(first-install\.sh)(.*)$/\2\3\4/g"  $SDCARD_PATH/rootcopy/etc/rc.local
+sed -i -E "s/^(#*)(.*)(first-install\.sh)(.*)$/\2\3\4/g" $SDCARD_PATH/rootimage/etc/rc.local
 
 # Can unmount these now
 umount $SDCARD_PATH/rootcopy
@@ -61,17 +53,3 @@ rm -r $SDCARD_PATH/rootimage
 # get written to.
 sudo dd bs=4M if=/dev/mmcblk0p7 of=$SDCARD_PATH/$NAME_BOOT
 sudo dd bs=4M if=/dev/mmcblk0p10 of=$SDCARD_PATH/$NAME_HOME
-
-# rm -fr /home/sdcard/image/home/.rootfs
-# rm /home/sdcard/image/usr
-# mkdir /home/sdcard/image/usr
-# cp -r /usr/* /home/sdcard/image/usr
-
-# umount /home/sdcard/image
-# rm -r /home/sdcard/image
-# umount /home/sdcard
-# umount /home/rootcopy
-# rm -r /home/sdcard
-# rm -r /home/rootcopy
-
-# sed -i 's/\/sbin\/first_/#\/sbin\/third_/g' /etc/rc.local
