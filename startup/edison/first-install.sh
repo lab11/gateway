@@ -4,9 +4,7 @@
 
 # EDISON ONLY
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# exit first_install by commenting out this script and rebooting
+# Exit first-install by commenting out this script and rebooting
 exit_install () {
     # Comment out first-install.sh from /etc/rc.local
     sed -i -E "s/^(.*)(first-install\.sh)(.*)$/#\1\2\3/g" /etc/rc.local
@@ -108,7 +106,7 @@ fi_assert $? "Formatting update partition"
 # factory_partition
 
 # Get the gateway ID
-$DIR/set_gateway_id.sh
+/home/debian/gateway/startup/edison/set_gateway_id.sh
 fi_assert $? "Setting gateway ID"
 
 # ssh
