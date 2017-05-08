@@ -45,10 +45,10 @@ mqtt_client.on('connect', function () {
 			var id = Buffer.from(pkt._meta.device_id, 'hex');
 
 			// Get the circuit, panel, and power data in a buffer.
-			var end = Buffer.alloc(4);
+			var end = Buffer.alloc(6);
 			end.writeUInt8(pkt.panel_id, 0);
 			end.writeUInt8(pkt.circuit_id, 1);
-			end.writeInt16LE(pkt.power_watts, 2);
+			end.writeInt32LE(pkt.power_watts, 4);
 
 			// Make them one
 			var all = Buffer.concat([id, end]);
@@ -61,7 +61,7 @@ mqtt_client.on('connect', function () {
 		}
 
 		// If we are full, notify the client.
-		if (_triumvi_data_buffers.length == 42) {
+		if (_triumvi_data_buffers.length == 36) {
 			notify_subscriber();
 		}
 	});

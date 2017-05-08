@@ -16,16 +16,20 @@ CREATE TABLE IF NOT EXISTS triumvi (\
   TRIUMVI_ID        CHAR(16) NOT NULL,\
   TIMESTAMP         INT      NOT NULL,\
   POWER_WATTS       REAL     NOT NULL,\
-  POWER_FACTOR      REAL     NOT NULL,\
-  VOLTAGE_RMS_VOLTS REAL     NOT NULL,\
-  CURRENT_RMS_AMPS  REAL     NOT NULL,\
-  PANEL_ID          INT,\
-  CIRCUIT_ID        INT\
+  POWER_FACTOR      REAL             ,\
+  VOLTAGE_RMS_VOLTS REAL             ,\
+  CURRENT_RMS_AMPS  REAL             ,\
+  INA_GAIN          INT              ,\
+  PANEL_ID          INT              ,\
+  CIRCUIT_ID        INT              ,\
+  THREE_PHASE       INT              ,\
+  FRAM_WRITE        INT              ,\
+  SAMPLE_TIMESTAMP  INT              ,\
+  COUNTER           INT               \
 )\
 ';
 
-var INSERT = 'INSERT INTO triumvi VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-
+var INSERT = 'INSERT INTO triumvi VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)';
 
 
 // Read in the config file to get the sqlite db filename
@@ -41,6 +45,10 @@ try {
     process.exit(1);
 }
 
+function ornull (val) {
+	if (val === 'undefined') return null;
+	return val;
+}
 
 // Do the actual saving to DB
 var db = new sqlite3.Database(config.database_file);
@@ -66,16 +74,23 @@ db.run(CREATE_TABLE, function (err) {
 				try {
 					var pkt = JSON.parse(message);
 
-					var triumvi_id = pkt._meta.device_id;
-					var timestamp = new Date(pkt._meta.received_time);
-					var power_watts = pkt.power_watts;
-					var power_factor = pkt.power_factor;
-					var voltage_rms_volts = pkt.voltage_rms_volts;
-					var current_rms_amps = pkt.current_rms_amps;
-					var panel_id = pkt.panel_id;
-					if (panel_id === 'undefined') panel_id = null;
-					var circuit_id = pkt.circuit_id;
-					if (circuit_id === 'undefined') circuit_id = null;
+					var triumvi_id        = pkt._meta.device_id;
+					var timestamp         = new Date(pkt._meta.received_time);
+					var power_watts       = pkt.power_watts;
+					var power_factor      = ornull(pkt.power_factor);
+					var voltage_rms_volts = ornull(pkt.voltage_rms_volts);
+					var current_rms_amps  = ornull(pkt.current_rms_amps);
+					var ina_gain          = ornull(pkt.ina_gain);
+					var panel_id          = ornull(pkt.panel_id);
+					var circuit_id        = ornull(pkt.circuit_id);
+					var three_phase       = ornull(pkt.three_phase_meter);
+					var fram_write        = ornull(pkt.fram_write);
+					if (pkt.sample_timestamp === 'undefined') {
+						var sample_timestamp = null;
+					} else {
+						var sample_timestamp = new Date(pkt.sample_timestamp);
+					}
+					var counter           = ornull(pkt.counter);
 
 					// Insert into database
 					insert.run(triumvi_id,
@@ -84,12 +99,17 @@ db.run(CREATE_TABLE, function (err) {
 					           power_factor,
 					           voltage_rms_volts,
 					           current_rms_amps,
+					           ina_gain,
 					           panel_id,
-					           circuit_id);
+					           circuit_id,
+					           three_phase,
+					           fram_write,
+					           sample_timestamp,
+					           counter);
 				} catch (e) {
 					console.log('Skipping packet: ' + e);
 				}
 			});
 		});
 	}
-})
+});

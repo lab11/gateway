@@ -213,8 +213,19 @@ app.post('/triumvi/data/download', function (req, res) {
 	// Run the query and save the results to a file.
 
 	// Headers for the CSV file.
-	var HEADERS = ['TRIUMVI_ID', 'TIMESTAMP', 'POWER_WATTS', 'POWER_FACTOR',
-	               'VOLTAGE_RMS_VOLTS', 'CURRENT_RMS_AMPS', 'PANEL_ID', 'CIRCUIT_ID'];
+	var HEADERS = ['TRIUMVI_ID',
+	               'TIMESTAMP',
+	               'POWER_WATTS',
+	               'POWER_FACTOR',
+	               'VOLTAGE_RMS_VOLTS',
+	               'CURRENT_RMS_AMPS',
+	               'INA_GAIN',
+	               'PANEL_ID',
+	               'CIRCUIT_ID',
+	               'THREE_PHASE',
+	               'FRAM_WRITE',
+	               'SAMPLE_TIMESTAMP',
+	               'COUNTER',];
 
 	// Use a local file to store the resulting data, then let the user download
 	// that file.

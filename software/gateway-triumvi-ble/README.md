@@ -17,23 +17,23 @@ when the buffer fills up.
 
 ### Data Format
 
-The characteristic holds packets in 12 byte chunks. There can be between
-1 and 42 data packets in the characteristic.
+The characteristic holds packets in 14 byte chunks. There can be between
+1 and 36 data packets in the characteristic.
 
 Each packet:
 
 ```
- 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Triumvi ID    |P|C|Pow|
-+-+-+-+-+-+-+-+-+-+-+-+-+
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Triumvi ID    |P|C|Power  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
 - **Triumvi ID**: Eight byte big-endian ID of the Triumvi that took the measurement.
 Should start with `c098e55452a0`.
 - **P**: One byte panel ID.
 - **C**: One byte circuit ID.
-- **Pow**: Two byte little-endian signed power measurement.
+- **Power**: Four byte little-endian signed power measurement.
 
 To determine the number of contained data packets in the characteristic,
-divide the length of the characteristic buffer by 12.
+divide the length of the characteristic buffer by 14.
