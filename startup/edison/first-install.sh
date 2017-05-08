@@ -9,7 +9,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # exit first_install by commenting out this script and rebooting
 exit_install () {
     # Comment out first-install.sh from /etc/rc.local
-    sed -i -E "s/^(.*)(first_install\.sh)(.*)$/#\1\2\3/g" /etc/rc.local
+    sed -i -E "s/^(.*)(first-install\.sh)(.*)$/#\1\2\3/g" /etc/rc.local
     echo "Rebooting...."
     reboot
 }

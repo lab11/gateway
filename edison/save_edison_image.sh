@@ -49,7 +49,7 @@ mount $SDCARD_PATH/$NAME_ROOT $SDCARD_PATH/rootimage
 cp -r $SDCARD_PATH/rootcopy/* $SDCARD_PATH/rootimage/
 
 # Make it so that first_install.sh runs on boot
-sed -i -E "s/^(#*)(.*)(first_install\.sh)(.*)$/\2\3\4/g"  $SDCARD_PATH/rootcopy/etc/rc.local
+sed -i -E "s/^(#*)(.*)(first-install\.sh)(.*)$/\2\3\4/g"  $SDCARD_PATH/rootcopy/etc/rc.local
 
 # Can unmount these now
 umount $SDCARD_PATH/rootcopy
