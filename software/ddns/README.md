@@ -33,34 +33,34 @@ have access to to support ddns. **Be careful with trailing `.`s throughout**
 
 2. Configure DNS server
 
-  These configurations are for BIND9.
+    These configurations are for BIND9.
 
-  Set up a key file (with restrctive permissions) for bind to read from:
+    Set up a key file (with restrctive permissions) for bind to read from:
 
-      $ cat /etc/bind/ddns-keys-lab11.conf 
-      key "swarmgateway.device.lab11.eecs.umich.edu." {
-      algorithm HMAC-SHA512;
-      secret "<-- PASTE THE SECRET FROM YOUR .key FILE HERE -->";
-      };
+        $ cat /etc/bind/ddns-keys-lab11.conf 
+        key "swarmgateway.device.lab11.eecs.umich.edu." {
+        algorithm HMAC-SHA512;
+        secret "<-- PASTE THE SECRET FROM YOUR .key FILE HERE -->";
+        };
 
-  Updated your `named` file to include a new zone:
+    Updated your `named` file to include a new zone:
 
-      include "/etc/bind/ddns-keys-lab11.conf";
-      zone "device.lab11.eecs.umich.edu" IN {
+        include "/etc/bind/ddns-keys-lab11.conf";
+        zone "device.lab11.eecs.umich.edu" IN {
               type master;
               file "/var/lib/bind/db.device.lab11.eecs.umich.edu";
               update-policy {
                       grant swarmgateway.device.lab11.eecs.umich.edu. wildcard *.device.lab11.eecs.umich.edu. A AAAA TXT;
               };
               notify no;
-      };
+        };
 
-  And create a database file:
+    And create a database file:
 
-      $ cat /var/lib/bind/db.device.lab11.eecs.umich.edu
-      $ORIGIN .
-      $TTL 30	; 30 seconds
-      device.lab11.eecs.umich.edu IN SOA eecsdns.eecs.umich.edu. helpeecs.umich.edu. (
+        $ cat /var/lib/bind/db.device.lab11.eecs.umich.edu
+        $ORIGIN .
+        $TTL 30	; 30 seconds
+        device.lab11.eecs.umich.edu IN SOA eecsdns.eecs.umich.edu. helpeecs.umich.edu. (
       				2016062002 ; serial
       				120        ; refresh (2 minutes)
       				120        ; retry (2 minutes)
@@ -71,26 +71,27 @@ have access to to support ddns. **Be careful with trailing `.`s throughout**
       			NS	csedns.eecs.umich.edu.
       			NS	eecsdns.eecs.umich.edu.
 
-  Some gotcha's:
-     * Whitespace is very significant throughout configurations. Vim did a good job of highlighting errors for me.
-     * Use the configuration check utilities from bind to verify your work
-        - `named-checkconf`
-        - `named-checkzone device.lab11.eecs.umich.edu /var/lib/bind/db.device.lab11.eecs.umich.edu`
-     * The bind server must be able to write to the database file AND be able to create new files in the same directory as the database file. See the next point.
-     * AppArmor / SELinux will stop things from working out-of-the-box on most installs, see http://askubuntu.com/questions/172030/how-to-allow-bind-in-app-armor
-        - Note you may want to change that AppArmor example to allow for any file in the directory (`/*`) or subdirectories (`/**`)
+    Some gotcha's:
+       * Whitespace is very significant throughout configurations. Vim did a good job of highlighting errors for me.
+       * Use the configuration check utilities from bind to verify your work
+          - `named-checkconf`
+          - `named-checkzone device.lab11.eecs.umich.edu /var/lib/bind/db.device.lab11.eecs.umich.edu`
+       * The bind server must be able to write to the database file AND be able to create new files in the same directory as the database file. See the next point.
+       * AppArmor / SELinux will stop things from working out-of-the-box on most installs, see http://askubuntu.com/questions/172030/how-to-allow-bind-in-app-armor
+          - Note you may want to change that AppArmor example to allow for any file in the directory (`/*`) or subdirectories (`/**`)
 
 3. Set up the gateways
 
-  On the gateway, you'll need to copy the keys (**both** the `.key` and `.private`) to `/etc/swarm-gateway/ddns/`.
+    On the gateway, you'll need to copy the keys (**both** the `.key` and `.private`) to `/etc/swarm-gateway/ddns/`.
 
-  Install dependencies
+    Install dependencies
   
-      sudo pip3 install dnspython3
-      sudo apt install dnsutils
+        sudo pip3 install dnspython3
+        sudo apt install dnsutils
 
-  Install `ddns` updates as a cron job (`cp gateway/cron/ddns /etc/cron.hourly`)
-    - FIXME: Some configuration options are hardcoded into this script currently, you'll need to update them
+    Install `ddns` updates as a cron job (`cp gateway/cron/ddns /etc/cron.hourly`)
+    
+        - FIXME: Some configuration options are hardcoded into this script currently, you'll need to update them
 
-  You can test that everything's working with `sudo run-parts /etc/cron.hourly`
+    You can test that everything's working with `sudo run-parts /etc/cron.hourly`
 
