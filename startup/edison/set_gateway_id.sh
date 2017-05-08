@@ -23,3 +23,9 @@ if [ -f /etc/sensu/conf.d/client.json ]; then
     sudo sed -i -E "s/\"name\":\"swarm-gateway-(.{12})\"/\"name\":\"swarm-gateway-$gateway_id_no_colon\"/" /etc/sensu/conf.d/client.json
     sudo sed -i -E "s/\"address\":\"(.{12}).device.lab11.eecs.umich.edu\"/\"address\":\"$gateway_id_no_colon.device.lab11.eecs.umich.edu\"/" /etc/sensu/conf.d/client.json
 fi
+
+# Set the gateway ID in the factory partition
+mkdir -p /factory
+mount /dev/mmcblk0p5 /factory
+echo "$gateway_id" > /factory/gateway_id
+umount /factory
