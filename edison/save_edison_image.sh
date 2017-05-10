@@ -43,10 +43,6 @@ cp -r $SDCARD_PATH/rootcopy/* $SDCARD_PATH/rootimage/
 # Make it so that first_install.sh runs on boot
 sed -i -E "s/^(#*)(.*)(first-install\.sh)(.*)$/\2\3\4/g" $SDCARD_PATH/rootimage/etc/rc.local
 
-# Remove SSH keys
-rm -f $SDCARD_PATH/rootimage/home/debian/.ssh/id_rsa
-rm -f $SDCARD_PATH/rootimage/home/debian/.ssh/id_rsa.pub
-
 # Can unmount these now
 umount $SDCARD_PATH/rootcopy
 umount $SDCARD_PATH/rootimage
@@ -57,3 +53,15 @@ rm -r $SDCARD_PATH/rootimage
 # get written to.
 sudo dd bs=4M if=/dev/mmcblk0p7 of=$SDCARD_PATH/$NAME_BOOT
 sudo dd bs=4M if=/dev/mmcblk0p10 of=$SDCARD_PATH/$NAME_HOME
+
+# But we do need to edit /home, so we need to mount it
+mkdir -p $SDCARD_PATH/homeimage
+mount $SDCARD_PATH/$NAME_HOME $SDCARD_PATH/homeimage
+
+# Remove SSH keys
+rm -f $SDCARD_PATH/homeimage/debian/.ssh/id_rsa
+rm -f $SDCARD_PATH/homeimage/debian/.ssh/id_rsa.pub
+
+# Undo
+umount $SDCARD_PATH/homeimage
+rm -r $SDCARD_PATH/homeimage
