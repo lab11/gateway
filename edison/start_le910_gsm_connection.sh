@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Turn on LE910 cell radio.
+# This is a helper script for activating the LE910 radio using
+# NetworkManager. It can also make LE910 start on boot.
 #
 # To make this happen at boot:
 #
