@@ -3,8 +3,7 @@
 # Setup a reverse SSH tunnel with port based on gateway id.
 
 PORT_BASE=49000
-# SSH_HOST="ssh.lab11.eecs.umich.edu"
-SSH_HOST="fram.eecs.umich.edu"
+SSH_HOST="ssh.lab11.eecs.umich.edu"
 SSH_USER="reversessh"
 SSH_ARGS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
 -o ServerAliveInterval=20 -o ServerAliveCountMax=1 -o ExitOnForwardFailure=yes -N -T"
