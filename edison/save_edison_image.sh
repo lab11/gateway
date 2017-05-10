@@ -43,6 +43,10 @@ cp -r $SDCARD_PATH/rootcopy/* $SDCARD_PATH/rootimage/
 # Make it so that first_install.sh runs on boot
 sed -i -E "s/^(#*)(.*)(first-install\.sh)(.*)$/\2\3\4/g" $SDCARD_PATH/rootimage/etc/rc.local
 
+# Remove SSH keys
+rm -f $SDCARD_PATH/rootimage/home/debian/.ssh/id_rsa
+rm -f $SDCARD_PATH/rootimage/home/debian/.ssh/id_rsa.pub
+
 # Can unmount these now
 umount $SDCARD_PATH/rootcopy
 umount $SDCARD_PATH/rootimage

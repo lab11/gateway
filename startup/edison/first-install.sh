@@ -78,6 +78,11 @@ fi_assert $? "Generating sshd keys"
 setup_ap_ssid_and_passphrase
 fi_assert $? "Generating Wifi Access Point SSID and passphrase"
 
+# Create an SSH key for debian user
+runuser -l debian -c 'ssh-keygen -f /home/debian/.ssh/id_rsa -q -N ""'
+echo "Gateway SSH public key"
+cat /home/debian/.ssh/id_rsa.pub
+
 # I guess do this? Don't really know why.
 depmod -a
 
