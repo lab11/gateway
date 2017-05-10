@@ -1,0 +1,18 @@
+[Unit]
+Description=Setup reverse SSH persistent tunnel.
+After=network-online.target
+Before=multi-user.target
+DefaultDependencies=no
+
+[Service]
+User=debian
+ExecStart=/home/debian/gateway/startup/reverse_ssh.sh
+
+# Wait 60 seconds before trying to restart the connection if it disconnects
+RestartSec=60
+
+# Keep retrying no matter what
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
