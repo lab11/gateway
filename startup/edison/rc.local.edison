@@ -18,6 +18,9 @@ echo 1 > /sys/devices/virtual/misc/watchdog/disable
 # Configure the CC2538
 /home/debian/gateway/startup/edison-v3-cc2538/flash_cc2538.sh
 
+# Configure the LE910
+/home/debian/gateway/startup/edison-v3-le910/set_apn.sh
+
 ### uncomment to disable USB device mode and enable host mode for the OTG port
 # rmmod g_multi || true
 
