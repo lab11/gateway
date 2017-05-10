@@ -25,7 +25,4 @@ if [ -f /etc/sensu/conf.d/client.json ]; then
 fi
 
 # Set the gateway ID in the factory partition
-mkdir -p /factory
-mount /dev/mmcblk0p5 /factory
 echo "$gateway_id" > /factory/gateway_id
-umount /factory

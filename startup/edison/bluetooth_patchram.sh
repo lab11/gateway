@@ -2,13 +2,8 @@
 
 killall -9 bluetoothd
 
-mkdir -p /factory
-mount /dev/mmcblk0p5 /factory
-
 # Use the configured gateway_id rather than the intel provided bluetooth_address
 BD_ADDR=$(echo $(cat /factory/gateway_id))
-
-umount /factory
 
 rfkill unblock bluetooth
 
