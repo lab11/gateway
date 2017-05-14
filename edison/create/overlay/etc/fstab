@@ -1,0 +1,15 @@
+/dev/root            /                   ext4       defaults,noatime      0  0
+proc                 /proc               proc       defaults              0  0
+devpts               /dev/pts            devpts     mode=0620,gid=5       0  0
+debugfs              /sys/kernel/debug   debugfs    auto                  0  0
+tmpfs                /run                tmpfs      mode=0755,nodev,nosuid,strictatime 0  0
+tmpfs                /tmp                tmpfs      defaults              0  0
+
+# Main drives
+/dev/mmcblk0p7       /boot               auto       defaults                       1   1
+/dev/mmcblk0p10      /home               auto       defaults                       1   1
+/dev/mmcblk0p5       /factory            auto       defaults                       1   1
+
+# SD card
+/dev/mmcblk1p1       /media/sdcard       auto       defaults,nofail,uid=debian     1   1
+

@@ -1,0 +1,33 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+
+# Disable the watchdog timer's automatic reboot
+echo 1 > /sys/devices/virtual/misc/watchdog/disable
+
+# Do setup on the first boot after flashing
+/opt/edison/first-install.sh
+
+# Configure the CC2538
+/home/debian/gateway/startup/edison-v3-cc2538/flash_cc2538.sh
+
+# Configure the LE910
+/home/debian/gateway/startup/edison-v3-le910/set_apn.sh
+
+### uncomment to disable USB device mode and enable host mode for the OTG port
+# rmmod g_multi || true
+
+### uncomment to enable login consoles on bluetooth rfcomm
+#screen -S "rfcomm-getty" -d -m /usr/bin/rfcomm watch 0 1 /sbin/rfcomm-getty.sh {}
+
+### uncomment to try to turn on wifi during boot without systemd
+# screen -S "ifup wlan0" -d -m ifup wlan0
+
+exit 0

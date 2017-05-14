@@ -1,0 +1,14 @@
+# /etc/modules: kernel modules to load at boot time.
+#
+# This file contains the names of kernel modules that should be loaded
+# at boot time, one per line. Lines beginning with "#" are ignored.
+
+bcm_bt_lpm
+bcm4334x
+g_multi
+
+# Don't need webcam support on gateway
+#uvcvideo
+
+ftdi_sio
+

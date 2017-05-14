@@ -1,0 +1,6 @@
+# These rules keep ModemManager from taking over the
+# edison tty serial terminal and the BCM43341 serial
+# port (which obviously aren't 3g modems).
+KERNEL=="ttyMFD0", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
+KERNEL=="ttyMFD2", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
+

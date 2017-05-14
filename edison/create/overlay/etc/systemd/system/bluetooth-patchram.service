@@ -1,0 +1,11 @@
+[Unit]
+Description=Setup BCM43341 so that bluetooth works
+Before=bluetooth.service
+
+[Service]
+ExecStart=/opt/edison/bluetooth_patchram.sh
+ProtectHome=true
+
+[Install]
+WantedBy=bluetooth.target
+
