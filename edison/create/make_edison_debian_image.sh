@@ -2,47 +2,63 @@
 
 # Where the debian file system will be created
 ROOTDIR=`pwd`/sidroot
+ROOTDIR_CLEAN=$ROOTDIR-clean
 
 # This allows us to run commands inside of the new filesystem
 CHROOTCMD="eval LC_ALL=C LANGUAGE=C LANG=C chroot $ROOTDIR"
 
+# Other key directories
+MODULESDIR="edison-linux-helper/collected/3.10.98-poky-edison/lib/modules/3.10.98-poky-edison"
+
+# Detect the user that owns this folder and try to run the non root command
+# as this user. Maybe it will work!
+# https://unix.stackexchange.com/questions/7730
+USER=$(stat -c '%U' `pwd`)
 
 echo "*** Build the edison kernel ***"
 
-git submodule update --init edison-linux-helper
+sudo -u $USER git submodule update --init edison-linux-helper
+
+exit(0)
 
 # Copy all of our additional patches
-cp patches/* edison-linux-helper/patches/
+sudo -u $USER cp patches/* edison-linux-helper/patches/
 
 # Get the kernel
 pushd edison-linux-helper
-make config
+sudo -u $USER make config
 popd
 
 # Use our kernel config file
-cp configs/edison_v3-3.10.98.config edison-linux-helper/edison-linux/.config
+sudo -u $USER cp configs/edison_v3-3.10.98.config edison-linux-helper/edison-linux/.config
 pushd edison-linux-helper
-make config
+sudo -u $USER make config
 popd
 
 # Build the kernel
 pushd edison-linux-helper/edison-linux
-make -j8
+sudo -u $USER make -j8
 popd
 
 # Capture all of the required built output into collected
 pushd edison-linux-helper
-make collected
+sudo -u $USER make collected
 popd
 
 echo "*** Start creating a debian rootfs image ***"
 
-# Make a spot to put the debian filesystem.
+# Clean up an old filesystem if it exists
 rm -rf $ROOTDIR
-mkdir $ROOTDIR
 
-# Create the base filesystem using a debian tool.
-debootstrap --arch i386 sid $ROOTDIR http://http.debian.net/debian/
+# Check to see if we already have a copy of the debian base image.
+# If we do, then don't bother running debootstrap again.
+if [ ! -d $ROOTDIR_CLEAN ]; then
+	# Create the base filesystem using a debian tool.
+	debootstrap --arch i386 sid $ROOTDIR_CLEAN http://http.debian.net/debian/
+fi
+
+# Copy the base filesystem so we can both save it and work on it.
+cp -r $ROOTDIR_CLEAN $ROOTDIR
 
 # Install necessary packages
 $CHROOTCMD apt clean
@@ -60,7 +76,7 @@ $CHROOTCMD useradd -m debian -p '$6$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5T
 
 # Add in kernel modules
 mkdir -p $ROOTDIR/lib/modules
-cp -r edison-linux-helper/collected/3.10.98-poky-edison/lib/modules/3.10.98-poky-edison $ROOTDIR/lib/modules/
+cp -r $MODULESDIR $ROOTDIR/lib/modules/
 
 # Setup SSH so root can't ssh
 sed -i -E "s/.*PermitRootLogin.*/PermitRootLogin no/g" $ROOTDIR/etc/ssh/sshd_config
@@ -76,9 +92,6 @@ echo "127.0.1.1    swarmgateway" >> $ROOTDIR/etc/hosts
 
 # Start modem manager on boot
 $CHROOTCMD systemctl enable ModemManager.service
-
-# Make QMI config file for libqmi tools that want it.
-echo "APN=" > $ROOTDIR/etc/qmi-network.conf
 
 # Setup resolv.conf so that cellular doesn't break our DNS
 printf '%s\n' 'nameserver 8.8.8.8' 'nameserver 8.8.4.4' > $ROOTDIR/etc/resolvconf/resolv.conf.d/base
@@ -141,6 +154,9 @@ done
 
 # Setup permissions
 chown -R 1000:1000 $ROOTDIR/home/debian
+
+# Make sure that NetworkManager config file are root rw only
+chmod 600 $ROOTDIR/etc/NetworkManager/system-connections/*
 
 # Cleanup space on rootfs
 $CHROOTCMD apt-get clean
