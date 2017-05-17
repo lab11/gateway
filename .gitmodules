@@ -1,3 +1,6 @@
 [submodule "buildroot/buildroot"]
 	path = buildroot/buildroot
 	url = git://git.busybox.net/buildroot
+[submodule "edison/create/edison-linux-helper"]
+	path = edison/create/edison-linux-helper
+	url = https://github.com/jubilinux/edison-linux-helper.git
