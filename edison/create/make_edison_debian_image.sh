@@ -4,6 +4,7 @@
 #
 #  ./make_edison_debian_image.sh --version 0.1.0 --umich --triumvi
 #
+#  --umich and --triumvi are optional
 
 # Parse arguments
 UMICH=0
@@ -32,9 +33,10 @@ shift # past argument or value
 done
 
 # Build output file name for this copy of the edison
-OUTFILENAME="swarm_gateway-$VERSION-edison"
-if [[ $UMICH -eq 1 ]]; then OUTFILENAME=$OUTFILENAME-umich; fi
-if [[ $TRIUMVI -eq 1 ]]; then OUTFILENAME=$OUTFILENAME-triumvi; fi
+VERSION_STRING=$VERSION-edison
+if [[ $UMICH -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-umich; fi
+if [[ $TRIUMVI -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-triumvi; fi
+OUTFILENAME="swarm_gateway-$VERSION_STRING"
 
 # Where the debian file system will be created
 ROOTDIR=`pwd`/sidroot
@@ -180,6 +182,10 @@ $CHROOTCMD git clone https://github.com/lab11/gateway-tools.git /home/debian/gat
 
 # Copy overlay files into this filesystem
 cp -r overlay $ROOTDIR
+
+# Update version number
+sed -i -E "s/^(.*)SwarmGateway.*$/\1SwarmGateway v$VERSION_STRING/g" $ROOTDIR/etc/issue.net
+sed -i -E "s/^VERSION_STRING.*$/VERSION_STRING v$VERSION/g" $ROOTDIR/home/debian/.bashrc
 
 # Setup bluetooth
 $CHROOTCMD systemctl enable bluetooth-patchram.service
