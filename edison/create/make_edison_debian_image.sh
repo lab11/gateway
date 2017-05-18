@@ -104,7 +104,7 @@ rm -rf $ROOTDIR
 # If we do, then don't bother running debootstrap again.
 if [ ! -d $ROOTDIR_CLEAN ]; then
 	# Create the base filesystem using a debian tool.
-	debootstrap --arch i386 sid $ROOTDIR_CLEAN http://http.debian.net/debian/
+	debootstrap --verbose --arch i386 sid $ROOTDIR_CLEAN http://http.debian.net/debian/
 fi
 
 # Copy the base filesystem so we can both save it and work on it.
@@ -212,14 +212,32 @@ cp -r gateway-private/swarm-gateway $ROOTDIR/etc/
 
 # Setup gateway services
 
-# Default ones we probably want on all gateways
-ln -s /home/debian/gateway/systemd/ble-gateway-mqtt.service      $ROOTDIR/etc/systemd/system/multi-user.target.wants/ble-gateway-mqtt.service
-ln -s /home/debian/gateway/systemd/gateway-internet-leds.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/gateway-internet-leds.service
-ln -s /home/debian/gateway/systemd/gateway-mqtt-reboot.service   $ROOTDIR/etc/systemd/system/multi-user.target.wants/gateway-mqtt-reboot.service
-ln -s /home/debian/gateway/systemd/gateway-server.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/gateway-server.service
+# Link all that we support
+for i in $ROOTDIR/home/debian/gateway/systemd/* ; do
+	SERVICE=/home/debian/gateway/systemd/`basename $i`
+	ln -s /home/debian/gateway/systemd/`basename $i` $ROOTDIR/etc/systemd/system/`basename $i`
+done
 
-ln -s /home/debian/gateway/systemd/ $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-ln -s /home/debian/gateway/systemd/ $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+# Default ones we probably want on all gateways
+ln -s ../adv-gateway-ip.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../ble-gateway-mqtt.service      $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-internet-leds.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-mqtt-reboot.service   $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-server.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+
+# Enable other services for a triumvi gateway
+if [[ $TRIUMVI -eq 1 ]]; then
+	ln -s ../gateway-triumvi-ble.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	ln -s ../gateway-triumvi-server             $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	ln -s ../gateway-triumvi-sqlite             $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	ln -s ../ieee802154-triumvi-gateway.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	rm $ROOTDIR/etc/systemd/system/multi-user.target.wants/adv-gateway-ip.service
+fi
+
+# Umich specific services
+if [[ $UMICH -eq 1 ]]; then
+	ln -s ../gateway-mqtt-influxdb.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+fi
 
 # Setup permissions
 chown -R 1000:1000 $ROOTDIR/home/debian
