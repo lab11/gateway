@@ -1,5 +1,41 @@
 #!/bin/bash
 
+# Usage:
+#
+#  ./make_edison_debian_image.sh --version 0.1.0 --umich --triumvi
+#
+
+# Parse arguments
+UMICH=0
+TRIUMVI=0
+
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    --version)
+    VERSION="$2"
+    shift # past argument
+    ;;
+    --umich)
+    UMICH=1
+    ;;
+    --triumvi)
+    TRIUMVI=1
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
+done
+
+# Build output file name for this copy of the edison
+OUTFILENAME="swarm_gateway-$VERSION-edison"
+if [[ $UMICH -eq 1 ]]; then OUTFILENAME=$OUTFILENAME-umich; fi
+if [[ $TRIUMVI -eq 1 ]]; then OUTFILENAME=$OUTFILENAME-triumvi; fi
+
 # Where the debian file system will be created
 ROOTDIR=`pwd`/sidroot
 ROOTDIR_CLEAN=$ROOTDIR-clean
@@ -15,35 +51,47 @@ MODULESDIR="edison-linux-helper/collected/3.10.98-poky-edison/lib/modules/3.10.9
 # https://unix.stackexchange.com/questions/7730
 USER=$(stat -c '%U' `pwd`)
 
-echo "*** Build the edison kernel ***"
+if [ ! -d $MODULESDIR ]; then
+	echo "*** Build the edison kernel ***"
 
-sudo -u $USER git submodule update --init edison-linux-helper
+	# Make sure we have the submodule checked out
+	sudo -u $USER git submodule update --init edison-linux-helper
 
-exit(0)
+	# Copy all of our additional patches
+	sudo -u $USER cp patches/* edison-linux-helper/patches/
 
-# Copy all of our additional patches
-sudo -u $USER cp patches/* edison-linux-helper/patches/
+	# Get the kernel
+	pushd edison-linux-helper
+	sudo -u $USER git submodule update --init edison-linux
+	sudo -u $USER git submodule update --init edison-bcm43340
+	sudo -u $USER ./apply.sh
+	popd
 
-# Get the kernel
-pushd edison-linux-helper
-sudo -u $USER make config
-popd
+	# Use our kernel config file
+	sudo -u $USER cp configs/edison_v3-3.10.98.config edison-linux-helper/edison-linux/.config
 
-# Use our kernel config file
-sudo -u $USER cp configs/edison_v3-3.10.98.config edison-linux-helper/edison-linux/.config
-pushd edison-linux-helper
-sudo -u $USER make config
-popd
+	# Build the kernel.
+	# NOTE: need gcc <= 5 for this old of a kernel.
+	pushd edison-linux-helper/edison-linux
+	sudo -u $USER make -j8 CC=gcc-5
+	popd
 
-# Build the kernel
-pushd edison-linux-helper/edison-linux
-sudo -u $USER make -j8
-popd
+	# Build the BCM43340 module
+	pushd edison-linux-helper/edison-bcm43340
+	sudo -u $USER KERNEL_SRC=../edison-linux make CC=gcc-5
+	popd
 
-# Capture all of the required built output into collected
-pushd edison-linux-helper
-sudo -u $USER make collected
-popd
+	# Capture all of the required built output into collected
+	pushd edison-linux-helper
+	sudo -u $USER mkdir -p collected
+	sudo -u $USER ./collect.sh
+	popd
+
+else
+	echo "*** Edison kernel already built! ***"
+	echo "***   Not rebuilding."
+	echo "***   Using what is in $MODULESDIR"
+fi
 
 echo "*** Start creating a debian rootfs image ***"
 
@@ -141,7 +189,7 @@ ln -s /lib/systemd/system/bluetooth.target $ROOTDIR/etc/systemd/system/multi-use
 # Not sure what the other arguments that systemd-rc-local-generator wants are...
 $CHROOTCMD /lib/systemd/system-generators/systemd-rc-local-generator /etc/systemd/system a b
 
-# Install node packages for hte gateway software
+# Install node packages for the gateway software
 mkdir -p $ROOTDIR/home/debian/gateway/software/node_modules
 for i in $ROOTDIR/home/debian/gateway/software/* ; do
   if [[ -d $i ]] && [[ $i != "node_modules" ]]; then
@@ -151,6 +199,21 @@ for i in $ROOTDIR/home/debian/gateway/software/* ; do
     popd > /dev/null
   fi;
 done
+
+# Make sure we have the config information for internal gateways
+sudo -u $USER git submodule update --init gateway-private
+cp -r gateway-private/swarm-gateway $ROOTDIR/etc/
+
+# Setup gateway services
+
+# Default ones we probably want on all gateways
+ln -s /home/debian/gateway/systemd/ble-gateway-mqtt.service      $ROOTDIR/etc/systemd/system/multi-user.target.wants/ble-gateway-mqtt.service
+ln -s /home/debian/gateway/systemd/gateway-internet-leds.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/gateway-internet-leds.service
+ln -s /home/debian/gateway/systemd/gateway-mqtt-reboot.service   $ROOTDIR/etc/systemd/system/multi-user.target.wants/gateway-mqtt-reboot.service
+ln -s /home/debian/gateway/systemd/gateway-server.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/gateway-server.service
+
+ln -s /home/debian/gateway/systemd/ $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s /home/debian/gateway/systemd/ $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 
 # Setup permissions
 chown -R 1000:1000 $ROOTDIR/home/debian
@@ -162,14 +225,14 @@ chmod 600 $ROOTDIR/etc/NetworkManager/system-connections/*
 $CHROOTCMD apt-get clean
 
 # Create the rootfs ext4 image
-rm -f edison-image.root
-dd if=/dev/zero of=edison-image.root count=1500 bs=1M
-mkfs.ext4 -F -L rootfs -O none,has_journal,ext_attr,resize_inode,dir_index,filetype,extent,flex_bg,sparse_super,large_file,huge_file,uninit_bg,dir_nlink,extra_isize edison-image.root
+rm -f $OUTFILENAME.root
+dd if=/dev/zero of=$OUTFILENAME.root count=1500 bs=1M
+mkfs.ext4 -F -L rootfs -O none,has_journal,ext_attr,resize_inode,dir_index,filetype,extent,flex_bg,sparse_super,large_file,huge_file,uninit_bg,dir_nlink,extra_isize $OUTFILENAME.root
 
 # Copy the rootfs content in the ext4 image
 rm -rf mntroot
 mkdir mntroot
-mount -o loop edison-image.root mntroot
+mount -o loop $OUTFILENAME.root mntroot
 cp -a $ROOTDIR/* mntroot/
 rm -rf mntroot/home
 mkdir -p mntroot/home
@@ -177,14 +240,14 @@ umount mntroot
 rmdir mntroot
 
 # Create the rootfs home image
-rm -f edison-image.home
-dd if=/dev/zero of=edison-image.home count=2785247 bs=512
-mkfs.ext4 -F -L home -O none,has_journal,ext_attr,resize_inode,dir_index,filetype,extent,flex_bg,sparse_super,large_file,huge_file,uninit_bg,dir_nlink,extra_isize edison-image.home
+rm -f $OUTFILENAME.home
+dd if=/dev/zero of=$OUTFILENAME.home count=2785247 bs=512
+mkfs.ext4 -F -L home -O none,has_journal,ext_attr,resize_inode,dir_index,filetype,extent,flex_bg,sparse_super,large_file,huge_file,uninit_bg,dir_nlink,extra_isize $OUTFILENAME.home
 
 # Copy the home content in the ext4 image
 rm -rf mnthome
 mkdir mnthome
-mount -o loop edison-image.home mnthome
+mount -o loop $OUTFILENAME.home mnthome
 cp -aR $ROOTDIR/home/debian mnthome/
 umount mnthome
 rmdir mnthome

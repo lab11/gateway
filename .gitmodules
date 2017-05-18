@@ -4,3 +4,6 @@
 [submodule "edison/create/edison-linux-helper"]
 	path = edison/create/edison-linux-helper
 	url = https://github.com/jubilinux/edison-linux-helper.git
+[submodule "edison/create/gateway-private"]
+	path = edison/create/gateway-private
+	url = git@github.com:lab11/gateway-private
