@@ -8,6 +8,7 @@ Restart=always
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=gateway-triumvi-sqlite
+User=debian
 
 [Install]
 WantedBy=multi-user.target

@@ -8,6 +8,7 @@ Restart=always
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=gateway-log
+User=debian
 
 [Install]
 WantedBy=multi-user.target
