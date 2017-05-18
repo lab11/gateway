@@ -96,6 +96,7 @@ else
 fi
 
 echo "*** Start creating a debian rootfs image ***"
+set -x
 
 # Clean up an old filesystem if it exists
 rm -rf $ROOTDIR
@@ -104,20 +105,31 @@ rm -rf $ROOTDIR
 # If we do, then don't bother running debootstrap again.
 if [ ! -d $ROOTDIR_CLEAN ]; then
 	# Create the base filesystem using a debian tool.
-	debootstrap --verbose --arch i386 sid $ROOTDIR_CLEAN http://http.debian.net/debian/
+	debootstrap --arch i386 sid $ROOTDIR_CLEAN http://http.debian.net/debian/
+	echo "***** Finished creating base debian filesystem"
+else
+	echo "***** Using existing base debian filesystem"
 fi
 
 # Copy the base filesystem so we can both save it and work on it.
 cp -r $ROOTDIR_CLEAN $ROOTDIR
+
+# Make /tmp writable
+chmod 777 $ROOTDIR/tmp
+
+# I don't know why we have to do this.
+# The first time I ran this script this was already done. Later, it changed,
+# and didn't work until I ran this command.
+echo "deb http://cdn-fastly.deb.debian.org/debian sid main" > $ROOTDIR/etc/apt/sources.list
 
 # Install necessary packages
 $CHROOTCMD apt clean
 $CHROOTCMD apt update
 $CHROOTCMD apt -y install dbus vim openssh-server sudo bash-completion dosfstools file curl
 $CHROOTCMD apt -y install network-manager net-tools
-$CHROOTCMD apt -y install python python-serial
+$CHROOTCMD apt -y install python python-serial python3 python3-pip
 $CHROOTCMD apt -y install bluetooth bluez libbluetooth-dev libudev-dev libavahi-compat-libdnssd-dev
-$CHROOTCMD apt -y install libqmi-utils resolvconf mosquitto git u-boot-tools usbutils
+$CHROOTCMD apt -y install libqmi-utils resolvconf mosquitto git u-boot-tools usbutils dnsutils
 $CHROOTCMD apt -y install screen psmisc rfkill
 $CHROOTCMD apt -y install make g++
 
@@ -151,6 +163,9 @@ $CHROOTCMD resolvconf -u
 $CHROOTCMD curl -sL https://deb.nodesource.com/setup_6.x | $CHROOTCMD bash -
 $CHROOTCMD apt -y install nodejs
 
+# Install package for DDNS script support
+$CHROOTCMD pip3 install dnspython3
+
 # Enable Node privileged access to BLE so it doesn't need sudo.
 $CHROOTCMD setcap cap_net_raw+eip $(eval readlink -f `which node`)
 
@@ -181,7 +196,10 @@ $CHROOTCMD git clone https://github.com/lab11/gateway.git /home/debian/gateway
 $CHROOTCMD git clone https://github.com/lab11/gateway-tools.git /home/debian/gateway-tools
 
 # Copy overlay files into this filesystem
-cp -r overlay $ROOTDIR
+cp -r overlay/* $ROOTDIR
+
+# Make sure firmware is symlinked to the /etc folder
+ln -s /lib/firmware $ROOTDIR/etc/firmware
 
 # Update version number
 sed -i -E "s/^(.*)SwarmGateway.*$/\1SwarmGateway v$VERSION_STRING/g" $ROOTDIR/etc/issue.net
@@ -205,10 +223,6 @@ for i in $ROOTDIR/home/debian/gateway/software/* ; do
     popd > /dev/null
   fi;
 done
-
-# Make sure we have the config information for internal gateways
-sudo -u $USER git submodule update --init gateway-private
-cp -r gateway-private/swarm-gateway $ROOTDIR/etc/
 
 # Setup gateway services
 
@@ -236,6 +250,12 @@ fi
 
 # Umich specific services
 if [[ $UMICH -eq 1 ]]; then
+	# Make sure we have the config information for internal gateways
+	sudo -u $USER git submodule update --init gateway-private
+	cp -r gateway-private/swarm-gateway $ROOTDIR/etc/
+	cp -r gateway-private/NetworkManager $ROOTDIR/etc/
+	cp -r gateway-private/cron.hourly $ROOTDIR/etc/
+
 	ln -s ../gateway-mqtt-influxdb.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 fi
 
@@ -257,7 +277,8 @@ mkfs.ext4 -F -L rootfs -O none,has_journal,ext_attr,resize_inode,dir_index,filet
 rm -rf mntroot
 mkdir mntroot
 mount -o loop $OUTFILENAME.root mntroot
-cp -a $ROOTDIR/* mntroot/
+shopt -s extglob
+cp -a $ROOTDIR/!(home) mntroot/
 rm -rf mntroot/home
 mkdir -p mntroot/home
 umount mntroot
@@ -275,3 +296,6 @@ mount -o loop $OUTFILENAME.home mnthome
 cp -aR $ROOTDIR/home/debian mnthome/
 umount mnthome
 rmdir mnthome
+
+chown $USER:$USER $OUTFILENAME.root
+chown $USER:$USER $OUTFILENAME.home
