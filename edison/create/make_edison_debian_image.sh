@@ -274,21 +274,21 @@ fi
 if [[ $UMICH -eq 1 ]]; then
 	# Install sensu
 	$CHROOTCMD wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | $CHROOTCMD apt-key add -
-	echo "deb     http://repositories.sensuapp.org/apt sensu main" > $ROOTDIR/etc/apt/sources.list.d/sensu.list
+	echo "deb     https://sensu.global.ssl.fastly.net/apt sensu main" > $ROOTDIR/etc/apt/sources.list.d/sensu.list
 	$CHROOTCMD apt update
 	$CHROOTCMD apt -y install sensu
 	rm $ROOTDIR/etc/init.d/sensu*
-	wget https://raw.githubusercontent.com/sensu/sensu-build/master/sensu_configs/systemd/sensu-client.service $ROOTDIR/etc/systemd/system/
+	wget https://raw.githubusercontent.com/sensu/sensu-build/master/sensu_configs/systemd/sensu-client.service -O $ROOTDIR/etc/systemd/system/sensu-client.service
 	ln -s ../sensu-client.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	cp -r gateway-private/sensu $ROOTDIR/etc/
-	$CHROOTCMD npm --prefix /home/debian/gateway-tools/gateway install --build-from-source
+	$CHROOTCMD npm --prefix /home/debian/gateway-tools/gateway install --build-from-source getmac
 
 	# Make sure we have the config information for internal gateways
 	sudo -u $USER git submodule update --init gateway-private
-	cp -r gateway-private/swarm-gateway $ROOTDIR/etc/
-	cp -r gateway-private/NetworkManager $ROOTDIR/etc/
-	cp -r gateway-private/cron.hourly $ROOTDIR/etc/
+	shopt -s dotglob
+	cp -R gateway-private/overlay/* $ROOTDIR
 
+	# Also publish to our influx server
 	ln -s ../gateway-mqtt-influxdb.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 fi
 
