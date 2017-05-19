@@ -38,6 +38,17 @@ if [[ $UMICH -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-umich; fi
 if [[ $TRIUMVI -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-triumvi; fi
 OUTFILENAME="swarm_gateway-$VERSION_STRING"
 
+if [[ "VER$VERSION" == "VER" ]]; then
+	echo "ERROR! Need a version!"
+	exit 1
+fi
+
+read -p "Creating image named $OUTFILENAME. Look good? " -n 1 -r
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
 # Where the debian file system will be created
 ROOTDIR=`pwd`/sidroot
 ROOTDIR_CLEAN=$ROOTDIR-clean
@@ -134,7 +145,7 @@ $CHROOTCMD apt -y install screen psmisc rfkill
 $CHROOTCMD apt -y install make g++
 
 # Create a default user "debian" with the correct password and settings
-$CHROOTCMD useradd -m debian -p '$6$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
+$CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
 
 # Add in kernel modules
 mkdir -p $ROOTDIR/lib/modules
@@ -196,7 +207,8 @@ $CHROOTCMD git clone https://github.com/lab11/gateway.git /home/debian/gateway
 $CHROOTCMD git clone https://github.com/lab11/gateway-tools.git /home/debian/gateway-tools
 
 # Copy overlay files into this filesystem
-cp -r overlay/* $ROOTDIR
+shopt -s dotglob
+cp -R overlay/* $ROOTDIR
 
 # Make sure firmware is symlinked to the /etc folder
 ln -s /lib/firmware $ROOTDIR/etc/firmware
@@ -214,15 +226,24 @@ ln -s /lib/systemd/system/bluetooth.target $ROOTDIR/etc/systemd/system/multi-use
 $CHROOTCMD /lib/systemd/system-generators/systemd-rc-local-generator /etc/systemd/system a b
 
 # Install node packages for the gateway software
-mkdir -p $ROOTDIR/home/debian/gateway/software/node_modules
-for i in $ROOTDIR/home/debian/gateway/software/* ; do
-  if [[ -d $i ]] && [[ $i != "node_modules" ]]; then
-    pushd $i > /dev/null
-    PREFIX=/home/debian/gateway/software/`basename $i`
-    $CHROOTCMD npm --prefix $PREFIX install --build-from-source
-    popd > /dev/null
-  fi;
-done
+if [ ! -d node_modules ]; then
+	echo "***** Rebuilding node_modules"
+	mkdir -p $ROOTDIR/home/debian/gateway/software/node_modules
+	for i in $ROOTDIR/home/debian/gateway/software/* ; do
+		if [[ -d $i ]] && [[ $i != "node_modules" ]]; then
+			pushd $i > /dev/null
+			ln -s ../node_modules .
+			PREFIX=/home/debian/gateway/software/`basename $i`
+			$CHROOTCMD npm --prefix $PREFIX install --build-from-source
+			popd > /dev/null
+		fi;
+	done
+	# Remove this log file that seemed to appear
+	rm $ROOTDIR/npm-debug.log
+else
+	echo "***** Using existing node modules"
+	cp -r node_modules $ROOTDIR/home/debian/gateway/software/node_modules
+fi
 
 # Setup gateway services
 
@@ -242,8 +263,8 @@ ln -s ../gateway-server.service        $ROOTDIR/etc/systemd/system/multi-user.ta
 # Enable other services for a triumvi gateway
 if [[ $TRIUMVI -eq 1 ]]; then
 	ln -s ../gateway-triumvi-ble.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-	ln -s ../gateway-triumvi-server             $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-	ln -s ../gateway-triumvi-sqlite             $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	ln -s ../gateway-triumvi-server.service     $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	ln -s ../gateway-triumvi-sqlite.service     $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	ln -s ../ieee802154-triumvi-gateway.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	rm $ROOTDIR/etc/systemd/system/multi-user.target.wants/adv-gateway-ip.service
 fi
@@ -284,7 +305,7 @@ mkdir -p mntroot/home
 umount mntroot
 rmdir mntroot
 
-# Create the rootfs home image
+# Create the home ext4 image
 rm -f $OUTFILENAME.home
 dd if=/dev/zero of=$OUTFILENAME.home count=2785247 bs=512
 mkfs.ext4 -F -L home -O none,has_journal,ext_attr,resize_inode,dir_index,filetype,extent,flex_bg,sparse_super,large_file,huge_file,uninit_bg,dir_nlink,extra_isize $OUTFILENAME.home
@@ -297,5 +318,19 @@ cp -aR $ROOTDIR/home/debian mnthome/
 umount mnthome
 rmdir mnthome
 
+# Create the boot image
+rm -f $OUTFILENAME.boot
+dd if=/dev/zero of=$OUTFILENAME.boot count=32 bs=1M
+mkfs.msdos -n boot $OUTFILENAME.boot
+
+# Copy the linux kernel to the boot image
+rm -rf mntboot
+mkdir mntboot
+mount -o loop $OUTFILENAME.boot mntboot
+cp edison-linux-helper/collected/3.10.98-poky-edison/boot/vmlinuz mntboot/
+umount mntboot
+rmdir mntboot
+
+chown $USER:$USER $OUTFILENAME.boot
 chown $USER:$USER $OUTFILENAME.root
 chown $USER:$USER $OUTFILENAME.home
