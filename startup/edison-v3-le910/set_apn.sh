@@ -4,7 +4,7 @@
 # setting based on which cellular modem is connected.
 
 # Get the QMI library to output which model is attached.
-MODEL=`qmicli -d /dev/cdc-wdm0 --dms-get-model`
+MODEL=`mmcli -L`
 
 # If the radio is a "LE910-SVG", it supports verizon
 if [[ $MODEL == *"LE910-SVG"* ]]; then

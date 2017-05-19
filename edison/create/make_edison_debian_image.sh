@@ -247,11 +247,12 @@ fi
 
 # Setup gateway services
 
-# Link all that we support
-for i in $ROOTDIR/home/debian/gateway/systemd/* ; do
-	SERVICE=/home/debian/gateway/systemd/`basename $i`
-	ln -s /home/debian/gateway/systemd/`basename $i` $ROOTDIR/etc/systemd/system/`basename $i`
-done
+# Copy all systemd unit files to /etc/systemd/service
+# Ideally these would be links, however that does not seem to work. systemctl
+# can find those to call `systemctl start` on, but they do not seem to work
+# on boot. It is hard to tell if that is intended behavior or a bug, but at
+# some point I had to give up and find something that does work.
+cp $ROOTDIR/home/debian/gateway/systemd/*.service $ROOTDIR/etc/systemd/system/
 
 # Default ones we probably want on all gateways
 ln -s ../adv-gateway-ip.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
