@@ -121,8 +121,8 @@ function dfu-wait {
 
 echo "** Flashing Edison Board $(date) **" >> ${LOG_FILENAME}
 
-echo "Using U-Boot target: edison-gateway"
-VARIANT_FILE="u-boot/edison-gateway.bin"
+echo "Using U-Boot target: edison-gateway-custom"
+VARIANT_FILE="u-boot/edison-gateway-custom.bin"
 
 dfu-wait
 
