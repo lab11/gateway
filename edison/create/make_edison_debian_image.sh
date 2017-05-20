@@ -140,9 +140,10 @@ $CHROOTCMD apt -y install dbus vim openssh-server sudo bash-completion dosfstool
 $CHROOTCMD apt -y install network-manager net-tools
 $CHROOTCMD apt -y install python python-serial python3 python3-pip
 $CHROOTCMD apt -y install bluetooth bluez libbluetooth-dev libudev-dev libavahi-compat-libdnssd-dev
-$CHROOTCMD apt -y install libqmi-utils resolvconf mosquitto git u-boot-tools usbutils dnsutils
+$CHROOTCMD apt -y install libqmi-utils resolvconf mosquitto mosquitto-clients git u-boot-tools usbutils dnsutils
 $CHROOTCMD apt -y install screen psmisc rfkill
 $CHROOTCMD apt -y install make g++
+$CHROOTCMD apt -y install exfat-fuse exfat-utils
 
 # Create a default user "debian" with the correct password and settings
 $CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
