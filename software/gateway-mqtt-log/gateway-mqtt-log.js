@@ -15,15 +15,15 @@ var DEFAULT_NUM_FILES = 5000;
 
 // Read in the config file to get the log filename
 try {
-    var config_file = fs.readFileSync('/etc/swarm-gateway/log.conf', 'utf-8');
-    var config = ini.parse(config_file);
-    if (config.log_file == undefined || config.log_file == '') {
-        throw new Exception('no settings');
-    }
+	var config_file = fs.readFileSync('/etc/swarm-gateway/log.conf', 'utf-8');
+	var config = ini.parse(config_file);
+	if (config.log_file == undefined || config.log_file == '') {
+		throw new Exception('no settings');
+	}
 } catch (e) {
 	console.log(e)
-    console.log('Could not find /etc/swarm-gateway/log.conf or logging not configured.');
-    process.exit(1);
+	console.log('Could not find /etc/swarm-gateway/log.conf or logging not configured.');
+	process.exit(1);
 }
 
 var log_file = config.log_file;
@@ -54,8 +54,8 @@ GatewayStream.prototype.on_mqttBroker = function () {
 
 	// Callback for when BLE discovers the advertisement
 	this.mqtt_client.on('message', (topic, message) => {
-	    this.internal_queue.push(message + '\n');
-	    this.deliver();
+		this.internal_queue.push(message + '\n');
+		this.deliver();
 	});
 };
 
