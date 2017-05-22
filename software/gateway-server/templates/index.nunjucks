@@ -33,7 +33,7 @@ SwarmGateway
         <h3 class="panel-title">Local Machine Info</h3>
       </div>
       <div class="panel-body">
-        <p>MAC Address: {{ mac_address }}</p>
+        <p>Gateway ID: {{ mac_address }}</p>
         {% for addr_group in ip_addresses %}
         <p>{{ addr_group.ifname }}:{{ addr_group.index }} - {{ addr_group.address }}</p>
         {% endfor %}
