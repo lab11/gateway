@@ -12,7 +12,7 @@ var _                      = require('lodash');
 var debug                  = require('debug')('ble-gateway');
 var watchout               = require('watchout');
 var async                  = require('async');
-var getmac                 = require('getmac');
+var gatewayId              = require('lab11-gateway-id');
 
 
 // There is a currently unknown issue where this script will hang sometimes,
@@ -70,10 +70,10 @@ BleGateway.prototype.start = function () {
         }
     };
 
-    // Pre-fetch the mac address
+    // Get the gateway ID for the running gateway to include in the data packets.
     this._gateway_id = '';
-    getmac.getMac((err, addr) => {
-        this._gateway_id = addr;
+    gatewayId.id((id) => {
+        this._gateway_id = id;
 
         // Now start BLE scanning.
         startScanningOnPowerOn();
