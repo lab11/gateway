@@ -4,10 +4,10 @@
 // Libraries
 var debug = require('debug')('sensu-process');
 
-var fs     = require('fs');
-var ini    = require('ini');
-var getmac = require('getmac');
-var amqp   = require('amqp');
+var fs        = require('fs');
+var ini       = require('ini');
+var gatewayId = require('lab11-gateway-id');
+var amqp      = require('amqp');
 
 // Code
 var SensuProcess = function () {
@@ -64,7 +64,7 @@ SensuProcess.prototype.begin = function (automatic, send_rate) {
 
     // get mac address for keepalives
     var that = this;
-    getmac.getMac(function (error, macaddr) {
+    gatewayId.id(function (macaddr) {
         that._process_macaddr = macaddr
         debug("Using MAC address: " + that._process_macaddr);
 
