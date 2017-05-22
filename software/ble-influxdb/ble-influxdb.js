@@ -10,7 +10,7 @@ var fs           = require('fs');
 var ini          = require('ini');
 var InfluxPoster = require('influx-poster');
 var noble        = require('noble');
-var getmac       = require('getmac');
+var gatewayId    = require('lab11-gateway-id');
 
 // How long to batch data for before posting
 var DATA_LIMIT_LINES = 200000;
@@ -349,12 +349,11 @@ var startScanningOnPowerOn = function() {
     }
 };
 
-// Pre-fetch the mac address
+// Pre-fetch the gateway ID
 var this_gateway_id = '';
-getmac.getMac((err, addr) => {
+gatewayId.id((addr) => {
     this_gateway_id = addr;
 
     // Now start BLE scanning.
     startScanningOnPowerOn();
 });
-

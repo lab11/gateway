@@ -4,9 +4,9 @@
   "description": "Forward BLE data to influxdb instance",
   "main": "ble-influxdb.js",
   "dependencies": {
-    "getmac": "^1.0.7",
     "influx-poster": "^1.0.0",
     "ini": "^1.3.4",
+    "lab11-gateway-id": "^0.1.1",
     "minimist": "^1.2.0",
     "noble": "^1.3.0"
   },
