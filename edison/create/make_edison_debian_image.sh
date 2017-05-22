@@ -54,6 +54,9 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
     exit 1
 fi
+echo ""
+
+set -x
 
 # Where the debian file system will be created
 ROOTDIR=`pwd`/sidroot
@@ -72,7 +75,7 @@ USER=$(stat -c '%U' `pwd`)
 
 if [[ $UBOOT -eq 1 ]]; then
 	echo "*** Building u-boot for the edison ***"
-	
+
 	# Make sure we have the repo
 	sudo -u $USER git submodule update --init edison-u-boot
 
@@ -138,7 +141,6 @@ else
 fi
 
 echo "*** Start creating a debian rootfs image ***"
-set -x
 
 # Clean up an old filesystem if it exists
 rm -rf $ROOTDIR
