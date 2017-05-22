@@ -12,12 +12,6 @@ fi
 
 echo Setting gateway ID to $gateway_id
 
-# Do the replace in the network ethernet setup file if this is being used.
-sudo sed -i -E "s/hwaddress ether(.*)$/hwaddress ether $gateway_id/" /etc/network/interfaces
-
-# Update the NetworkManager profile for the ethernet
-sudo sed -i -E "s/cloned-mac-address=.*$/cloned-mac-address=$gateway_id/g" /etc/NetworkManager/system-connections/wired
-
 # Update the sensu file if it exists
 if [ -f /etc/sensu/conf.d/client.json ]; then
     gateway_id_no_colon=${gateway_id//:}

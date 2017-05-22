@@ -5,7 +5,6 @@ type=ethernet
 permissions=
 
 [ethernet]
-cloned-mac-address=C0:98:E5:C0:00:01
 mac-address-blacklist=
 
 [ipv4]
@@ -16,4 +15,3 @@ method=auto
 addr-gen-mode=stable-privacy
 dns-search=
 method=auto
-

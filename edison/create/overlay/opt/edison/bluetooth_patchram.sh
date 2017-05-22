@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Use the configured gateway_id rather than the intel provided bluetooth_address
-BD_ADDR=$(echo $(cat /factory/gateway_id))
+# bluetooth_address gets set correctly by first-install.sh
+BD_ADDR=$(echo $(cat /factory/bluetooth_address))
 
 rfkill unblock bluetooth
 
@@ -14,4 +14,3 @@ rfkill unblock bluetooth
   --baudrate 3000000 \
   --patchram /etc/firmware/bcm43341.hcd \
   /dev/ttyMFD0
-

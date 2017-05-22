@@ -152,6 +152,12 @@ $CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW
 mkdir -p $ROOTDIR/lib/modules
 cp -r $MODULESDIR $ROOTDIR/lib/modules/
 
+# Remove machine-id so that it will get generated on boot.
+rm $ROOTDIR/var/lib/dbus/machine-id
+rm $ROOTDIR/etc/machine-id
+touch $ROOTDIR/etc/machine-id
+chmod 444 $ROOTDIR/etc/machine-id
+
 # Setup SSH so root can't ssh
 sed -i -E "s/.*PermitRootLogin.*/PermitRootLogin no/g" $ROOTDIR/etc/ssh/sshd_config
 

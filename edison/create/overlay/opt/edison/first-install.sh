@@ -30,6 +30,10 @@ fi_assert $? "Formatting update partition"
 /opt/edison/set_gateway_id.sh
 fi_assert $? "Setting gateway ID"
 
+# Setup all of the MAC addresses
+/opt/edison/set_mac_addresses.sh
+fi_assert $? "Setting MAC addresses"
+
 # Make sure this edison has a unique SSH key
 rm -rf /etc/ssh/*key*
 ssh-keygen -A

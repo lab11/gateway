@@ -1,0 +1,6 @@
+[Match]
+Path=pci-0000:00:11.0-platform-dwc3-host.2-usb-0:1.1:1.0
+
+[Link]
+MACAddress=c0:98:e5:c0:10:01
+NamePolicy=path
