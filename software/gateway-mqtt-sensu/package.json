@@ -18,8 +18,8 @@
   "homepage": "https://github.com/lab11/gateway#readme",
   "dependencies": {
     "amqp": "^0.2.6",
-    "getmac": "^1.2.1",
     "ini": "^1.3.4",
+    "lab11-gateway-id": "^0.1.1",
     "mqtt": "^1.12.0"
   }
 }

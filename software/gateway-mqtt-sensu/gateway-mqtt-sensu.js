@@ -8,13 +8,12 @@ Publish keep alives to a sensu server on behalf of all devices.
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
-var fs     = require('fs');
+var fs        = require('fs');
 
-var getmac = require('getmac');
-var ini    = require('ini');
-var mqtt   = require('mqtt');
-var amqp   = require('amqp');
-
+var amqp      = require('amqp');
+var gatewayId = require('lab11-gateway-id');
+var ini       = require('ini');
+var mqtt      = require('mqtt');
 
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
@@ -48,9 +47,9 @@ if (config.ignore) {
     device_filters = config.ignore.split(',');
 }
 
-// Start by getting an ID for this node
-getmac.getMac(function (err, macaddr) {
-    console.log('Using MAC address: ' + macaddr);
+// Start by getting an ID for this gateway
+gatewayId.id(function (macaddr) {
+    console.log('Using gateway address: ' + macaddr);
 
     // Then connect to the correct rabbitmq broker
     var amqp_conn = amqp.createConnection({host: config.host,
