@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 /*
-Takes the stream of packets from the BLE gateway and publishes them to
-influxdb.
+Collects raw BLE advertisements and publishes metadata about them to influxdb.
 */
 
 var argv         = require('minimist')(process.argv.slice(2));

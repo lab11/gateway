@@ -1,8 +1,17 @@
 BLE to influxdb
 ===================
 
-[InfluxDB](https://influxdata.com/) is a backend for time-series data.
-This tool publishes BLE advertisement data to an influxdb installation.
+[InfluxDB](https://influxdata.com/) is a backend for time-series data. This
+tool collects raw BLE advertisements and publishes their device type (BLEES,
+PowerBlade, etc.), BLE address, RSSI, receive time, and sequence number to an
+influxdb installation. In order to determine the device type and the sequence
+number (where applicable), this service uses the fourth octet of the BLE
+address.
+
+Whereas `ble-gateway-mqtt` translates data in the advertisement and makes that
+data available to the gateway, this service does not care about the data in the
+advertisement, only the existence of the advertisement itself. This service is
+used to study reception rates of raw BLE packets.
 
 
 Configuration
