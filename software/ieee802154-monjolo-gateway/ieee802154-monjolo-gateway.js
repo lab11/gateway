@@ -2,12 +2,11 @@
 
 var exec = require('child_process').exec;
 
-var async    = require('async');
-var getmac   = require('getmac');
-var raw      = require('raw-socket');
-var watchout = require('watchout');
-
-var mqtt     = require('mqtt');
+var async     = require('async');
+var gatewayId = require('lab11-gateway-id');
+var mqtt      = require('mqtt');
+var raw       = require('raw-socket');
+var watchout  = require('watchout');
 
 var GatewayTopics = require('gateway-topics');
 
@@ -72,9 +71,9 @@ async.eachSeries(COMMANDS, function (cmd, callback) {
 		console.log(err);
 	} else {
 
-		// Pre-fetch the mac address
+		// Pre-fetch the gateway ID
 		var gateway_id = '';
-		getmac.getMac(function (err, addr) {
+		gatewayId.id(function (addr) {
 			gateway_id = addr;
 
 
