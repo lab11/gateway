@@ -1,17 +1,17 @@
-From 1d54b955786296c6610ffcb9d645b8639522e9b2 Mon Sep 17 00:00:00 2001
+From b1d09a269b11e21ca255a186261737f9d2ba9bbd Mon Sep 17 00:00:00 2001
 From: Brad <bradjc5@gmail.com>
-Date: Mon, 22 May 2017 14:53:30 -0400
-Subject: [PATCH] dfu: add optional timeout
+Date: Mon, 22 May 2017 16:49:54 -0400
+Subject: [PATCH] add dfu timeout
 
 ---
  cmd/dfu.c                  | 11 +++++++++++
- common/dfu.c               | 23 +++++++++++++++++++++++
+ common/dfu.c               | 14 ++++++++++++++
  configs/edison_defconfig   |  1 +
  drivers/dfu/Kconfig        |  6 ++++++
  drivers/dfu/dfu.c          | 27 +++++++++++++++++++++++++++
- drivers/usb/gadget/f_dfu.c |  1 +
+ drivers/usb/gadget/f_dfu.c |  2 ++
  include/dfu.h              |  4 ++++
- 7 files changed, 73 insertions(+)
+ 7 files changed, 65 insertions(+)
 
 diff --git a/cmd/dfu.c b/cmd/dfu.c
 index 04291f6c08..71fac0a3cf 100644
@@ -48,44 +48,28 @@ index 04291f6c08..71fac0a3cf 100644
  	"dfu tftp <interface> <dev> [<addr>]\n"
  	"  - device firmware upgrade via TFTP\n"
 diff --git a/common/dfu.c b/common/dfu.c
-index 0e9f5f59c8..893e33e61c 100644
+index 0e9f5f59c8..eb46115186 100644
 --- a/common/dfu.c
 +++ b/common/dfu.c
-@@ -35,6 +35,11 @@ int run_usb_dnl_gadget(int usbctrl_index, char *usb_dnl_gadget)
+@@ -35,6 +35,9 @@ int run_usb_dnl_gadget(int usbctrl_index, char *usb_dnl_gadget)
  		error("g_dnl_register failed");
  		return CMD_RET_FAILURE;
  	}
 +#ifdef CONFIG_DFU_TIMEOUT
-+	ulong dfu_timeout = dfu_get_timeout();
 +	ulong time_activity_start = get_timer(0);
-+	ulong time_inactivity_start = time_activity_start + dfu_timeout;
 +#endif
  
  	while (1) {
  		if (g_dnl_detach()) {
-@@ -57,6 +62,13 @@ int run_usb_dnl_gadget(int usbctrl_index, char *usb_dnl_gadget)
- 				goto exit;
- 		}
- 
-+#ifdef CONFIG_DFU_TIMEOUT
-+		if (dfu_enum_done() && (time_inactivity_start != time_activity_start)) {
-+			time_inactivity_start = time_activity_start;
-+			debug("\nDFU connection established\n");
-+		}
-+#endif
-+
- 		if (ctrlc())
- 			goto exit;
- 
-@@ -80,6 +92,17 @@ int run_usb_dnl_gadget(int usbctrl_index, char *usb_dnl_gadget)
+@@ -80,6 +83,17 @@ int run_usb_dnl_gadget(int usbctrl_index, char *usb_dnl_gadget)
  			}
  		}
  
 +#ifdef CONFIG_DFU_TIMEOUT
-+		if (time_activity_start != time_inactivity_start) {
++		if (!dfu_enum_done()) {
 +			ulong cur_time = get_timer(time_activity_start);
 +
-+			if (cur_time > dfu_timeout) {
++			if (cur_time > dfu_get_timeout()) {
 +				debug("\nInactivity Timeout, Abort Dfu\n");
 +				goto exit;
 +			}
@@ -181,17 +165,18 @@ index 8dacc1a6d1..10314e6525 100644
  	return 0;
  }
 diff --git a/drivers/usb/gadget/f_dfu.c b/drivers/usb/gadget/f_dfu.c
-index dfa4359577..36114975e3 100644
+index dfa4359577..35a5db17f2 100644
 --- a/drivers/usb/gadget/f_dfu.c
 +++ b/drivers/usb/gadget/f_dfu.c
-@@ -601,6 +601,7 @@ dfu_handle(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
+@@ -596,6 +596,8 @@ dfu_handle(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
+ 	debug("req_type: 0x%x ctrl->bRequest: 0x%x f_dfu->dfu_state: 0x%x\n",
+ 	       req_type, ctrl->bRequest, f_dfu->dfu_state);
+ 
++	dfu_trigger_enum_done();
++
+ 	if (req_type == USB_TYPE_STANDARD) {
+ 		if (ctrl->bRequest == USB_REQ_GET_DESCRIPTOR &&
  		    (w_value >> 8) == DFU_DT_FUNC) {
- 			value = min(len, (u16) sizeof(dfu_func));
- 			memcpy(req->buf, &dfu_func, value);
-+			dfu_trigger_enum_done();
- 		}
- 	} else /* DFU specific request */
- 		value = dfu_state[f_dfu->dfu_state] (f_dfu, ctrl, gadget, req);
 diff --git a/include/dfu.h b/include/dfu.h
 index f39d3f1171..d7508b401e 100644
 --- a/include/dfu.h
