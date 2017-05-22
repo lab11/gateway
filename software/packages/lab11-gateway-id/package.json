@@ -1,6 +1,6 @@
 {
   "name": "lab11-gateway-id",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Get the gateway's ID.",
   "main": "lab11-gateway-id.js",
   "scripts": {

@@ -8,6 +8,8 @@ Uses this logic to determine an ID.
 3. Reads /etc/machine-id and uses it if it exists.
 */
 
+var fs     = require('fs');
+
 var getmac = require('getmac');
 
 function id (cb) {
