@@ -5,10 +5,13 @@
 #  ./make_edison_debian_image.sh --version 0.1.0 --umich --triumvi
 #
 #  --umich and --triumvi are optional
+#
+#  Pass --uboot to build an edison-compatible u-boot from source.
 
 # Parse arguments
 UMICH=0
 TRIUMVI=0
+UBOOT=0
 
 while [[ $# -gt 0 ]]
 do
@@ -24,6 +27,9 @@ case $key in
     ;;
     --triumvi)
     TRIUMVI=1
+    ;;
+    --uboot)
+    UBOOT=1
     ;;
     *)
             # unknown option
@@ -64,6 +70,31 @@ MODULESDIR="edison-linux-helper/collected/3.10.98-poky-edison/lib/modules/3.10.9
 # https://unix.stackexchange.com/questions/7730
 USER=$(stat -c '%U' `pwd`)
 
+if [[ $UBOOT -eq 1 ]]; then
+	echo "*** Building u-boot for the edison ***"
+	
+	# Make sure we have the repo
+	sudo -u $USER git submodule update --init edison-u-boot
+
+	# Apply any patches that we need
+	pushd edison-u-boot
+	for P in ../patches/u-boot/*.patch; do
+		sudo -u $USER git apply $P
+	done
+
+	# Setup the .config file
+	sudo -u $USER make edison_defconfig
+
+	# Build the new version of u-boot
+	sudo -u $USER make -j8
+
+	# Need to round up the filesize to a multiple of 4096 bytes
+	sudo -u $USER truncate -s %4096 u-boot.bin
+	popd
+
+	sudo -u $USER cp edison-u-boot/u-boot.bin u-boot-edison-2017_05.bin
+fi
+
 if [ ! -d $MODULESDIR ]; then
 	echo "*** Build the edison kernel ***"
 
@@ -71,7 +102,7 @@ if [ ! -d $MODULESDIR ]; then
 	sudo -u $USER git submodule update --init edison-linux-helper
 
 	# Copy all of our additional patches
-	sudo -u $USER cp patches/* edison-linux-helper/patches/
+	sudo -u $USER cp patches/linux/* edison-linux-helper/patches/
 
 	# Get the kernel
 	pushd edison-linux-helper

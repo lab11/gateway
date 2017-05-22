@@ -7,3 +7,6 @@
 [submodule "edison/create/gateway-private"]
 	path = edison/create/gateway-private
 	url = git@github.com:lab11/gateway-private
+[submodule "edison/create/edison-u-boot"]
+	path = edison/create/edison-u-boot
+	url = https://github.com/andy-shev/u-boot.git
