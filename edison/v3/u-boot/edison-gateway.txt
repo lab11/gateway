@@ -11,7 +11,7 @@ first_install_max_retries=3
 ota_update_retry=0
 ota_update_max_retries=3
 do_compute_target=if itest.b ${first_install_retry} -gt ${first_install_max_retries} || itest.b ${ota_update_retry} -gt ${ota_update_max_retries}; then echo "Switch to Rescue target"; setenv bootargs_target rescue; saveenv; fi
-mmc-bootargs=run do_bootargs_rootfs; setenv bootargs ${bootargs_rootfs} ${bootargs_console} ${bootargs_debug} g_multi.ethernet_config=${bootargs_ethconfig} systemd.unit=${bootargs_target}.target hardware_id=${hardware_id} g_multi.iSerialNumber=${serial#} g_multi.dev_addr=${usb0addr}
+mmc-bootargs=run do_bootargs_rootfs; setenv bootargs ${bootargs_rootfs} ${bootargs_console} ${bootargs_debug} systemd.unit=${bootargs_target}.target hardware_id=${hardware_id} g_multi.iSerialNumber=${serial#}
 loadaddr=0x100000
 load_kernel=fatload mmc 0:7 ${loadaddr} vmlinuz
 do_partition_done=0
@@ -39,7 +39,6 @@ target_name=default
 bootdelay=1
 do_flash_os_done=1
 bootargs_target=multi-user
-bootargs_ethconfig=cdc
 dfu_to_sec=3
 do_probe_dfu=run do_dfu_alt_info_mmc ; dfu 0 mmc 0 $dfu_to_sec
 boot_target_cmd=run do_flash_os;run do_probe_dfu;run do_compute_target;run mmc-bootargs;run load_kernel;zboot ${loadaddr}
