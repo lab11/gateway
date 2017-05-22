@@ -3,14 +3,13 @@
 var exec = require('child_process').exec;
 var fs   = require('fs');
 
-var async    = require('async');
-var getmac   = require('getmac');
-var raw      = require('raw-socket');
-var watchout = require('watchout');
-var ini      = require('ini');
-var ccm      = require('node-aes-ccm');
-
-var mqtt     = require('mqtt');
+var async     = require('async');
+var gatewayId = require('lab11-gateway-id');
+var mqtt      = require('mqtt');
+var raw       = require('raw-socket');
+var watchout  = require('watchout');
+var ini       = require('ini');
+var ccm       = require('node-aes-ccm');
 
 var GatewayTopics = require('gateway-topics');
 
@@ -258,7 +257,7 @@ _mqtt_client.on('connect', function () {
     console.log('Connected to MQTT');
 
     // Get MAC address
-    getmac.getMac(function (err, addr) {
+    gatewayId.id(function (addr) {
     	_gateway_id = addr;
 
     	// Different setup procedure if using Linux/CC2520 or CC2538 pass through
