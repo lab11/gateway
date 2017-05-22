@@ -10,7 +10,7 @@ var express    = require('express');
 var nunjucks   = require('nunjucks');
 var bodyParser = require('body-parser');
 var prettyjson = require('prettyjson');
-var getmac     = require('getmac');
+var gatewayId  = require('lab11-gateway-id');
 var async      = require('async');
 var request    = require('request');
 
@@ -65,9 +65,9 @@ var nearby = [];
 // Keep track of any local data for devices. This lets us use accessors.
 var local = {};
 
-// Pre-fetch the mac address
+// Pre-fetch the gateway ID.
 var macaddr = '';
-getmac.getMac(function (err, addr) {
+gatewayId.id(function (addr) {
 	macaddr = addr;
 });
 
