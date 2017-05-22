@@ -343,10 +343,10 @@ function discover_gateways (mqtt_addr) {
 
 // get the unique id for this gateway
 function get_gateway_id (gateway_ip, cb) {
-    //  http://<gateway_ip>/api/id has a unique ID for the device
-    //  This is the MAC address as discovered by getmac
-    //  If that response cannot be obtained, default to ip address
-    //  Note that on the primary this is usually 'localhost'
+    //  http://<gateway_ip>/api/id has a unique ID for the device.
+    //  This is the MAC address as provided by the gateway server.
+    //  If that response cannot be obtained, default to ip address.
+    //  Note that on the primary this is usually 'localhost'.
     var gateway_id = gateway_ip;
     request('http://'+gateway_ip+'/api/id', function (error, response, body) {
         if (!error && response.statusCode == 200) {
