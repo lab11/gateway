@@ -1,7 +1,7 @@
-From 27ab683b842202ace5150af52386ac11e4e338ba Mon Sep 17 00:00:00 2001
+From 1d54b955786296c6610ffcb9d645b8639522e9b2 Mon Sep 17 00:00:00 2001
 From: Brad <bradjc5@gmail.com>
-Date: Sat, 20 May 2017 03:02:34 -0400
-Subject: [PATCH] add timeout
+Date: Mon, 22 May 2017 14:53:30 -0400
+Subject: [PATCH] dfu: add optional timeout
 
 ---
  cmd/dfu.c                  | 11 +++++++++++
@@ -10,8 +10,8 @@ Subject: [PATCH] add timeout
  drivers/dfu/Kconfig        |  6 ++++++
  drivers/dfu/dfu.c          | 27 +++++++++++++++++++++++++++
  drivers/usb/gadget/f_dfu.c |  1 +
- include/dfu.h              |  2 ++
- 7 files changed, 71 insertions(+)
+ include/dfu.h              |  4 ++++
+ 7 files changed, 73 insertions(+)
 
 diff --git a/cmd/dfu.c b/cmd/dfu.c
 index 04291f6c08..71fac0a3cf 100644
@@ -193,10 +193,10 @@ index dfa4359577..36114975e3 100644
  	} else /* DFU specific request */
  		value = dfu_state[f_dfu->dfu_state] (f_dfu, ctrl, gadget, req);
 diff --git a/include/dfu.h b/include/dfu.h
-index f39d3f1171..7c4acec70f 100644
+index f39d3f1171..d7508b401e 100644
 --- a/include/dfu.h
 +++ b/include/dfu.h
-@@ -152,9 +152,11 @@ const char *dfu_get_layout(enum dfu_layout l);
+@@ -152,12 +152,16 @@ const char *dfu_get_layout(enum dfu_layout l);
  struct dfu_entity *dfu_get_entity(int alt);
  char *dfu_extract_token(char** e, int *n);
  void dfu_trigger_reset(void);
@@ -208,6 +208,11 @@ index f39d3f1171..7c4acec70f 100644
  unsigned char *dfu_free_buf(void);
  unsigned long dfu_get_buf_size(void);
  bool dfu_usb_get_reset(void);
++ulong dfu_get_timeout(void);
++void dfu_set_timeout(ulong);
+ 
+ int dfu_read(struct dfu_entity *de, void *buf, int size, int blk_seq_num);
+ int dfu_write(struct dfu_entity *de, void *buf, int size, int blk_seq_num);
 -- 
 2.11.0
 
