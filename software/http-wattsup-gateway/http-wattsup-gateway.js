@@ -3,7 +3,7 @@
 var express = require('express');
 var expressBodyParser = require('body-parser');
 
-var getmac = require('getmac');
+var gatewayId = require('lab11-gateway-id');
 var mqtt = require('mqtt');
 
 var GatewayTopics = require('gateway-topics');
@@ -15,7 +15,7 @@ var MQTT_TOPIC_NAME = 'gateway-data';
 
 // Get the ID for this gateway
 var _gateway_id = '';
-getmac.getMac(function (err, addr) {
+gatewayId.id(function (addr) {
     _gateway_id = addr;
 });
 
