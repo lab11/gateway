@@ -11,6 +11,9 @@ TIMEOUT_SEC=240
 # Handle Ifwi file for DFU update
 IFWI_DFU_FILE=ifwi/edison_ifwi-dbg
 
+# Path to u-boot that we want to use
+UBOOT_BINARY=u-boot/u-boot-edison-2017_05.bin
+
 # Update the gateway ID
 gateway_id=$1
 
@@ -150,7 +153,7 @@ flash-dfu-ifwi ifwi06  --alt ifwi06  -D "${IFWI_DFU_FILE}-06-dfu.bin"
 flash-dfu-ifwi ifwib06 --alt ifwib06 -D "${IFWI_DFU_FILE}-06-dfu.bin"
 
 echo "Flashing U-Boot"
-flash-command --alt u-boot0 -D "u-boot/u-boot-edison.bin"
+flash-command --alt u-boot0 -D "${UBOOT_BINARY}"
 
 echo "Flashing U-Boot Environment"
 flash-command --alt u-boot-env0 -D "${VARIANT_FILE}"
