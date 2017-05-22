@@ -1,0 +1,26 @@
+{
+  "name": "lab11-gateway-id",
+  "version": "0.1.0",
+  "description": "Get the gateway's ID.",
+  "main": "lab11-gateway-id.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "keywords": [
+    "gateway",
+    "id"
+  ],
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "dependencies": {
+    "getmac": "^1.2.1"
+  }
+}
