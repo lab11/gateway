@@ -1,45 +1,91 @@
-partitions=uuid_disk=${uuid_disk};name=u-boot0,start=1MiB,size=2MiB,uuid=${uuid_uboot0};name=u-boot-env0,size=1MiB,uuid=${uuid_uboot_env0};name=u-boot1,size=2MiB,uuid=${uuid_uboot1};name=u-boot-env1,size=1MiB,uuid=${uuid_uboot_env1};name=factory,size=1MiB,uuid=${uuid_factory};name=panic,size=24MiB,uuid=${uuid_panic};name=boot,size=32MiB,uuid=${uuid_boot};name=rootfs,size=1536MiB,uuid=${uuid_rootfs};name=update,size=768MiB,uuid=${uuid_update};name=home,size=-,uuid=${uuid_home};
-do_dfu_alt_info_mmc=setenv dfu_alt_info "ifwi${hardware_id} raw 0 8192 mmcpart 1;ifwib${hardware_id} raw 0 8192 mmcpart 2;u-boot0 part 0 1;u-boot-env0 part 0 2;u-boot1 part 0 3;u-boot-env1 part 0 4;boot part 0 7;rootfs part 0 8;update part 0 9;home part 0 10;vmlinuz fat 0 7;initrd fat 0 7"
-dfu_alt_info_ram=kernel ram ${loadaddr} 0x800000
-do_dfu_alt_info_ifwi=setenv dfu_alt_info "ifwi${hardware_id} raw 0 8192 mmcpart 1;ifwib${hardware_id} raw 0 8192 mmcpart 2"
-dfu_alt_info_reset=reset ram 0x0 0x0
+################################################################################
+### Edison Swarm Gateway
+### U-Boot Environment Variables
+################################################################################
+
+###
+### General Variables
+###
+# Name for this u-boot environment
+target_name=swarm-gateway-edison
+# ID for this gateway. This environment variable gets set by the ./flashall.sh
+# script and used by the first-install.sh script on first boot to configure
+# the gateway. Really we want to edit partition #5 and add a "gateway_id" file,
+# and this is the roundabout way of getting there.
+gateway_id=c0:98:e5:c0:ff:ff
+
+###
+### Configuration for linux kernel command line arguments
+###
 bootargs_console=console=ttyMFD2 earlyprintk=ttyMFD2,keep
 bootargs_debug=loglevel=4
-do_bootargs_rootfs=setenv bootargs_rootfs rootwait root=PARTUUID=${uuid_rootfs} rootfstype=ext4
-first_install_retry=0
-first_install_max_retries=3
-ota_update_retry=0
-ota_update_max_retries=3
-do_compute_target=if itest.b ${first_install_retry} -gt ${first_install_max_retries} || itest.b ${ota_update_retry} -gt ${ota_update_max_retries}; then echo "Switch to Rescue target"; setenv bootargs_target rescue; saveenv; fi
-mmc-bootargs=run do_bootargs_rootfs; setenv bootargs ${bootargs_rootfs} ${bootargs_console} ${bootargs_debug} systemd.unit=${bootargs_target}.target hardware_id=${hardware_id}
+bootargs_target=multi-user
+set_bootargs_rootfs=setenv bootargs_rootfs rootwait root=PARTUUID=${uuid_rootfs} rootfstype=ext4
+set_bootargs=run do_bootargs_rootfs; setenv bootargs ${bootargs_rootfs} ${bootargs_console} ${bootargs_debug} systemd.unit=${bootargs_target}.target hardware_id=${hardware_id}
+
+###
+### Status Variables
+### These get set to essentially allow control flow in u-boot
+status_do_partition_done=0
+
+###
+### Configuration Settings
+###
+# How long the "Press any key to stop autoboot" prompt is shown for in seconds
+bootdelay=1
+# How long to wait for a DFU connection on each boot before continuing to boot
+dfu_timeout_sec=3
+
+###
+### Set Parameters
+###
 loadaddr=0x100000
-load_kernel=fatload mmc 0:7 ${loadaddr} vmlinuz
-do_partition_done=0
-do_partition=if itest.b ${do_partition_done} -eq 1; then echo "Partitioning already done..."; else run do_force_partition ; fi
-do_force_partition=echo "Partitioning using GPT"; gpt write mmc 0 ${partitions} ; mmc rescan; setenv do_partition_done 1 ; saveenv
-do_flash_ifwi=run do_dfu_alt_info_ifwi ; dfu 0 mmc 0
-do_flash_os=if itest.b ${do_flash_os_done} -eq 1 ; then echo "Flashing already done..." ; else run do_force_flash_os; fi
-do_force_flash_os=run do_dfu_alt_info_mmc ; sleep 1 ; setenv do_flash_os_done 1 ; saveenv ; dfu 0 mmc 0
-do_flashall=run do_partition;run do_flash_ifwi;run do_flash_os
-do_dnx=setenv dfu_alt_info ${dfu_alt_info_ram};dfu 0 ram 0 ram;run bootcmd
-init_dfu=run do_dfu_alt_info_mmc ; saveenv
-bootcmd=echo "Target:${target_name}"; run do_partition; run do_handle_bootargs_mode;
-do_handle_bootargs_mode=run do_preprocess_bootargs_mode; if itest.s $bootargs_mode == "ota" ; then run do_ota; fi; if itest.s $bootargs_mode == "boot" ; then run do_boot; fi; if itest.s $bootargs_mode == "flash"; then run do_flash; fi; run do_fallback; exit;
-do_preprocess_bootargs_mode=if env exists bootargs_mode ; then ; else setenv bootargs_mode "boot" ;fi;
-do_fallback=echo "Unknown boot mode: $bootargs_mode"; env delete -f bootargs_mode; saveenv; echo "Resetting to default boot mode and reboot..."; reset;
-do_boot=run boot_target_cmd;
-do_flash=run do_force_flash_os;
 ota_script_addr=0x100000
+partitions=uuid_disk=${uuid_disk};name=u-boot0,start=1MiB,size=2MiB,uuid=${uuid_uboot0};name=u-boot-env0,size=1MiB,uuid=${uuid_uboot_env0};name=u-boot1,size=2MiB,uuid=${uuid_uboot1};name=u-boot-env1,size=1MiB,uuid=${uuid_uboot_env1};name=factory,size=1MiB,uuid=${uuid_factory};name=panic,size=24MiB,uuid=${uuid_panic};name=boot,size=32MiB,uuid=${uuid_boot};name=rootfs,size=1536MiB,uuid=${uuid_rootfs};name=update,size=768MiB,uuid=${uuid_update};name=home,size=-,uuid=${uuid_home};
+set_dfu_alt_info_mmc=setenv dfu_alt_info "ifwi${hardware_id} raw 0 8192 mmcpart 1;ifwib${hardware_id} raw 0 8192 mmcpart 2;u-boot0 part 0 1;u-boot-env0 part 0 2;u-boot1 part 0 3;u-boot-env1 part 0 4;boot part 0 7;rootfs part 0 8;update part 0 9;home part 0 10;vmlinuz fat 0 7;initrd fat 0 7"
+
+###
+### Commands
+###
+
+# START! This is called by u-boot
+bootcmd=echo "Target:${target_name}"; run do_partition; run do_handle_bootargs_mode;
+
+# Check if we need to setup partitions. This happens on first boot when a new
+# image is written to the edison.
+do_partition=if itest.b ${status_do_partition_done} -eq 1; then echo "Partitioning already done..."; else run do_force_partition ; fi
+do_force_partition=echo "Partitioning using GPT"; gpt write mmc 0 ${partitions} ; mmc rescan; setenv status_do_partition_done 1 ; saveenv
+
+# Select which operating we want to do.
+#   Operation    Description
+#   boot         Boot the kernel and OS
+#   ota          Load a new root image from the "update" partition
+#   flash        Go to wait for DFU mode
+# If nothing is set we default to "boot". If something else is set, we erase it,
+# reboot, and go to "boot".
+do_handle_bootargs_mode=run do_preprocess_bootargs_mode; if itest.s $bootargs_mode == "ota" ; then run do_ota; fi; if itest.s $bootargs_mode == "boot" ; then run do_boot; fi; if itest.s $bootargs_mode == "flash"; then run do_flash; fi; run do_fallback; exit;
+do_preprocess_bootargs_mode=if env exists bootargs_mode ; then ; else setenv bootargs_mode "boot" ; fi;
+
+# OTA
+# Tool for loading a new root image from the "update" partition if a `flash`
+# directory is there.
+# These commands basically setup the ota_update.scr file from the `flash` folder.
+do_ota=run do_ota_init; run do_load_ota_scr; run do_source_ota_scr; run do_ota_clean;
 do_ota_init=setenv ota_status 1 ; env delete -f bootargs_mode
 do_load_ota_scr=if fatload mmc 0:9 $ota_script_addr ota_update.scr ; then setenv ota_status 0 ; else setenv ota_status 1 ; fi
 do_source_ota_scr=if test $ota_status -eq 0 ; then if source $ota_script_addr ; then setenv ota_status 0 ; else setenv ota_status 2 ; fi ; fi
 do_ota_clean=saveenv ; reset
-do_ota=run do_ota_init ; run do_load_ota_scr ; run do_source_ota_scr ; run do_ota_clean
-target_name=default
-bootdelay=1
-do_flash_os_done=1
-bootargs_target=multi-user
-dfu_timeout_sec=3
-do_probe_dfu=run do_dfu_alt_info_mmc; dfu 0 mmc 0 ${dfu_timeout_sec}
-boot_target_cmd=run do_flash_os;run do_probe_dfu;run do_compute_target;run mmc-bootargs;run load_kernel;zboot ${loadaddr}
-gateway_id=c0:98:e5:c0:88:76
+
+# Boot
+# Do the process to actually boot the kernel.
+do_boot=run do_probe_dfu; run set_bootargs; run do_load_kernel; zboot ${loadaddr}
+do_probe_dfu=run set_dfu_alt_info_mmc; dfu 0 mmc 0 ${dfu_timeout_sec}
+do_load_kernel=fatload mmc 0:7 ${loadaddr} vmlinuz
+
+# Flash
+# Wait for DFU commands and load new images onto the eMMC
+do_flash=run do_force_flash_os;
+do_force_flash_os=run set_dfu_alt_info_mmc ; sleep 1 ; dfu 0 mmc 0
+
+# Fallback
+do_fallback=echo "Unknown boot mode: $bootargs_mode"; env delete -f bootargs_mode; saveenv; echo "Resetting to default boot mode and reboot..."; reset;
