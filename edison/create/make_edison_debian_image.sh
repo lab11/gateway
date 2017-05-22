@@ -197,9 +197,6 @@ sed -i -E "s/.*PermitRootLogin.*/PermitRootLogin no/g" $ROOTDIR/etc/ssh/sshd_con
 # Add /sbin to user path
 sed -i 's\/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games\/usr/local/bin:/usr/bin:/bin:/sbin\g' $ROOTDIR/etc/profile
 
-# Set hostname
-echo "swarmgateway" > $ROOTDIR/etc/hostname
-
 # Add swarmgateway to hosts so sudo doesn't complain
 echo "127.0.1.1    swarmgateway" >> $ROOTDIR/etc/hosts
 
