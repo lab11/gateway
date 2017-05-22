@@ -1,6 +1,6 @@
 {
   "name": "gateway-mqtt-sensu",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Publish keepalives to sensu on behalf of devices.",
   "main": "gateway-mqtt-sensu.js",
   "scripts": {
