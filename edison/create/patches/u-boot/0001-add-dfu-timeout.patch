@@ -1,6 +1,6 @@
-From b1d09a269b11e21ca255a186261737f9d2ba9bbd Mon Sep 17 00:00:00 2001
+From 27b5bd67fa4701f110020177a8687828b5ab5da0 Mon Sep 17 00:00:00 2001
 From: Brad <bradjc5@gmail.com>
-Date: Mon, 22 May 2017 16:49:54 -0400
+Date: Tue, 23 May 2017 17:28:18 -0400
 Subject: [PATCH] add dfu timeout
 
 ---
@@ -48,7 +48,7 @@ index 04291f6c08..71fac0a3cf 100644
  	"dfu tftp <interface> <dev> [<addr>]\n"
  	"  - device firmware upgrade via TFTP\n"
 diff --git a/common/dfu.c b/common/dfu.c
-index 0e9f5f59c8..eb46115186 100644
+index 0e9f5f59c8..64bc658829 100644
 --- a/common/dfu.c
 +++ b/common/dfu.c
 @@ -35,6 +35,9 @@ int run_usb_dnl_gadget(int usbctrl_index, char *usb_dnl_gadget)
@@ -66,7 +66,7 @@ index 0e9f5f59c8..eb46115186 100644
  		}
  
 +#ifdef CONFIG_DFU_TIMEOUT
-+		if (!dfu_enum_done()) {
++		if (!dfu_enum_done() && dfu_get_timeout()) {
 +			ulong cur_time = get_timer(time_activity_start);
 +
 +			if (cur_time > dfu_get_timeout()) {
