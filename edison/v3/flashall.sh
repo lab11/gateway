@@ -43,8 +43,6 @@ if [[ ! " $VALID_MODELS " =~ " $HW_MODEL " ]]; then
 	exit
 fi
 
-exit 0
-
 BASE=${GATEWAY_ID:0:12}
 END=${GATEWAY_ID:13:4}
 
