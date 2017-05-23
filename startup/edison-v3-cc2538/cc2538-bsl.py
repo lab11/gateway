@@ -48,7 +48,6 @@ import os
 import subprocess
 import struct
 import binascii
-import findTTY
 
 #version
 VERSION_STRING = "1.1"
@@ -61,6 +60,7 @@ PY3 = sys.version_info >= (3,0)
 
 try:
     import serial
+    import serial.tools.list_ports
 except ImportError:
     print('{} requires the Python serial library'.format(sys.argv[0]))
     print('Please install it with one of the following:')
@@ -659,12 +659,13 @@ if __name__ == "__main__":
 
             ports = sorted(ports)
             '''
-            # find FDTI device
-            ports = findTTY.findSerialDevice('ID_SERIAL=\'FTDI_')
+            # Find FTDI device. This works because we used ftx_prog to set
+            # the FTDI properties.
+            ports = list(serial.tools.list_ports.grep('cc2538'))
 
             if ports:
                 # Found something - take it
-                conf['port'] = ports[0]
+                conf['port'] = ports[0][0]
             else:
                 raise Exception('No serial port found.')
 
