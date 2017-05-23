@@ -23,7 +23,7 @@ bootargs_console=console=ttyMFD2 earlyprintk=ttyMFD2,keep
 bootargs_debug=loglevel=4
 bootargs_target=multi-user
 set_bootargs_rootfs=setenv bootargs_rootfs rootwait root=PARTUUID=${uuid_rootfs} rootfstype=ext4
-set_bootargs=run do_bootargs_rootfs; setenv bootargs ${bootargs_rootfs} ${bootargs_console} ${bootargs_debug} systemd.unit=${bootargs_target}.target hardware_id=${hardware_id}
+set_bootargs=run set_bootargs_rootfs; setenv bootargs ${bootargs_rootfs} ${bootargs_console} ${bootargs_debug} systemd.unit=${bootargs_target}.target hardware_id=${hardware_id}
 
 ###
 ### Status Variables
