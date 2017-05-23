@@ -39,6 +39,11 @@ rm -rf /etc/ssh/*key*
 ssh-keygen -A
 fi_assert $? "Generating sshd keys"
 
+# Set the model in /factory
+MODEL=`sudo fw_printenv model | cut -d "=" -f 2`
+echo $MODEL > /factory/model
+fi_assert $? "Setting /factory/model"
+
 # Setup Access Point SSID and passphrase.
 # Substitute the SSID and passphrase in the file /etc/hostapd/hostapd.conf
 # The SSID is built from the hostname and a serial number to have a

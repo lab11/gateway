@@ -13,6 +13,8 @@ target_name=swarm-gateway-edison
 # the gateway. Really we want to edit partition #5 and add a "gateway_id" file,
 # and this is the roundabout way of getting there.
 gateway_id=c0:98:e5:c0:ff:ff
+# String that identifies the model of gateway hardware. Likely "edison-v3".
+model=edison
 
 ###
 ### Configuration for linux kernel command line arguments

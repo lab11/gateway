@@ -17,12 +17,33 @@ UBOOT_BINARY=u-boot/u-boot-edison-2017_05.bin
 # Update the gateway ID
 GATEWAY_ID=$1
 
+# This is the name of the gateway image to flash to the edison
+IMAGE_ROOT=$2
+
+# This is the gateway hardware model
+HW_MODEL=$3
+
+function usage {
+	echo "usage: sudo ./flashall.sh <gateway id> <image root> <model>"
+	echo "examp: sudo ./flashall.sh c0:98:e5:c0:00:01 swarm_gateway-2.0.0-edison-umich edison-v3"
+}
+
 # Make sure we got valid ID
 if [ ${#GATEWAY_ID} -ne 17 ]; then
 	echo "ERROR: Invalid gateway ID"
-	echo "Call this script like: sudo ./flashall.sh c0:98:e5:c0:00:01"
+	usage
 	exit
 fi
+
+VALID_MODELS="edison-v3 edison-v2"
+if [[ ! " $VALID_MODELS " =~ " $HW_MODEL " ]]; then
+	echo "ERROR: Invalid HW model ($HW_MODEL)"
+	echo "Valid models: $VALID_MODELS"
+	usage
+	exit
+fi
+
+exit 0
 
 BASE=${GATEWAY_ID:0:12}
 END=${GATEWAY_ID:13:4}
@@ -35,6 +56,7 @@ cp  u-boot/edison-gateway.txt  u-boot/edison-gateway-custom.txt
 
 # Replace the gateway ID in the u boot environment variables text strings file
 sed -i -E "s/gateway_id=(.*)$/gateway_id=$GATEWAY_ID/" u-boot/edison-gateway-custom.txt
+sed -i -E "s/model=(.*)$/model=$HW_MODEL/" u-boot/edison-gateway-custom.txt
 
 # Create the binary we can flash onto the edison.
 mkenvimage -s 65536 -r -o u-boot/edison-gateway-custom.bin u-boot/edison-gateway-custom.txt
@@ -42,8 +64,7 @@ mkenvimage -s 65536 -r -o u-boot/edison-gateway-custom.bin u-boot/edison-gateway
 LOG_FILENAME="flash.log"
 OUTPUT_LOG_CMD="2>&1 | tee -a ${LOG_FILENAME} | ( sed -n '19 q'; head -n 1; cat >/dev/null )"
 
-# This is the name of the gateway image to flash to the edison
-IMAGE_ROOT=$2
+
 
 if [ ! -f $IMAGE_ROOT.root ]; then
     echo "File $IMAGE_ROOT.root not found!"
