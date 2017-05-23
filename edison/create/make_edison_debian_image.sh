@@ -177,6 +177,7 @@ $CHROOTCMD apt -y install libqmi-utils resolvconf mosquitto mosquitto-clients gi
 $CHROOTCMD apt -y install screen psmisc rfkill
 $CHROOTCMD apt -y install make g++
 $CHROOTCMD apt -y install exfat-fuse exfat-utils
+$CHROOTCMD apt -y install libftdi-dev
 
 # Create a default user "debian" with the correct password and settings
 $CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
@@ -246,6 +247,12 @@ $CHROOTCMD git clone https://github.com/lab11/gateway-tools.git /home/debian/gat
 # Copy overlay files into this filesystem
 shopt -s dotglob
 cp -R overlay/* $ROOTDIR
+
+# Build ftx_prog so that we can setup the FTDI for the CC2538
+$CHROOTCMD git clone https://github.com/richardeoin/ftx-prog.git /home/debian/ftx-prog
+$CHROOTCMD make -C /home/debian/ftx-prog
+cp $ROOTDIR/home/debian/ftx-prog/ftx_prog $ROOTDIR/opt/edison/
+rm -rf $ROOTDIR/home/debian/ftx-prog
 
 # Make sure firmware is symlinked to the /etc folder
 ln -s /lib/firmware $ROOTDIR/etc/firmware

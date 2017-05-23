@@ -15,20 +15,26 @@ IFWI_DFU_FILE=ifwi/edison_ifwi-dbg
 UBOOT_BINARY=u-boot/u-boot-edison-2017_05.bin
 
 # Update the gateway ID
-gateway_id=$1
+GATEWAY_ID=$1
 
 # Make sure we got valid ID
-if [ ${#gateway_id} -ne 17 ]; then
+if [ ${#GATEWAY_ID} -ne 17 ]; then
 	echo "ERROR: Invalid gateway ID"
 	echo "Call this script like: sudo ./flashall.sh c0:98:e5:c0:00:01"
 	exit
 fi
 
+BASE=${GATEWAY_ID:0:12}
+END=${GATEWAY_ID:13:4}
+
+ADDR_USB_DFU="${BASE}e${END}"
+ADDR_USB_FTDI="${BASE}f${END}"
+
 # Copy the stock gateway env vars string file
 cp  u-boot/edison-gateway.txt  u-boot/edison-gateway-custom.txt
 
 # Replace the gateway ID in the u boot environment variables text strings file
-sed -i -E "s/gateway_id=(.*)$/gateway_id=$gateway_id/" u-boot/edison-gateway-custom.txt
+sed -i -E "s/gateway_id=(.*)$/gateway_id=$GATEWAY_ID/" u-boot/edison-gateway-custom.txt
 
 # Create the binary we can flash onto the edison.
 mkenvimage -s 65536 -r -o u-boot/edison-gateway-custom.bin u-boot/edison-gateway-custom.txt
@@ -121,6 +127,10 @@ function dfu-wait {
 		exit -2
 	fi
 }
+
+# echo "Setting the FTDI parameters for the gateway"
+# ./ftx_prog --manufacturer Lab11 --product "swarm-gateway serial" --new-serial-number $ADDR_USB_FTDI > /dev/null
+
 
 echo "** Flashing Edison Board $(date) **" >> ${LOG_FILENAME}
 

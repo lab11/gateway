@@ -4,11 +4,15 @@
 # used at boot. The addresses are based on the gateway_id.
 #
 # The goals is to assign addresses as follows:
-#  ethernet: c0:98:e5:c0:1x:xx
-#  wifi:     c0:98:e5:c0:2x:xx
-#  wwan:     c0:98:e5:c0:3x:xx
-#  usb:      c0:98:e5:c0:4x:xx
-#  ble:      c0:98:e5:c0:5x:xx
+#  ethernet:    c0:98:e5:c0:1x:xx
+#  wifi:        c0:98:e5:c0:2x:xx
+#  wwan:        c0:98:e5:c0:3x:xx
+#  usb:         c0:98:e5:c0:4x:xx
+#  ble:         c0:98:e5:c0:5x:xx
+#
+#  ftdi cc2538: c0:98:e5:c0:dx:xx
+#  ftdi serial: c0:98:e5:c0:ex:xx
+#  dfu usb:     c0:98:e5:c0:fx:xx
 # where x:xx is the last 12 bits of the gateway_id. If there are ever more
 # network interfaces they should get added. This numbering method supports up
 # to 16 network interfaces.
@@ -24,6 +28,7 @@ ADDR_WIFI="${BASE}2${END}"
 ADDR_WWAN="${BASE}3${END}"
 ADDR_USB="${BASE}4${END}"
 ADDR_BLE="${BASE}5${END}"
+ADDR_FTDI_CC2538="${BASE}d${END}"
 
 echo "Update MAC addresses based on $GATEWAY_ID"
 
@@ -44,3 +49,6 @@ echo "$ADDR_WIFI_NO_COLON" > /config/wifi/mac.txt
 # Bluetooth address is set from a file in /factory and used by the
 # bluetooth patchram script to setup the adapter.
 echo "$ADDR_BLE" > /factory/bluetooth_address
+
+# Configure the FTDI chip that allows us to flash the CC2538
+/opt/edison/ftx_prog --manufacturer Lab11 --product "swarm-gateway cc2538" --new-serial-number "$ADDR_FTDI_CC2538"
