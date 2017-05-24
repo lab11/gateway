@@ -221,6 +221,9 @@ $CHROOTCMD setcap cap_net_raw+eip $(eval readlink -f `which node`)
 # Make sure we can do IPv6 mDNS lookups.
 sed -i "s/mdns4_minimal/mdns_minimal/g" $ROOTDIR/etc/nsswitch.conf
 
+# We want to be more diligent about our logs
+cp $ROOTDIR/etc/cron.daily/logrotate $ROOTDIR/etc/cron.hourly/logrotate
+
 # Cap log files so we don't run out of space
 echo "# Cap log files on the constrained edison" >> $ROOTDIR/etc/logrotate.conf
 echo "rotate 1" >> $ROOTDIR/etc/logrotate.conf
