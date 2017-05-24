@@ -3,6 +3,7 @@
 var request = require('request');
 var url     = require('url');
 var debug   = require('debug')('influx-poster');
+var zlib    = require('zlib');
 
 // user_config: configuration dictionary for influx database with the following keys
 //  mandatory
@@ -35,6 +36,7 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
         prefix: '',
         precision: 'ms',
         retention_policy: '',
+        gzip: true,
     };
     if (user_config && typeof user_config == 'object' &&
             'host' in user_config && 'database' in user_config) {
@@ -47,6 +49,7 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
         if ('prefix'    in user_config) config.prefix    = user_config.prefix;
         if ('precision' in user_config) config.precision = user_config.precision;
         if ('retention_policy' in user_config) config.retention_policy = user_config.retention_policy;
+        if ('gzip'      in user_config) config.gzip      = (user_config.gzip == 'true');
     } else {
         return new Error("Invalid configuration");
     }
@@ -81,6 +84,9 @@ var InfluxPoster = function (user_config, maximum_lines, maximum_time) {
         query:    query,
     });
     debug("Influx POST URL: " + this._post_url);
+
+    // Set whether we want to compress or not
+    this._gzip = config.gzip;
 
     // start timer
     if (this._max_time > 0) {
@@ -176,42 +182,59 @@ InfluxPoster.prototype.post_data = function (callback) {
     debug("Posting data!");
 
     if (this._data_lines.length > 0) {
+        var that = this;
         var post_body = this._data_lines.join('\n');
-        var options = {
-            method: 'POST',
-            url: this._post_url,
-            body: post_body,
-        };
-        debug("POSTing " + this._data_lines.length + " lines at " + Date.now()/1000);
 
-        // clear data array
-        // this does drop data if there is an error,
-        //  but better than letting it pile up until we run out of memory
+        // Clear data array. This does drop data if there is an error,
+        // but better than letting it pile up until we run out of memory.
         this._data_lines = [];
 
-        var that = this;
-        request(options, function (err, response) {
+        function send (options) {
+            debug("POSTing at " + Date.now()/1000);
 
-            if (err) {
-                debug("Influx POST error: " + err);
-                debug(response);
+            request(options, function (err, response) {
 
-                // should do something with the error here...
-            } else {
-                debug("POST successful at " + Date.now()/1000)
-            }
+                if (err) {
+                    debug("Influx POST error: " + err);
+                    debug(response);
 
-            // restart timer
-            if (that._max_time > 0) {
-                setTimeout(function () {
-                   that.post_data();
-                }, that._max_time);
-            }
+                    // should do something with the error here...
+                } else {
+                    debug("POST successful at " + Date.now()/1000)
+                }
 
-            if (callback) {
-                callback();
-            }
-        });
+                // restart timer
+                if (that._max_time > 0) {
+                    setTimeout(function () {
+                       that.post_data();
+                    }, that._max_time);
+                }
+
+                if (callback) {
+                    callback();
+                }
+            });
+        }
+
+        // Check if we should compress the body before POSTing it.
+        if (this._gzip) {
+            zlib.gzip(post_body, function (gzip_err, compressed) {
+                var options = {
+                    method: 'POST',
+                    url: that._post_url,
+                    body: compressed,
+                    headers: {'Content-Encoding': 'gzip'},
+                };
+                send(options);
+            });
+        } else {
+            var options = {
+                method: 'POST',
+                url: that._post_url,
+                body: post_body,
+            };
+            send(options);
+        }
 
     } else {
         // no data, continue immediately

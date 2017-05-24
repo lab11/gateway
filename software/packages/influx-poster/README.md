@@ -71,6 +71,7 @@ Initialize influx-poster.
         prefix    - path prefix before command, default ''
         precision - precision key for influx, default 'ms'
         retention_policy - retention_policy key for influx, default ''
+        gzip      - compress the http POST message, default 'true'
 
 **`maximum_lines`**: maximum number of lines to be stored before posting
 

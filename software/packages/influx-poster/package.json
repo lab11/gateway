@@ -1,6 +1,6 @@
 {
   "name": "influx-poster",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "POST data to InfluxDB in batches",
   "main": "influx-poster.js",
   "scripts": {
