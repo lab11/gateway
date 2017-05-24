@@ -174,8 +174,8 @@ function parse_packet (buffer) {
 
 		if (status_byte & TRIUMVI_STATUSREG_POWERFACTOR) {
 			out.power_factor = data.readUInt16LE(offset) / 1000;
-			out.voltage_rms_volts = data.readUInt8(offset+2);
-			out.ina_gain = data.readUInt8(offset+3);
+			out.voltage_rms_volts = ((data.readUInt8(offset+3)&0xC0) << 2) + data.readUInt8(offset+2);
+			out.ina_gain = data.readUInt8(offset+3) & 0x3F;
 			out.current_rms_amps = exponent_transform(data, offset+4, 2) / 1000;
 			offset += 6;
 		}
