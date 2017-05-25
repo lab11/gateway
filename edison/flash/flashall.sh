@@ -147,8 +147,8 @@ function dfu-wait {
 	fi
 }
 
-# echo "Setting the FTDI parameters for the gateway"
-# ./ftx_prog --manufacturer Lab11 --product "swarm-gateway serial" --new-serial-number $ADDR_USB_FTDI > /dev/null
+echo "Setting the FTDI parameters for the gateway"
+./ftx_prog --manufacturer Lab11 --product "swarm-gateway serial" --new-serial-number $ADDR_USB_FTDI > /dev/null
 
 
 echo "** Flashing Edison Board $(date) **" >> ${LOG_FILENAME}
