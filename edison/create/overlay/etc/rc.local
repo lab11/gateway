@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #
 # rc.local
 #
@@ -14,6 +14,15 @@ echo 1 > /sys/devices/virtual/misc/watchdog/disable
 
 # Do setup on the first boot after flashing
 /opt/edison/first-install.sh
+
+# Make sure that we were able to set the FTDI properties on the CC2538 FTDI
+# chip. This will fail to happen if the DFU USB is still plugged in because
+# the USB bus is hidden in that case.
+FTDI_CHECK=`python -m serial.tools.list_ports "swarm-gateway cc2538" -q`
+if [[ "$FTDI_CHECK" == "" ]]; then
+	echo "Running set MAC addresses again to try to configure the FTDI chip."
+	/opt/edison/set_mac_addresses.sh
+fi
 
 # Configure the CC2538
 /home/debian/gateway/startup/edison-v3-cc2538/flash_cc2538.sh
