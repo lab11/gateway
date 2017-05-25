@@ -25,14 +25,40 @@ URL = '{}.device.lab11.eecs.umich.edu'
 POSITION_START_X = 0
 POSITION_START_Y = 0
 
+# List of ids to make QR codes of
+ids = []
+
 # Parse command line
-if len(sys.argv) != 3:
+if len(sys.argv) == 3:
+	start_id = int(sys.argv[1], 16)
+	count = int(sys.argv[2])
+
+	for id in range(start_id, start_id+count):
+		first = id >> 8
+		second = id & 0xff
+
+		label_id = '{}{:02X}:{:02X}'.format(DEVICE_ID, first, second)
+		ids.append(label_id)
+
+elif len(sys.argv) > 3 and sys.argv[1] == 'ids':
+	for id_str in sys.argv[2:]:
+		id = int(id_str, 16)
+		first = id >> 8
+		second = id & 0xff
+
+		label_id = '{}{:02X}:{:02X}'.format(DEVICE_ID, first, second)
+		ids.append(label_id)
+
+else:
 	print('Usage: {} <start id in hex> <number of labels>'.format(__file__))
 	print('example: {} 003a 6'.format(__file__))
+	print('Usage: {} ids <id 1> <id 2> <id 3>...'.format(__file__))
+	print('example: {} ids 2c 3d 3e 3f 45'.format(__file__))
 	sys.exit(1)
 
-start_id = int(sys.argv[1], 16)
-count = int(sys.argv[2])
+if len(ids) == 0:
+	print('No IDs to make labels for!')
+	sys.exit(1)
 
 # State
 x = POSITION_START_X
@@ -61,21 +87,6 @@ def get_coordinates ():
 		y += 1
 
 	return (round(xpx), round(ypx))
-
-# List of ids to make QR codes of
-ids = []
-
-for id in range(start_id, start_id+count):
-	first = id >> 8
-	second = id & 0xff
-
-	label_id = '{}{:02X}:{:02X}'.format(DEVICE_ID, first, second)
-	ids.append(label_id)
-
-
-if len(ids) == 0:
-	print('No IDs to make labels for!')
-	sys.exit(1)
 
 
 label_svg = LABEL_SVG
