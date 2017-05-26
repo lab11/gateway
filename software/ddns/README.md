@@ -89,9 +89,9 @@ have access to to support ddns. **Be careful with trailing `.`s throughout**
         sudo pip3 install dnspython3
         sudo apt install dnsutils
 
-    Install `ddns` updates as a cron job (`cp gateway/cron/ddns /etc/cron.hourly`)
+    Then call the ddns script to update the DNS record with the current IP address.
     
-        - FIXME: Some configuration options are hardcoded into this script currently, you'll need to update them
-
-    You can test that everything's working with `sudo run-parts /etc/cron.hourly`
+        ddns.py --zone <zone name> --nameserver <server url> <desired hostname> -k <path to the .key file> -v
+        
+    You probably want to do that in a cron job.
 
