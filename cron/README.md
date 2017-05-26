@@ -1,1 +1,0 @@
-../software/ddns/README.md
