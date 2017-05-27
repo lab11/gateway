@@ -9,9 +9,6 @@
 # In order to enable or disable this script just change the execution
 # bits.
 
-# Disable the watchdog timer's automatic reboot
-echo 1 > /sys/devices/virtual/misc/watchdog/disable
-
 # Do setup on the first boot after flashing
 /opt/edison/first-install.sh
 

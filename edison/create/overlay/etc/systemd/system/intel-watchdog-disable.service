@@ -1,0 +1,14 @@
+[Unit]
+Description=Disable the Edison watchdog
+After=sysinit.target local-fs.target
+Before=basic.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=echo 1 > /sys/devices/virtual/misc/watchdog/disable
+ExecStop=echo 0 > /sys/devices/virtual/misc/watchdog/disable
+ProtectHome=true
+
+[Install]
+WantedBy=basic.target
