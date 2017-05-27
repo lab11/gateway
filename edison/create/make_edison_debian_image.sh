@@ -179,9 +179,6 @@ $CHROOTCMD apt -y install make g++
 $CHROOTCMD apt -y install exfat-fuse exfat-utils
 $CHROOTCMD apt -y install libftdi-dev
 
-# Create a default user "debian" with the correct password and settings
-$CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
-
 # Add in kernel modules
 mkdir -p $ROOTDIR/lib/modules
 cp -r $MODULESDIR $ROOTDIR/lib/modules/
@@ -319,6 +316,9 @@ fi
 
 # Umich specific services
 if [[ $UMICH -eq 1 ]]; then
+	# Create a default user "debian" with the correct password and settings
+	$CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
+
 	# Install sensu
 	$CHROOTCMD wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | $CHROOTCMD apt-key add -
 	echo "deb     https://sensu.global.ssl.fastly.net/apt sensu main" > $ROOTDIR/etc/apt/sources.list.d/sensu.list
@@ -337,6 +337,11 @@ if [[ $UMICH -eq 1 ]]; then
 
 	# Also publish to our influx server
 	ln -s ../gateway-mqtt-influxdb.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+
+else
+	# Create a default user "debian" with the password "swarmgateway"
+	# echo swarmgateway | mkpasswd -m sha-512 -s | sed "s/\\$/\\\\$/g"
+	$CHROOTCMD useradd -m debian -p '\$6\$zXSccm7zraCL\$VvpKt.PYTuDfUyrOvGc6s5rYmNa0.e3G3WN4gnHedTS6L36ZCjisMsSkH6Q5u9vRIU.A4hB5/xWUjBCSkGC0w/' -G adm,sudo,dialout -s /bin/bash
 fi
 
 # Setup permissions
