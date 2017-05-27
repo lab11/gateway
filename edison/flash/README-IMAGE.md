@@ -2,19 +2,16 @@ Edison Gateway Image
 ====================
 
 This folder contains Intel Edison images that can be flashed on to an Edison
-to create a gateway. To use:
+to create a gateway.
 
-1. Get a copy of the gateway repo:
+Make sure you have the needed dependencies:
 
-        git clone https://github.com/lab11/gateway
+    sudo apt get install u-boot-tools dfu-util
 
-2. Copy the `.boot`, `.root`, and `.home` images to the `gateway/edison/flash`
-folder.
+Then to use:
 
-3. Plug in both USB cables and run the `flashall.sh` script:
+    sudo ./flashall.sh --id <gateway_id> --model <model>
 
-        sudo ./flashall.sh <gateway_id> <basename of image> <model>
+like:
 
-    like:
-
-        sudo ./flashall.sh c0:98:e5:c0:00:01 swarm_gateway-2.0.0-edison edison-v3
+    sudo ./flashall.sh --id c0:98:e5:c0:00:01 --model edison-v3

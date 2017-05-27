@@ -17,7 +17,7 @@ Please add them if you have issues.
 Images
 ------
 
-Check owncloud.lab11.eecs.umich.edu for swarm gateway images.
+Check https://owncloud.lab11.eecs.umich.edu for swarm gateway images.
 
 
 Usage
@@ -27,17 +27,13 @@ Follow these steps to program an Edison:
 
 1. Plug cables into both micro USB ports on the gateway.
 
-2. Connect to serial:
+2. On the host computer:
 
-        miniterm.py /dev/ttyUSB0 115200
-
-5. On the host computer:
-
-        ./flashall.sh c0:98:e5:c0:00:<gateway_id> <root of image to flash>
+        sudo ./flashall.sh --id c0:98:e5:c0:00:<gateway_id> --image <root of image to flash> --model <gateway model>
 
     For example:
 
-        ./flashall.sh c0:98:e5:c0:00:01 swarm-gateway-1.9.0.edison.umich.triumvi
+        sudo ./flashall.sh --id c0:98:e5:c0:00:01 --image swarm-gateway-1.9.0.edison.umich.triumvi --model edison-v3
 
 3. Plug in power to the gateway. The gateway should start flashing. If not,
 when the serial terminal gets to

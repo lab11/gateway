@@ -14,14 +14,34 @@ IFWI_DFU_FILE=ifwi/edison_ifwi-dbg
 # Path to u-boot that we want to use
 UBOOT_BINARY=u-boot/u-boot-edison-2017_05.bin
 
-# Update the gateway ID
-GATEWAY_ID=$1
+# Parse arguments
+IMAGE_ROOT=""
+GATEWAY_ID=""
+HW_MODEL=""
 
-# This is the name of the gateway image to flash to the edison
-IMAGE_ROOT=$2
+while [[ $# -gt 0 ]]
+do
+key="$1"
 
-# This is the gateway hardware model
-HW_MODEL=$3
+case $key in
+    --image)
+    IMAGE_ROOT="$2"
+    shift # past argument
+    ;;
+    --id)
+    GATEWAY_ID="$2"
+    shift # past argument
+    ;;
+    --model)
+    HW_MODEL="$2"
+    shift # past argument
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
+done
 
 function usage {
 	echo "usage: sudo ./flashall.sh <gateway id> <image root> <model>"
@@ -35,7 +55,7 @@ if [ ${#GATEWAY_ID} -ne 17 ]; then
 	exit
 fi
 
-VALID_MODELS="edison-v3 edison-v2"
+VALID_MODELS="edison-v3 edison-v2 edison"
 if [[ ! " $VALID_MODELS " =~ " $HW_MODEL " ]]; then
 	echo "ERROR: Invalid HW model ($HW_MODEL)"
 	echo "Valid models: $VALID_MODELS"
