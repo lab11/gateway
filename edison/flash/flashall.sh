@@ -108,14 +108,6 @@ if [ ! -f ${IFWI_DFU_FILE}-00-dfu.bin ]; then
 	popd
 fi
 
-if [ ! -f u-boot/u-boot-edison.bin ]; then
-	echo "Extracting u-boot binary"
-	pushd u-boot
-	tar xf u-boot-edison.tar.gz
-	popd
-fi
-
-
 function flash-command-try {
 	eval sudo dfu-util -v -d ${USB_VID}:${USB_PID} $@ $OUTPUT_LOG_CMD
 }

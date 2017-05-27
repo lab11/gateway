@@ -29,4 +29,6 @@ cp flash/README-IMAGE.md $IMAGE/README.md
 # Update flashall.sh so you don't have to pass in the --image argument.
 sed -i -E "s/^IMAGE_ROOT=.*/IMAGE_ROOT=\"$IMAGE\"/" $IMAGE/flashall.sh
 
-
+# And zip it
+zip $IMAGE.zip -r $IMAGE
+rm -r $IMAGE
