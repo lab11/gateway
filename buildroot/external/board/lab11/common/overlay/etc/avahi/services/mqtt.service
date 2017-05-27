@@ -1,9 +1,0 @@
-<?xml version="1.0" standalone='no'?>
-<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-<service-group>
-  <name>MQTT Broker</name>
-  <service>
-    <type>_mqtt._tcp</type>
-    <port>1883</port>
-  </service>
-</service-group>
