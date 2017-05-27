@@ -261,6 +261,9 @@ ln -s /lib/firmware $ROOTDIR/etc/firmware
 sed -i -E "s/^(.*)SwarmGateway.*$/\1SwarmGateway v$VERSION_STRING/g" $ROOTDIR/etc/issue.net
 sed -i -E "s/^VERSION_STRING.*$/VERSION_STRING=v$VERSION/g" $ROOTDIR/home/debian/.bashrc
 
+# Disable watchdog
+$CHROOTCMD systemctl enable intel-watchdog-disable.service
+
 # Setup bluetooth
 $CHROOTCMD systemctl enable bluetooth-patchram.service
 ln -s /lib/systemd/system/bluetooth.target $ROOTDIR/etc/systemd/system/multi-user.target.wants/bluetooth.target
