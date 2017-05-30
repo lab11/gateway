@@ -78,7 +78,7 @@ function parse_packet (buffer) {
 
 	// Extract the source address
 	var src_buf = reverse(buffer.slice(7, 15));
-	// Verify that the node is one of ours (AKA eligible to be a monjolo)
+	// Verify that the node is one of ours (AKA eligible to be a triumvi)
 	if (src_buf[0] != 0xc0 || src_buf[1] != 0x98 || src_buf[2] != 0xe5) {
 		return;
 	}
@@ -102,16 +102,20 @@ function parse_packet (buffer) {
 	var nonce = Buffer.concat([src_buf, zero_buf, nonce_counter]);
 
 	// Get the actual encrypted data buffer.
-	var encrypted = buffer.slice(20, buffer.length-4);
+	var encrypted = buffer.slice(20, buffer.length-5);
 
 	// And the auth tag data thingy at the end of the packet.
-	var auth_tag = buffer.slice(buffer.length-4);
+	var auth_tag = buffer.slice(buffer.length-5, buffer.length-1);
+
+	// Also get rssi that is the last byte of the packet.
+	var rssi = buffer.readInt8(buffer.length-1);
 
 	// Now we can decrypt!
 	var decrypted = ccm.decrypt(_aes_key, nonce, encrypted, src_buf, auth_tag);
 
 	// Check that we could successfully decrypt
 	if (!decrypted.auth_ok) {
+		console.log('Error decrypting packet.');
 		return;
 	}
 
@@ -147,6 +151,7 @@ function parse_packet (buffer) {
 	// We always have power
 	out.Power = exponent_transform(data, 0, 4) / 1000.0;
 	out.power_watts = out.Power;
+	out.rssi_dbm = rssi;
 
 	// Check if we have more
 	if (data.length >= 5) {
