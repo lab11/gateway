@@ -22,6 +22,12 @@ fi_assert () {
     fi
 }
 
+# Try to connect to WiFi so that it will work on the next reboot.
+# There seems to be some issue with network manager where sometimes it will
+# not connect to wifi until nmcli is used to connect the first time. From then
+# on it seems to connect to the internet.
+screen -S "wlan0" -d -m nmcli con up ifname wlan0
+
 # Format update partition
 mkfs.vfat /dev/mmcblk0p9 -n "Edison" -F 32
 fi_assert $? "Formatting update partition"
