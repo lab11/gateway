@@ -67,7 +67,7 @@ function set_leds () {
 
 function check_internet () {
     dns.lookup('google.com', function (err) {
-        if (err && err.code == "ENOTFOUND") {
+        if (err) {
             _internet = false;
         } else {
             _internet = true;
