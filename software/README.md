@@ -55,6 +55,8 @@ Broadcast the gateway's IP address as a BLE packet.
 Use nearby gateways to decide which devices are nearest to which gateway.
 - [BLE Influx](ble-influx):
 Collect raw BLE advertisements and directly post data to InfluxDB.
+- [SSDP](gateway-ssdp):
+Advertise the gateway with SSDP/UPnP.
 - [App Runner](app-runner):
 Automatically start and restart scripts and other applications that make use
 of the gateway's data.
