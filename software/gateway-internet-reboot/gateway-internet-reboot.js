@@ -20,7 +20,7 @@ var watchdog = new watchout(10*60*1000, function(didCancelWatchdog) {
 function check_internet () {
     dns.lookup('google.com', function (err) {
         if (!err) {
-            watchout.reset();
+            watchdog.reset();
         }
     });
 }
