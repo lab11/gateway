@@ -29,8 +29,6 @@ These process data locally:
 Takes the main MQTT stream and re-publishes it as UDP packets and as a WebSocket.
 - [Gateway Server](https://github.com/lab11/gateway/tree/master/software/gateway-server):
 Display a status page for the gateway.
-- [Gateway Watchdog](https://github.com/lab11/gateway/tree/master/software/gateway-watchdog-email):
-Sends an email when the gateway stops getting new packets.
 
 ### Publishers
 
@@ -65,6 +63,10 @@ Make the gateway publish to a BIND DNS server to register a hostname
 for the gateway.
 - [Gateway Internet LEDs](https://github.com/lab11/gateway/tree/master/software/gateway-internet-leds):
 Set LED color based on status of gateway.
+- [Gateway Internet Reboot](gateway-internet-reboot):
+Reboot the gateway if it looses its Internet connection.
+- [Gateway MQTT Reboot](gateway-mqtt-reboot):
+Reboot the gateway if it isn't getting parsed packets.
 
 ### Triumvi
 
