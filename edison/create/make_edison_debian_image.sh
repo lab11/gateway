@@ -302,11 +302,12 @@ fi
 cp $ROOTDIR/home/debian/gateway/systemd/*.service $ROOTDIR/etc/systemd/system/
 
 # Default ones we probably want on all gateways
-ln -s ../adv-gateway-ip.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-ln -s ../ble-gateway-mqtt.service      $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-ln -s ../gateway-internet-leds.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-ln -s ../gateway-mqtt-reboot.service   $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-ln -s ../gateway-server.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../adv-gateway-ip.service          $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../ble-gateway-mqtt.service        $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-internet-leds.service   $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-internet-reboot.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-mqtt-reboot.service     $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-server.service          $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 
 # Enable other services for a triumvi gateway
 if [[ $TRIUMVI -eq 1 ]]; then

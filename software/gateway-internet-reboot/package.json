@@ -1,0 +1,14 @@
+{
+  "name": "gateway-internet-reboot",
+  "version": "1.0.0",
+  "description": "Reboot gateway if no internet.",
+  "main": "gateway-internet-reboot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "watchout": "0.0.5"
+  }
+}

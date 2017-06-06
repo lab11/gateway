@@ -1,0 +1,13 @@
+[Unit]
+Description=Reboot gateway if it looses internet connection.
+After=NetworkManager.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-internet-reboot/gateway-internet-reboot.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-internet-reboot
+
+[Install]
+WantedBy=multi-user.target
