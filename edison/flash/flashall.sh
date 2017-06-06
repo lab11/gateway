@@ -18,6 +18,7 @@ UBOOT_BINARY=u-boot/u-boot-edison-2017_05.bin
 IMAGE_ROOT=""
 GATEWAY_ID=""
 HW_MODEL=""
+FTPROG=0
 
 while [[ $# -gt 0 ]]
 do
@@ -35,6 +36,9 @@ case $key in
     --model)
     HW_MODEL="$2"
     shift # past argument
+    ;;
+    --ftprog)
+    FTPROG=1
     ;;
     *)
             # unknown option
@@ -159,8 +163,10 @@ function dfu-wait {
 	fi
 }
 
-echo "Setting the FTDI parameters for the gateway"
-./ftx_prog --manufacturer Lab11 --product "swarm-gateway serial" --new-serial-number $ADDR_USB_FTDI > /dev/null
+if [[ $UBOOT -eq 1 ]]; then
+	echo "Setting the FTDI parameters for the gateway"
+	./ftx_prog --manufacturer Lab11 --product "swarm-gateway serial" --new-serial-number $ADDR_USB_FTDI > /dev/null
+fi
 
 
 echo "** Flashing Edison Board $(date) **" >> ${LOG_FILENAME}
