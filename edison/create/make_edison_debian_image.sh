@@ -266,6 +266,8 @@ $CHROOTCMD systemctl enable intel-watchdog-disable.service
 
 # Setup bluetooth
 $CHROOTCMD systemctl enable bluetooth-patchram.service
+$CHROOTCMD systemctl enable bluetooth-auto-power-hci@0.service
+$CHROOTCMD systemctl disable bluetooth.service
 ln -s /lib/systemd/system/bluetooth.target $ROOTDIR/etc/systemd/system/multi-user.target.wants/bluetooth.target
 
 # Make sure rc.local runs on boot.
