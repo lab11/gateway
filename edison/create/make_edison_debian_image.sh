@@ -59,8 +59,8 @@ echo ""
 set -x
 
 # Where the debian file system will be created
-ROOTDIR=`pwd`/sidroot
-ROOTDIR_CLEAN=$ROOTDIR-clean
+ROOTDIR=`pwd`/debroot-$VERSION_STRING
+ROOTDIR_CLEAN=debroot-clean
 
 # This allows us to run commands inside of the new filesystem
 CHROOTCMD="eval LC_ALL=C LANGUAGE=C LANG=C chroot $ROOTDIR"
@@ -149,7 +149,7 @@ rm -rf $ROOTDIR
 # If we do, then don't bother running debootstrap again.
 if [ ! -d $ROOTDIR_CLEAN ]; then
 	# Create the base filesystem using a debian tool.
-	debootstrap --arch i386 sid $ROOTDIR_CLEAN http://http.debian.net/debian/
+	debootstrap --arch i386 stretch $ROOTDIR_CLEAN http://http.debian.net/debian/
 	echo "***** Finished creating base debian filesystem"
 else
 	echo "***** Using existing base debian filesystem"
@@ -314,6 +314,7 @@ if [[ $TRIUMVI -eq 1 ]]; then
 	ln -s ../gateway-triumvi-server.service     $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	ln -s ../gateway-triumvi-sqlite.service     $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	ln -s ../ieee802154-triumvi-gateway.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	ln -s ../ssh-reverse-tunnel.service         $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	rm $ROOTDIR/etc/systemd/system/multi-user.target.wants/adv-gateway-ip.service
 fi
 
