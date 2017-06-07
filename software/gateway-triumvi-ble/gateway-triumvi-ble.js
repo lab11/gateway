@@ -144,6 +144,9 @@ bleno.on('advertisingStart', function(error) {
 	debug('on -> advertisingStart: ' + (error ? 'error ' + error : 'success'));
 
 	if (!error) {
+		// If we get this far, we should be good (let's hope).
+		clearTimeout(startup_timeout);
+
 		bleno.setServices([
 			new bleno.PrimaryService({
 				uuid: SERVICE_UUID,
@@ -170,6 +173,14 @@ bleno.on('advertisingStart', function(error) {
 		]);
 	}
 });
+
+// Set a timer to allow us to exit if things don't get working. BLE can be
+// finicky, and the library support just isn't robust enough.
+// 2 minutes to get things going.
+var startup_timeout = setTimeout(function () {
+	console.log('Exiting because we never got things setup.');
+	process.exit(1);
+}, 2*60*1000);
 
 // Trigger a notification every second (if there is data).
 setInterval(function () {
