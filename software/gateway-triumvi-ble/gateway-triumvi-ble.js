@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+// Set advertisement rate to be once per second. This must be set before
+// including the bleno library (which is included from eddystone-beacon).
+process.env['BLENO_ADVERTISING_INTERVAL'] = 1000;
+
 var os    = require('os');
 
 var mqtt  = require('mqtt');
@@ -67,45 +71,69 @@ mqtt_client.on('connect', function () {
 	});
 });
 
+function advertise_ip_address (ip) {
+	console.log('Advertising http://' + ip);
+
+	// Ok lets generate some advertising data.
+	// We just hack this in for now. No real reason to cobble all of
+	// the code together to format this in a generic way.
+	var buf_ip = Buffer.from(ip);
+	var buf_flags = Buffer.from([2, 0x01, 0x06]);
+	var buf_short_services = Buffer.from([3, 0x03, 0xAA, 0xFE]); // eddystone
+	var buf_eddystone = Buffer.from([ip.length+6, 0x16, 0xAA, 0xFE, 0x10, 0xEB, 0x02]); // eddystone header
+	var adv_data = Buffer.concat([buf_flags, buf_short_services, buf_eddystone, buf_ip]);
+
+	// We also want a name, so generate a scan response.
+	var name = DEVICE_NAME;
+	var buf_name = Buffer.from(name);
+	var buf_device_name = Buffer.from([name.length+1, 0x09]);
+	var scan_data = Buffer.concat([buf_device_name, buf_name]);
+
+	// Tell bleno to use this data.
+	bleno.startAdvertisingWithEIRData(adv_data, scan_data);
+}
+
+function setup_advertisement () {
+	var ifaces = os.networkInterfaces();
+	var ifnames = Object.keys(ifaces);
+	var found = false;
+
+	for (var i=0; i<ifnames.length; i++) {
+		if (found) break;
+
+		var iface = ifaces[ifnames[i]];
+
+		for (var j=0; j<iface.length; j++) {
+			var addr = iface[j];
+
+			if ('IPv4' !== addr.family || addr.internal !== false) {
+				// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+				continue;
+			}
+
+			// We have found the first non-local IPv4 address. Advertise it.
+			found = true;
+			advertise_ip_address(addr.address);
+			break;
+		}
+	}
+
+	// If we didn't find anything, we may very well not have an ip address
+	// yet. Use a blank value and try again in 5 minutes.
+	if (!found) {
+		advertise_ip_address('0.0.0.0');
+		console.log('Trying again to find IP in 1 minute');
+		setTimeout(function () {
+			setup_advertisement();
+		}, 1*60*1000);
+	}
+}
+
 bleno.on('stateChange', function(state) {
 	debug('on -> stateChange: ' + state);
 
 	if (state === 'poweredOn') {
-		var ifaces  = os.networkInterfaces();
-		var found = false;
-		Object.keys(ifaces).forEach(function (ifname) {
-			ifaces[ifname].forEach(function (iface) {
-				if ('IPv4' !== iface.family || iface.internal !== false || found === true) {
-					// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-					return;
-				}
-
-				// We have found the first non-local IPv4 address. Advertise it.
-				console.log('Advertising http://' + iface.address);
-
-				// Ok lets generate some advertising data.
-				// We just hack this in for now. No real reason to cobble all of
-				// the code together to format this in a generic way.
-				var ip = iface.address;
-				var buf_ip = Buffer.from(ip);
-				var buf_flags = Buffer.from([2, 0x01, 0x06]);
-				var buf_short_services = Buffer.from([3, 0x03, 0xAA, 0xFE]); // eddystone
-				var buf_eddystone = Buffer.from([ip.length+6, 0x16, 0xAA, 0xFE, 0x10, 0xEB, 0x02]); // eddystone header
-				var adv_data = Buffer.concat([buf_flags, buf_short_services, buf_eddystone, buf_ip]);
-
-				// We also want a name, so generate a scan response.
-				var name = DEVICE_NAME;
-				var buf_name = Buffer.from(name);
-				var buf_device_name = Buffer.from([name.length+1, 0x09]);
-				var scan_data = Buffer.concat([buf_device_name, buf_name]);
-
-				// Tell bleno to use this data.
-				bleno.startAdvertisingWithEIRData(adv_data, scan_data);
-
-				found = true;
-			});
-		});
-
+		setup_advertisement();
 
 	} else {
 		bleno.stopAdvertising();
