@@ -25,7 +25,8 @@
         <!-- GATEAWAYS -->
         <div data-role="page" id="gateways">
 
-            <nd2-include data-src="panel-left.html"></nd2-include>
+
+            <nd2-include data-src="panel-left.html" class="gateways-left-panel"></nd2-include>
 
             <div data-role="header" data-position="fixed">
                 <a href="#leftpanel" class="ui-btn ui-btn-left"><i class="fa fa-bars"></i></a>
@@ -42,12 +43,14 @@
 
             </div>
 
+
+
         </div>
 
         <!-- SINGLE GATEAWAY -->
         <div data-role="page" id="gateway">
 
-            <nd2-include data-src="panel-left.html"></nd2-include>
+            <nd2-include data-src="panel-left.html" class="gateways-left-panel"></nd2-include>
 
             <div data-role="header" data-position="fixed">
                 <a href="#leftpanel" class="ui-btn ui-btn-left"><i class="fa fa-bars"></i></a>
@@ -83,12 +86,60 @@
         <script>
             document.addEventListener("deviceReady", deviceReady, false);
 
+            // hacks to get left panel to show up because it just needs to work
+            // at this point.
+            $(document).on("pagecreate", "#gateways", function (event) {
+                $('#gateways .gateways-left-panel').include({src: 'panel-left.html'})
+            });
+            $(document).on("pagecreate", "#gateway", function (event) {
+                $('#gateway .gateways-left-panel').include({src: 'panel-left.html'})
+            });
+
             function deviceReady() {
+
+                // Hack this in here to get it to work because i cant stand
+                // this anymore.
+                // nd2-include
+                $.widget("nd2.include", {
+                    options: {
+                        src: null,
+                        post: {}
+                    },
+                    _create: function() {
+                        var el = this.element;
+                        var opts = $.extend(this.options, el.data("options"));
+                        $(document).trigger("createinclude");
+
+                        if (opts.src !== null) {
+                            el.load(opts.src, function() {
+                                el.enhanceWithin();
+
+                                // Apply waves.js
+                                if (typeof Waves !== "undefined") {
+                                    Waves.attach('a', ['waves-button']);
+                                    Waves.attach('button', ['waves-button']);
+                                    Waves.init();
+
+                                    $("body").find(".ui-flipswitch-on").removeClass("waves-effect");
+                                    Waves.attach('.ui-flipswitch', ['waves-button', 'waves-light']);
+
+                                }
+
+                            });
+                        }
+                    },
+                    _update: function() {
+                        console.log("update?");
+                    },
+                    refresh: function() {
+                        return this._update();
+                    }
+                });
+
                 $.getScript('js/jquery.mobile.1.4.5.min.js', function () {
                     $.getScript('js/waves.0.7.2.min.js', function () {
                         $.getScript('js/nativedroid2.js', function () {
                             $.getScript('js/nd2settings.js', function () {
-
                                 app.ready();
                             });
                         });

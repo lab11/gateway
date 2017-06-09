@@ -70,57 +70,57 @@
 
     console.log('DOES THIS run arg')
 
-    // nd2-include
-    $.widget("nd2.include", {
-        options: {
-            src: null,
-            post: {}
-        },
-        _create: function() {
-            console.log('create call in include')
-            var el = this.element;
-            console.log(el)
-            console.log(this.options)
-            console.log(el.data("options"))
-            var opts = $.extend(this.options, el.data("options"));
-            $(document).trigger("createinclude");
+    // // nd2-include
+    // $.widget("nd2.include", {
+    //     options: {
+    //         src: null,
+    //         post: {}
+    //     },
+    //     _create: function() {
+    //         console.log('create call in include')
+    //         var el = this.element;
+    //         console.log(el)
+    //         console.log(this.options)
+    //         console.log(el.data("options"))
+    //         var opts = $.extend(this.options, el.data("options"));
+    //         $(document).trigger("createinclude");
 
-            if (opts.src !== null) {
-                console.log('woah')
-                el.load(opts.src, function() {
-                    el.enhanceWithin();
+    //         if (opts.src !== null) {
+    //             console.log('woah')
+    //             el.load(opts.src, function() {
+    //                 el.enhanceWithin();
 
-                    // Apply waves.js
-                    if (typeof Waves !== "undefined") {
-                        Waves.attach('a', ['waves-button']);
-                        Waves.attach('button', ['waves-button']);
-                        Waves.init();
+    //                 // Apply waves.js
+    //                 if (typeof Waves !== "undefined") {
+    //                     Waves.attach('a', ['waves-button']);
+    //                     Waves.attach('button', ['waves-button']);
+    //                     Waves.init();
 
-                        $("body").find(".ui-flipswitch-on").removeClass("waves-effect");
-                        Waves.attach('.ui-flipswitch', ['waves-button', 'waves-light']);
+    //                     $("body").find(".ui-flipswitch-on").removeClass("waves-effect");
+    //                     Waves.attach('.ui-flipswitch', ['waves-button', 'waves-light']);
 
-                    }
+    //                 }
 
-                });
-            } else{
-                console.log('no src')
-            }
-        },
-        _update: function() {
-            console.log("update?");
-        },
-        refresh: function() {
-            return this._update();
-        }
-    });
+    //             });
+    //         } else{
+    //             console.log('no src')
+    //         }
+    //     },
+    //     _update: function() {
+    //         console.log("update?");
+    //     },
+    //     refresh: function() {
+    //         return this._update();
+    //     }
+    // });
 
-    $(document).bind("pagecreate", function(e) {
-        console.log('CREATE page ' + e.target);
-        console.log(e.target)
-        console.log($("nd2-include", e.target))
-        $(document).trigger("includebeforecreate");
-        return $("nd2-include", e.target).include();
-    });
+    // $(document).bind("pagecreate", function(e) {
+    //     console.log('CREATE page ' + e.target);
+    //     console.log(e.target)
+    //     console.log($("nd2-include", e.target))
+    //     $(document).trigger("includebeforecreate");
+    //     return $("nd2-include", e.target).include();
+    // });
 
 
     // nd2-ad
