@@ -260,6 +260,7 @@ ln -s /lib/firmware $ROOTDIR/etc/firmware
 # Update version number
 sed -i -E "s/^(.*)SwarmGateway.*$/\1SwarmGateway v$VERSION_STRING/g" $ROOTDIR/etc/issue.net
 sed -i -E "s/^VERSION_STRING.*$/VERSION_STRING=v$VERSION/g" $ROOTDIR/home/debian/.bashrc
+echo "$VERSION" > $ROOTDIR/etc/swarm-gateway/version
 
 # Disable watchdog
 $CHROOTCMD systemctl enable intel-watchdog-disable.service
