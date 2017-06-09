@@ -162,6 +162,7 @@ bleno.on('advertisingStart', function(error) {
 							callback(bleno.Characteristic.RESULT_SUCCESS, _current_read.slice(offset));
 						},
 						onSubscribe: function (maxValueSize, updateValueCallback) {
+							debug('subscribe characteristic');
 							_notify_callback = updateValueCallback;
 						},
 						onUnsubscribe: function () {
@@ -172,6 +173,19 @@ bleno.on('advertisingStart', function(error) {
 			})
 		]);
 	}
+});
+
+bleno.on('advertisingStartError', function (err) {
+	debug('adv start err: ' + err);
+	debug(err);
+})
+
+bleno.on('disconnect', function (client_address) {
+	debug('DISCONNECT ' + client_address);
+});
+
+bleno.on('advertisingStop', function () {
+	debug('ADV STOPPED');
 });
 
 // Set a timer to allow us to exit if things don't get working. BLE can be
