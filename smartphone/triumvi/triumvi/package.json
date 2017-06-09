@@ -1,27 +1,27 @@
 {
-    "name": "edu.umich.eecs.lab11.triumvi",
-    "displayName": "triumvi",
-    "version": "1.0.0",
-    "description": "Quick display Triumvi data from a gateway.",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "edu.umich.eecs.lab11.triumvi",
+  "displayName": "triumvi",
+  "version": "1.0.0",
+  "description": "Quick display Triumvi data from a gateway.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Brad Campbell",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "cordova-android": "^6.2.3",
+    "cordova-plugin-ble-central": "^1.1.4",
+    "cordova-plugin-compat": "^1.1.0",
+    "cordova-plugin-whitelist": "^1.3.2"
+  },
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-whitelist": {},
+      "cordova-plugin-ble-central": {}
     },
-    "author": "Brad Campbell",
-    "license": "Apache-2.0",
-    "dependencies": {
-        "cordova-android": "^6.2.3",
-        "cordova-plugin-ble-central": "^1.1.4",
-        "cordova-plugin-compat": "^1.1.0",
-        "cordova-plugin-whitelist": "^1.3.2"
-    },
-    "cordova": {
-        "plugins": {
-            "cordova-plugin-whitelist": {},
-            "cordova-plugin-ble-central": {}
-        },
-        "platforms": [
-            "android"
-        ]
-    }
+    "platforms": [
+      "android"
+    ]
+  }
 }
