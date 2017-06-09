@@ -22,8 +22,6 @@
     </head>
     <body>
 
-
-
         <!-- GATEAWAYS -->
         <div data-role="page" id="gateways">
 
@@ -82,62 +80,21 @@
         <script type="text/javascript" src="js/jquery-ui.1.11.4.min.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript" src="js/jquery.timeago.1.5.4.js"></script>
-        <!-- <script type="text/javascript" src="js/waves.0.7.2.min.js"></script> -->
         <script>
-        // var deviceReadyDeferred = $.Deferred();
-        // var jqmReadyDeferred = $.Deferred();
+            document.addEventListener("deviceReady", deviceReady, false);
 
-        document.addEventListener("deviceReady", deviceReady, false);
+            function deviceReady() {
+                $.getScript('js/jquery.mobile.1.4.5.min.js', function () {
+                    $.getScript('js/waves.0.7.2.min.js', function () {
+                        $.getScript('js/nativedroid2.js', function () {
+                            $.getScript('js/nd2settings.js', function () {
 
-        function deviceReady() {
-          // deviceReadyDeferred.resolve();
-
-            console.log('device ready')
-
-            // Make sure our timestamps update.
-            // jQuery("time.timeago").timeago();
-
-
-            $.getScript('js/jquery.mobile.1.4.5.min.js', function () {
-                $.getScript('js/waves.0.7.2.min.js', function () {
-                    $.getScript('js/nativedroid2.js', function () {
-                        $.getScript('js/nd2settings.js', function () {
-
-                            app.ready();
+                                app.ready();
+                            });
                         });
                     });
                 });
-            });
-        }
-
-        // $(document).one("mobileinit", function () {
-        //   jqmReadyDeferred.resolve();
-        // });
-
-        // // $.when(deviceReadyDeferred, jqmReadyDeferred).then(doWhenBothFrameworksLoaded);
-        // $.when(deviceReadyDeferred, jqmReadyDeferred).then(app.ready);
-
-        // function doWhenBothFrameworksLoaded() {
-        //   // TBD
-        // }
+            }
         </script>
-        <!-- <script type="text/javascript" src="js/jquery.mobile.1.4.5.min.js"></script> -->
-        <!-- <script type="text/javascript" src="js/nativedroid2.js"></script> -->
-        <!-- <script type="text/javascript" src="js/nd2settings.js"></script> -->
-
-
-
-
-
-
-        <!-- <script type="text/javascript" src="cordova.js"></script>
-        <script type="text/javascript" src="js/jquery.2.1.4.min.js"></script>
-        <script type="text/javascript" src="js/jquery-ui.1.11.4.min.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
-        <script type="text/javascript" src="js/jquery.mobile.1.4.5.min.js"></script>
-        <script type="text/javascript" src="js/waves.0.7.2.min.js"></script>
-        <script type="text/javascript" src="js/nativedroid2.js"></script>
-        <script type="text/javascript" src="js/nd2settings.js"></script> -->
-
     </body>
 </html>
