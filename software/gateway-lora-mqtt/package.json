@@ -1,0 +1,16 @@
+{
+  "name": "gateway-lora-mqtt",
+  "version": "1.0.0",
+  "description": "Gateway - LORA - MQTT
+  "main": "gateway-lora-mqtt.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ini": "^1.3.4",
+    "mqtt": "^2.9.1"
+  },
+  "devDependencies": {}
+}
