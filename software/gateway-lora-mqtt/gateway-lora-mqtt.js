@@ -68,18 +68,33 @@ function parse (buf) {
         // Controller
         if (message_type == 0x01) {
             // Energy
-            var energy_module0 = buf.readUInt16BE(9);
-            var energy_module1 = buf.readUInt16BE(11);
-            var energy_module2 = buf.readUInt16BE(13);
-            var energy_controller = buf.readUInt16BE(15);
-            var energy_linux   = buf.readUInt16BE(17);
-            var energy_module5 = buf.readUInt16BE(19);
-            var energy_module6 = buf.readUInt16BE(21);
-            var energy_module7 = buf.readUInt16BE(23);
+            var battery_voltage = buf.readUInt16BE(9);
+            var battery_current = buf.readInt32BE(11);
+            var solar_voltage = buf.readUInt16BE(15);
+            var solar_current = buf.readInt32BE(17);
+            var battery_percent = buf.readUInt8(21);
+            var battery_energy = buf.readUInt16BE(22);
+            var battery_capacity = buf.readUInt16BE(24);
+
+            var energy_module0 = buf.readUInt16BE(26);
+            var energy_module1 = buf.readUInt16BE(28);
+            var energy_module2 = buf.readUInt16BE(30);
+            var energy_controller = buf.readUInt16BE(32);
+            var energy_linux   = buf.readUInt16BE(34);
+            var energy_module5 = buf.readUInt16BE(36);
+            var energy_module6 = buf.readUInt16BE(38);
+            var energy_module7 = buf.readUInt16BE(40);
 
             return {
-                device: "signpost_energy_remaining",
+                device: "signpost_energy",
                 sequence_number: sequence_number,
+                battery_voltage_mV: battery_voltage,
+                battery_current_uA: battery_current,
+                solar_voltage_mV: solar_voltage,
+                solar_current_uA: solar_current,
+                battery_capacity_percent_remaining: battery_percent,
+                battery_capacity_remaining_mAh: battery_energy,
+                battery_capacity_full_mAh: battery_capacity,
                 controller_energy_remaining_mWh: energy_controller,
                 module0_energy_remaining_mWh: energy_module0,
                 module1_energy_remaining_mWh: energy_module1,
@@ -132,50 +147,6 @@ function parse (buf) {
                 longitude_direction: longitude_direction,
                 timestamp: utcDate.toISOString(),
                 satellite_count: satellite_count,
-                _meta: get_meta(addr)
-            }
-        } else if (message_type == 0x03) {
-            var battery_voltage = buf.readUInt16BE(9);
-            var battery_current = buf.readInt32BE(11);
-            var solar_voltage = buf.readUInt16BE(15);
-            var solar_current = buf.readInt32BE(17);
-            var battery_percent = buf.readUInt8(21);
-            var battery_energy = buf.readUInt16BE(22);
-            var battery_capacity = buf.readUInt16BE(24);
-
-            return {
-                device: "signpost_bat_sol_status",
-                sequence_number: sequence_number,
-                battery_voltage_mV: battery_voltage,
-                battery_current_uA: battery_current,
-                solar_voltage_mV: solar_voltage,
-                solar_current_uA: solar_current,
-                battery_percent_remaining: battery_percent,
-                battery_coulombs_remaining_mAh: battery_energy,
-                battery_coulombs_full_mAh: battery_capacity,
-                _meta: get_meta(addr)
-            }
-        } else if (message_type == 0x04) {
-            // Energy
-            var energy_module0 = buf.readUInt16BE(9);
-            var energy_module1 = buf.readUInt16BE(11);
-            var energy_module2 = buf.readUInt16BE(13);
-            var energy_controller = buf.readUInt16BE(15);
-            var energy_linux   = buf.readUInt16BE(17);
-            var energy_module5 = buf.readUInt16BE(19);
-            var energy_module6 = buf.readUInt16BE(21);
-            var energy_module7 = buf.readUInt16BE(23);
-
-            return {
-                device: "signpost_average_power",
-                sequence_number: sequence_number,
-                controller_average_power_mW: energy_controller,
-                module0_average_power_mW: energy_module0,
-                module1_average_power_mW: energy_module1,
-                module2_average_power_mW: energy_module2,
-                module5_average_power_mW: energy_module5,
-                module6_average_power_mW: energy_module6,
-                module7_average_power_mW: energy_module7,
                 _meta: get_meta(addr)
             }
         }
