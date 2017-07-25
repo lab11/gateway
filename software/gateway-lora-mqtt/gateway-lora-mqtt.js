@@ -219,7 +219,11 @@ function parse (buf) {
             var ligh = buf.readInt16BE(13);
             // app returns pressure in uBar in 3 bytes, left aligned
                         // pascal = 1x10^-5 Bar = 10 uBar
-                        var pres = (buf.readInt32BE(15) >> 8) / 10.0;
+            var pres;
+            var pres1 =  buf.readUInt8(15);
+            var pres2 =  buf.readUInt8(16);
+            var pres3 =  buf.readUInt8(17);
+            pres = ((pres1 << 16) + (pres2 << 8) + pres3) /10.0
 
             return {
                 device: 'signpost_ambient',
@@ -380,9 +384,16 @@ mqtt_client_lora.on('connect', function () {
     // Callback for each packet
     mqtt_client_lora.on('message', function (topic, message) {
         var json = JSON.parse(message.toString());
-        buf = Buffer.from(Buffer.from(json.data, 'base64').toString(), 'hex');
+        try {
+            buf = Buffer.from(json.data, 'base64');
             console.log(buf.toString('hex'));
-        var pkt = parse(buf);
+        } catch (e) {
+            console.log(e)
+        }
+
+        if(buf.length > 6) {
+            var pkt = parse(buf);
+        }
         mqtt_client_outgoing.publish('gateway-data', JSON.stringify(pkt));
         mqtt_client_outgoing.publish('signpost', JSON.stringify(pkt));
     });
