@@ -1,7 +1,7 @@
 {
   "name": "gateway-lora-mqtt",
   "version": "1.0.0",
-  "description": "Gateway - LORA - MQTT
+  "description": "Gateway - LORA - MQTT",
   "main": "gateway-lora-mqtt.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
