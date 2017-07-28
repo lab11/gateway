@@ -385,16 +385,18 @@ mqtt_client_lora.on('connect', function () {
     mqtt_client_lora.on('message', function (topic, message) {
         var json = JSON.parse(message.toString());
         try {
-            buf = Buffer.from(json.data, 'base64');
-            console.log(buf.toString('hex'));
+            if(json.data) {
+                buf = Buffer.from(json.data, 'base64');
+                console.log(buf.toString('hex'));
+                if(buf.length > 6) {
+                    var pkt = parse(buf);
+                }
+                mqtt_client_outgoing.publish('gateway-data', JSON.stringify(pkt));
+                mqtt_client_outgoing.publish('signpost', JSON.stringify(pkt));
+            }
         } catch (e) {
             console.log(e)
         }
 
-        if(buf.length > 6) {
-            var pkt = parse(buf);
-        }
-        mqtt_client_outgoing.publish('gateway-data', JSON.stringify(pkt));
-        mqtt_client_outgoing.publish('signpost', JSON.stringify(pkt));
     });
 });
