@@ -8,8 +8,9 @@
 var child_process = require('child_process');
 var fs            = require('fs');
 var ini           = require('ini');
-var mqtt       = require('mqtt');
-var addr       = require('os').networkInterfaces();
+var mqtt          = require('mqtt');
+var addr          = require('os').networkInterfaces();
+var Geohash       = require('latlon-geohash');
 
 try {
     var config_file = fs.readFileSync('/etc/swarm-gateway/lora.conf', 'utf-8');
@@ -29,23 +30,43 @@ function pad (s, len) {
     return s;
 }
 
-function get_meta (src_addr) {
+function get_meta (src_addr, hash) {
     if(addr.eth0) {
         return {
         received_time: new Date().toISOString(),
         device_id: src_addr,
         receiver: 'lora',
-        gateway_id: addr.eth0[0].mac
+        gateway_id: addr.eth0[0].mac,
+        geohash: get_hash(src_addr, hash)
         }
     } else {
         return {
         received_time: new Date().toISOString(),
         device_id: src_addr,
         receiver: 'lora',
-        gateway_id: 'gateway1'
+        gateway_id: 'gateway1',
+        geohash: get_hash(src_addr, hash)
         }
     }
 
+}
+
+function get_hash (addr, hash) {
+    if(typeof get_hash.hashes == 'undefined') {
+        get_hash.hashes = {};
+    }
+
+    if(typeof hash !== 'undefined') {
+        //this must have been a gps packet so let it update the hash table
+        get_hash.hashes[addr] = hash;
+        return hash;
+    } else { 
+        if(typeof get_hash.hashes[addr] == 'undefined') {
+            return Geohash.encode(0,0,7);
+        } else {
+            return get_hash.hashes[addr];
+        }
+    }
 }
 
 function parse (buf) {
@@ -63,6 +84,9 @@ function parse (buf) {
     var message_type = buf[7];
     // And get the sequence number
     var sequence_number = buf[8];
+
+    // and get the geohash of the last known location of this signpost
+    get_hash
 
     if (module == 0x20) {
         // Controller
@@ -138,6 +162,9 @@ function parse (buf) {
             // that's right, month is zero-indexed for some reason
             var utcDate = new Date(Date.UTC(year, month-1, day, hours, minutes, seconds));
 
+            //convert lat long to a geohash
+            hash = Geohash.encode(latitude, longitude, 7);
+
             return {
                 device: 'signpost_gps',
                 sequence_number: sequence_number,
@@ -147,7 +174,7 @@ function parse (buf) {
                 longitude_direction: longitude_direction,
                 timestamp: utcDate.toISOString(),
                 satellite_count: satellite_count,
-                _meta: get_meta(addr)
+                _meta: get_meta(addr, hash)
             }
         }
     } else if (module == 0x31) {
