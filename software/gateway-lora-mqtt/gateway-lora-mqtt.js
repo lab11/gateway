@@ -146,6 +146,8 @@ function parse (buf) {
             } else {
               year += 2000;
             }
+            
+            hash = Geohash.encode(latitude, longitude, 7);
 
             var latitude_direction = 'N';
             if (latitude < 0) {
@@ -163,7 +165,6 @@ function parse (buf) {
             var utcDate = new Date(Date.UTC(year, month-1, day, hours, minutes, seconds));
 
             //convert lat long to a geohash
-            hash = Geohash.encode(latitude, longitude, 7);
 
             return {
                 device: 'signpost_gps',
