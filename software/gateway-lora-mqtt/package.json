@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "ini": "^1.3.4",
-    "mqtt": "^2.9.1"
+    "mqtt": "^2.9.1",
+    "latlon-geohash": "^1.1.0"
   },
   "devDependencies": {}
 }
