@@ -62,7 +62,7 @@ function get_hash (addr, hash) {
         return hash;
     } else { 
         if(typeof get_hash.hashes[addr] == 'undefined') {
-            return Geohash.encode(0,0,7);
+            return Geohash.encode(0,0,10);
         } else {
             return get_hash.hashes[addr];
         }
@@ -147,7 +147,7 @@ function parse (buf) {
               year += 2000;
             }
             
-            hash = Geohash.encode(latitude, longitude, 7);
+            hash = Geohash.encode(latitude, longitude, 10);
 
             var latitude_direction = 'N';
             if (latitude < 0) {
