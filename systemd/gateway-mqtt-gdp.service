@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish Gateway Advertisements to GDP
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-mqtt-gdp/gateway-mqtt-gdp.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-mqtt-gdp
+
+[Install]
+WantedBy=multi-user.target
