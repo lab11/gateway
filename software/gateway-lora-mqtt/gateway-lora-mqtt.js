@@ -109,25 +109,67 @@ function parse (buf) {
             var energy_module6 = buf.readUInt16BE(38);
             var energy_module7 = buf.readUInt16BE(40);
 
-            return {
-                device: "signpost_energy",
-                sequence_number: sequence_number,
-                battery_voltage_mV: battery_voltage,
-                battery_current_uA: battery_current,
-                solar_voltage_mV: solar_voltage,
-                solar_current_uA: solar_current,
-                battery_capacity_percent_remaining: battery_percent,
-                battery_capacity_remaining_mAh: battery_energy,
-                battery_capacity_full_mAh: battery_capacity,
-                controller_energy_remaining_mWh: energy_controller,
-                module0_energy_remaining_mWh: energy_module0,
-                module1_energy_remaining_mWh: energy_module1,
-                module2_energy_remaining_mWh: energy_module2,
-                module5_energy_remaining_mWh: energy_module5,
-                module6_energy_remaining_mWh: energy_module6,
-                module7_energy_remaining_mWh: energy_module7,
-                _meta: get_meta(addr)
+            if(buf.length > 45) {
+                var average_module0 = buf.readUInt16BE(42);
+                var average_module1 = buf.readUInt16BE(44);
+                var average_module2 = buf.readUInt16BE(46);
+                var average_controller = buf.readUInt16BE(48);
+                var average_linux   = 0;
+                var average_module5 = buf.readUInt16BE(50);
+                var average_module6 = buf.readUInt16BE(52);
+                var average_module7 = buf.readUInt16BE(54);
             }
+
+            if(typeof average_module0 !== 'undefined') {
+                return {
+                    device: "signpost_energy",
+                    sequence_number: sequence_number,
+                    battery_voltage_mV: battery_voltage,
+                    battery_current_uA: battery_current,
+                    solar_voltage_mV: solar_voltage,
+                    solar_current_uA: solar_current,
+                    battery_capacity_percent_remaining: battery_percent,
+                    battery_capacity_remaining_mAh: battery_energy,
+                    battery_capacity_full_mAh: battery_capacity,
+                    controller_energy_remaining_mWh: energy_controller,
+                    module0_energy_remaining_mWh: energy_module0,
+                    module1_energy_remaining_mWh: energy_module1,
+                    module2_energy_remaining_mWh: energy_module2,
+                    module5_energy_remaining_mWh: energy_module5,
+                    module6_energy_remaining_mWh: energy_module6,
+                    module7_energy_remaining_mWh: energy_module7,
+                    controller_energy_average_mWh: average_controller,
+                    module0_energy_average_mWh: average_module0,
+                    module1_energy_average_mWh: average_module1,
+                    module2_energy_average_mWh: average_module2,
+                    module5_energy_average_mWh: average_module5,
+                    module6_energy_average_mWh: average_module6,
+                    module7_energy_average_mWh: average_module7,
+                    _meta: get_meta(addr)
+                }
+            } else {
+                return {
+                    device: "signpost_energy",
+                    sequence_number: sequence_number,
+                    battery_voltage_mV: battery_voltage,
+                    battery_current_uA: battery_current,
+                    solar_voltage_mV: solar_voltage,
+                    solar_current_uA: solar_current,
+                    battery_capacity_percent_remaining: battery_percent,
+                    battery_capacity_remaining_mAh: battery_energy,
+                    battery_capacity_full_mAh: battery_capacity,
+                    controller_energy_remaining_mWh: energy_controller,
+                    module0_energy_remaining_mWh: energy_module0,
+                    module1_energy_remaining_mWh: energy_module1,
+                    module2_energy_remaining_mWh: energy_module2,
+                    module5_energy_remaining_mWh: energy_module5,
+                    module6_energy_remaining_mWh: energy_module6,
+                    module7_energy_remaining_mWh: energy_module7,
+                    _meta: get_meta(addr)
+                }
+            }
+
+            
         } else if (message_type == 0x02) {
             // GPS
             var day = buf.readUInt8(9);
