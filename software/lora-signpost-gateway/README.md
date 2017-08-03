@@ -1,5 +1,5 @@
-Gateway - Signpost - MQTT
+Lora - Signpost - MQTT
 =======================
 
-This takes internal buffers on the signpost topic and publishes
-them back as formatted json
+This takes data from CMUs lora data stream and publishes it on mqtt at 
+the appropriate topic

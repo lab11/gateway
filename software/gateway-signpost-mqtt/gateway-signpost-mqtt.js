@@ -9,115 +9,42 @@ var child_process = require('child_process');
 var fs            = require('fs');
 var ini           = require('ini');
 var mqtt          = require('mqtt');
-var addr          = require('os').networkInterfaces();
-var Geohash       = require('latlon-geohash');
 
-try {
-    var config_file = fs.readFileSync('/etc/swarm-gateway/lora.conf', 'utf-8');
-    var config = ini.parse(config_file);
-    if (config.host == undefined || config.host == '') {
-        throw new Exception('no settings');
-    }
-} catch (e) {console.log(e)
-    console.log('Could not find /etc/swarm-gateway/lora.conf or lora not configured.');
-    process.exit(1);
-}
 
-function pad (s, len) {
-    for (var i=s.length; i<len; i++) {
-        s = '0' + s;
-    }
-    return s;
-}
+function parse (topic, buf) {
+    
+    message_type = buf.readUInt8(0);
 
-function get_meta (src_addr, hash) {
-    if(addr.eth0) {
-        return {
-        received_time: new Date().toISOString(),
-        device_id: src_addr,
-        receiver: 'lora',
-        gateway_id: addr.eth0[0].mac,
-        geohash: get_hash(src_addr, hash)
-        }
-    } else {
-        return {
-        received_time: new Date().toISOString(),
-        device_id: src_addr,
-        receiver: 'lora',
-        gateway_id: 'gateway1',
-        geohash: get_hash(src_addr, hash)
-        }
-    }
-
-}
-
-function get_hash (addr, hash) {
-    if(typeof get_hash.hashes == 'undefined') {
-        get_hash.hashes = {};
-    }
-
-    if(typeof hash !== 'undefined') {
-        //this must have been a gps packet so let it update the hash table
-        get_hash.hashes[addr] = hash;
-        return hash;
-    } else { 
-        if(typeof get_hash.hashes[addr] == 'undefined') {
-            return Geohash.encode(0,0,10);
-        } else {
-            return get_hash.hashes[addr];
-        }
-    }
-}
-
-function parse (buf) {
-    // Strip out address
-    var addr = '';
-    for (var i=0; i<6; i++) {
-        addr += pad(buf[i].toString(16), 2);
-    }
-
-    // Get the id (last address octet) of the sending signpost
-    var signpost_id = buf[5];
-    // Get the sender module
-    var module = buf[6];
-    // And the message type
-    var message_type = buf[7];
-    // And get the sequence number
-    var sequence_number = buf[8];
-
-    // and get the geohash of the last known location of this signpost
-    get_hash
-
-    if (module == 0x20) {
+    if (topic == 'signpost/lab11/energy') {
         // Controller
         if (message_type == 0x01) {
             // Energy
-            var battery_voltage = buf.readUInt16BE(9);
-            var battery_current = buf.readInt32BE(11);
-            var solar_voltage = buf.readUInt16BE(15);
-            var solar_current = buf.readInt32BE(17);
-            var battery_percent = buf.readUInt8(21);
-            var battery_energy = buf.readUInt16BE(22);
-            var battery_capacity = buf.readUInt16BE(24);
+            var battery_voltage = buf.readUInt16BE(1);
+            var battery_current = buf.readInt32BE(3);
+            var solar_voltage = buf.readUInt16BE(7);
+            var solar_current = buf.readInt32BE(9);
+            var battery_percent = buf.readUInt8(13);
+            var battery_energy = buf.readUInt16BE(14);
+            var battery_capacity = buf.readUInt16BE(16);
 
-            var energy_module0 = buf.readUInt16BE(26);
-            var energy_module1 = buf.readUInt16BE(28);
-            var energy_module2 = buf.readUInt16BE(30);
-            var energy_controller = buf.readUInt16BE(32);
-            var energy_linux   = buf.readUInt16BE(34);
-            var energy_module5 = buf.readUInt16BE(36);
-            var energy_module6 = buf.readUInt16BE(38);
-            var energy_module7 = buf.readUInt16BE(40);
+            var energy_module0 = buf.readUInt16BE(18);
+            var energy_module1 = buf.readUInt16BE(20);
+            var energy_module2 = buf.readUInt16BE(22);
+            var energy_controller = buf.readUInt16BE(24);
+            var energy_linux   = buf.readUInt16BE(26);
+            var energy_module5 = buf.readUInt16BE(28);
+            var energy_module6 = buf.readUInt16BE(30);
+            var energy_module7 = buf.readUInt16BE(32);
 
             if(buf.length > 45) {
-                var average_module0 = buf.readUInt16BE(42);
-                var average_module1 = buf.readUInt16BE(44);
-                var average_module2 = buf.readUInt16BE(46);
-                var average_controller = buf.readUInt16BE(48);
+                var average_module0 = buf.readUInt16BE(34);
+                var average_module1 = buf.readUInt16BE(36);
+                var average_module2 = buf.readUInt16BE(38);
+                var average_controller = buf.readUInt16BE(40);
                 var average_linux   = 0;
-                var average_module5 = buf.readUInt16BE(50);
-                var average_module6 = buf.readUInt16BE(52);
-                var average_module7 = buf.readUInt16BE(54);
+                var average_module5 = buf.readUInt16BE(42);
+                var average_module6 = buf.readUInt16BE(44);
+                var average_module7 = buf.readUInt16BE(46);
             }
 
             if(typeof average_module0 !== 'undefined') {
@@ -145,7 +72,6 @@ function parse (buf) {
                     module5_energy_average_mWh: average_module5,
                     module6_energy_average_mWh: average_module6,
                     module7_energy_average_mWh: average_module7,
-                    _meta: get_meta(addr)
                 }
             } else {
                 return {
@@ -165,23 +91,22 @@ function parse (buf) {
                     module5_energy_remaining_mWh: energy_module5,
                     module6_energy_remaining_mWh: energy_module6,
                     module7_energy_remaining_mWh: energy_module7,
-                    _meta: get_meta(addr)
                 }
             }
 
             
         } else if (message_type == 0x02) {
             // GPS
-            var day = buf.readUInt8(9);
-            var month = buf.readUInt8(10);
-            var year = buf.readUInt8(11);
-            var hours = buf.readUInt8(12);
-            var minutes = buf.readUInt8(13);
-            var seconds = buf.readUInt8(14);
-            var latitude = buf.readInt32BE(15)/(10000*100.0);
-            var longitude = buf.readInt32BE(19)/(10000*100.0);
-            var fix = ['', 'No Fix', '2D', '3D'][buf.readUInt8(23)];
-            var satellite_count = buf.readUInt8(24);
+            var day = buf.readUInt8(1);
+            var month = buf.readUInt8(2);
+            var year = buf.readUInt8(3);
+            var hours = buf.readUInt8(4);
+            var minutes = buf.readUInt8(5);
+            var seconds = buf.readUInt8(6);
+            var latitude = buf.readInt32BE(7)/(10000*100.0);
+            var longitude = buf.readInt32BE(11)/(10000*100.0);
+            var fix = ['', 'No Fix', '2D', '3D'][buf.readUInt8(15)];
+            var satellite_count = buf.readUInt8(16);
 
             if (year >= 80) {
               year += 1900;
@@ -217,27 +142,26 @@ function parse (buf) {
                 longitude_direction: longitude_direction,
                 timestamp: utcDate.toISOString(),
                 satellite_count: satellite_count,
-                _meta: get_meta(addr, hash)
             }
         }
-    } else if (module == 0x31) {
+    } else if (topic == 'signpost/lab11/2.4ghz_spectrum') {
         if (message_type == 0x01) {
-            var chan11 = buf.readInt8(9);
-            var chan12 = buf.readInt8(10);
-            var chan13 = buf.readInt8(11);
-            var chan14 = buf.readInt8(12);
-            var chan15 = buf.readInt8(13);
-            var chan16 = buf.readInt8(14);
-            var chan17 = buf.readInt8(15);
-            var chan18 = buf.readInt8(16);
-            var chan19 = buf.readInt8(17);
-            var chan20 = buf.readInt8(18);
-            var chan21 = buf.readInt8(19);
-            var chan22 = buf.readInt8(20);
-            var chan23 = buf.readInt8(21);
-            var chan24 = buf.readInt8(22);
-            var chan25 = buf.readInt8(23);
-            var chan26 = buf.readInt8(24);
+            var chan11 = buf.readInt8(1);
+            var chan12 = buf.readInt8(2);
+            var chan13 = buf.readInt8(3);
+            var chan14 = buf.readInt8(4);
+            var chan15 = buf.readInt8(5);
+            var chan16 = buf.readInt8(6);
+            var chan17 = buf.readInt8(7);
+            var chan18 = buf.readInt8(8);
+            var chan19 = buf.readInt8(9);
+            var chan20 = buf.readInt8(10);
+            var chan21 = buf.readInt8(11);
+            var chan22 = buf.readInt8(12);
+            var chan23 = buf.readInt8(13);
+            var chan24 = buf.readInt8(14);
+            var chan25 = buf.readInt8(15);
+            var chan26 = buf.readInt8(16);
 
             console.log(buf);
             if (chan11 >= 0 ||
@@ -279,20 +203,19 @@ function parse (buf) {
                 channel_24: chan24,
                 channel_25: chan25,
                 channel_26: chan26,
-                _meta: get_meta(addr)
             }
         }
-    } else if (module == 0x32) {
+    } else if (topic == 'signpost/lab11/audio_spectrum') {
         if (message_type == 0x01) {
-                        var temp = buf.readInt16BE(9) / 100.0;
-            var humi = buf.readInt16BE(11) / 100.0;
-            var ligh = buf.readInt16BE(13);
+                        var temp = buf.readInt16BE(1) / 100.0;
+            var humi = buf.readInt16BE(3) / 100.0;
+            var ligh = buf.readInt16BE(5);
             // app returns pressure in uBar in 3 bytes, left aligned
                         // pascal = 1x10^-5 Bar = 10 uBar
             var pres;
-            var pres1 =  buf.readUInt8(15);
-            var pres2 =  buf.readUInt8(16);
-            var pres3 =  buf.readUInt8(17);
+            var pres1 =  buf.readUInt8(7);
+            var pres2 =  buf.readUInt8(8);
+            var pres3 =  buf.readUInt8(9);
             pres = ((pres1 << 16) + (pres2 << 8) + pres3) /10.0
 
             return {
@@ -302,10 +225,9 @@ function parse (buf) {
                 humidity: humi,
                 light_lux: ligh,
                 pressure_pascals: pres,
-                _meta: get_meta(addr)
             }
         }
-    } else if (module == 0x33) {
+    } else if (topic == 'signpost/lab11/ambient') {
         if (message_type == 0x01) {
             //these are in dB SPL! I simplified the math to some magic numbers
             //here's the rundown
@@ -318,13 +240,13 @@ function parse (buf) {
             //(20*log(output/43.75))+35.5
             //for right now this is happening here, but I'm trying to move it
             //to the app itself
-            var f_63_hz = Number(((Math.log10(buf.readUInt16BE(9)/43.75)*20)+35.5).toFixed(0));
-            var f_160_hz = Number(((Math.log10(buf.readUInt16BE(11)/43.75)*20)+35.5).toFixed(0));
-            var f_400_hz = Number(((Math.log10(buf.readUInt16BE(13)/43.75)*20)+35.5).toFixed(0));
-            var f_1000_hz = Number(((Math.log10(buf.readUInt16BE(15)/43.75)*20)+35.5).toFixed(0));
-            var f_2500_hz = Number(((Math.log10(buf.readUInt16BE(17)/43.75)*20)+35.5).toFixed(0));
-            var f_6250_hz = Number(((Math.log10(buf.readUInt16BE(19)/43.75)*20)+35.5).toFixed(0));
-            var f_16000_hz = Number(((Math.log10(buf.readUInt16BE(21)/43.75)*20)+35.5).toFixed(0));
+            var f_63_hz = Number(((Math.log10(buf.readUInt16BE(1)/43.75)*20)+35.5).toFixed(0));
+            var f_160_hz = Number(((Math.log10(buf.readUInt16BE(3)/43.75)*20)+35.5).toFixed(0));
+            var f_400_hz = Number(((Math.log10(buf.readUInt16BE(5)/43.75)*20)+35.5).toFixed(0));
+            var f_1000_hz = Number(((Math.log10(buf.readUInt16BE(7)/43.75)*20)+35.5).toFixed(0));
+            var f_2500_hz = Number(((Math.log10(buf.readUInt16BE(9)/43.75)*20)+35.5).toFixed(0));
+            var f_6250_hz = Number(((Math.log10(buf.readUInt16BE(11)/43.75)*20)+35.5).toFixed(0));
+            var f_16000_hz = Number(((Math.log10(buf.readUInt16BE(13)/43.75)*20)+35.5).toFixed(0));
 
             return {
                 device: 'signpost_audio_frequency',
@@ -336,14 +258,13 @@ function parse (buf) {
                 '2500Hz': f_2500_hz,
                 '6250Hz': f_6250_hz,
                 '16000Hz': f_16000_hz,
-                _meta: get_meta(addr)
             }
         }
-    } else if (module == 0x34) {
+    } else if (topic == 'signpost/lab11/microwave_radar') {
         if (message_type == 0x01) {
-            var motion = buf.readInt8(9) > 0;
-            var speed = buf.readUInt32BE(10) / 1000.0;
-            var motion_confidence = buf.readUInt8(14);
+            var motion = buf.readInt8(1) > 0;
+            var speed = buf.readUInt32BE(2) / 1000.0;
+            var motion_confidence = buf.readUInt8(6);
 
             return {
                 device: 'signpost_microwave_radar',
@@ -351,16 +272,15 @@ function parse (buf) {
                 motion: motion,
                 'velocity_m/s': speed,
                 'motion_confidence': motion_confidence,
-                _meta: get_meta(addr)
             }
         }
-    } else if (module == 0x35) {
+    } else if (topic == 'signpost/lab11/aqm') {
         if (message_type == 0x01) {
-            var co2_ppm = buf.readUInt16BE(9);
-            var VOC_PID_ppb = buf.readUInt32BE(11);
-            var VOC_IAQ_ppb = buf.readUInt32BE(15);
-            var barometric_millibar = buf.readUInt16BE(19);
-            var humidity_percent = buf.readUInt16BE(21);
+            var co2_ppm = buf.readUInt16BE(1);
+            var VOC_PID_ppb = buf.readUInt32BE(3);
+            var VOC_IAQ_ppb = buf.readUInt32BE(7);
+            var barometric_millibar = buf.readUInt16BE(11);
+            var humidity_percent = buf.readUInt16BE(13);
             return {
                 device: 'signpost_ucsd_air_quality',
                 sequence_number: sequence_number,
@@ -369,10 +289,9 @@ function parse (buf) {
                 VOC_IAQ_ppb: VOC_IAQ_ppb,
                 barometric_millibar: barometric_millibar,
                 humidity_percent: humidity_percent,
-                _meta: get_meta(addr)
             }
         }
-    } else if (module == 0x22) {
+    } else if (topic == 'signpost/lab11/radio') {
         if (message_type == 0x01) {
             var controller = 0;
             var audio = 0;
@@ -382,7 +301,7 @@ function parse (buf) {
             var radio = 0;
             var ucsd = 0;
 
-            var num_mods = buf.readUInt8(9);
+            var num_mods = buf.readUInt8(1);
             j = 0;
             for(; j < num_mods; j++) {
                 switch(buf.readUInt8(10+j*2)) {
@@ -431,15 +350,6 @@ function parse (buf) {
                 "ucsd_air_quality_radio_energy_used_mWh":Number(ucsd*(0.000096+0.01)).toFixed(3),
                 "radio_status_radio_energy_used_mWh":Number(radio*(0.000096+0.01)).toFixed(3),
                 "radio_queue_length": queue_size,
-                _meta: get_meta(addr)
-            }
-        }
-        if (message_type == 0x02) {
-
-            return {
-                device: 'signpost_radio_test_packet',
-                sequence_number: sequence_number,
-                _meta: get_meta(addr)
             }
         }
     }
@@ -448,7 +358,7 @@ function parse (buf) {
 var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client_lora.on('connect', function () {
     // Subscribe to all packets
-    mqtt_client.subscribe('signpost/lab11');
+    mqtt_client.subscribe('signpost/lab11/#');
 
     // Callback for each packet
     mqtt_client.on('message', function (topic, message) {
@@ -458,10 +368,17 @@ mqtt_client_lora.on('connect', function () {
                 buf = Buffer.from(json.data, 'base64');
                 console.log(buf.toString('hex'));
                 if(buf.length > 6) {
-                    var pkt = parse(buf);
+                    var pkt = parse(topic,buf);
                 }
+                
+                pkt[_meta] = {};
+                pkt[_meta].device_id = json.device_id;
+                pkt[_meta].receive_time = json.receive_time;
+                pkt[_meta].receiver = json.receiver;
+                pkt[_meta].geohash = json.geohash;
+
                 mqtt_client_outgoing.publish('gateway-data', JSON.stringify(pkt));
-                mqtt_client_outgoing.publish('signpost', JSON.stringify(pkt));
+                mqtt_client_outgoing.publish('signpost/lab11/processed', JSON.stringify(pkt));
             }
         } catch (e) {
             console.log(e)
