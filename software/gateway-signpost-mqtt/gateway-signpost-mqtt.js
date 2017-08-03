@@ -445,14 +445,13 @@ function parse (buf) {
     }
 }
 
-var mqtt_client_lora = mqtt.connect(config.protocol + '://' + config.host + ':' + config.port, {username: config.username, password: config.password});
-var mqtt_client_outgoing = mqtt.connect('mqtt://localhost');
+var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client_lora.on('connect', function () {
     // Subscribe to all packets
-    mqtt_client_lora.subscribe('application/5/node/#');
+    mqtt_client.subscribe('signpost/lab11');
 
     // Callback for each packet
-    mqtt_client_lora.on('message', function (topic, message) {
+    mqtt_client.on('message', function (topic, message) {
         var json = JSON.parse(message.toString());
         try {
             if(json.data) {

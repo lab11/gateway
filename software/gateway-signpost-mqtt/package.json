@@ -1,8 +1,8 @@
 {
-  "name": "gateway-lora-mqtt",
+  "name": "gateway-signpost-mqtt",
   "version": "1.0.0",
-  "description": "Gateway - LORA - MQTT",
-  "main": "gateway-lora-mqtt.js",
+  "description": "Gateway - Signpost - MQTT",
+  "main": "gateway-signpost-mqtt.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,7 +11,6 @@
   "dependencies": {
     "ini": "^1.3.4",
     "mqtt": "^2.9.1",
-    "latlon-geohash": "^1.1.0"
   },
   "devDependencies": {}
 }
