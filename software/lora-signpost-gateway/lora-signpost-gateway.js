@@ -130,7 +130,7 @@ mqtt_client_lora.on('connect', function () {
 
                 //pkt returns an array of things to publish
                 for(var key in pkt) {
-                    mqtt_client_outgoing.publish(pkt[key].topic, JSON.stringify(pkt[key].topublish));
+                    mqtt_client_outgoing.publish('signpost/' + pkt[key].topic, JSON.stringify(pkt[key].topublish));
                 }
             }
         } catch (e) {
