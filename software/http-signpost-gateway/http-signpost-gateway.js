@@ -109,7 +109,7 @@ _app.use(expressBodyParser.raw({limit: '10kb'}));
 
 _app.listen(80, function() {
     console.log('Listening for HTTP Requests');
-}
+});
 
 var mqtt_client_outgoing = mqtt.connect('mqtt://localhost');
 _app.post('/signpost', function(req, res) {
