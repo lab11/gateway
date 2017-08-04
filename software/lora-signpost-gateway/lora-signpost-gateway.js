@@ -71,6 +71,7 @@ function parse (buf) {
         var data = buf.slice(index,index+dlen);
         index += dlen;
         pcount += 1;
+        ret[pcount.toString()] = {}; 
         ret[pcount.toString()].topic = topic; 
         ret[pcount.toString()].topublish = {};
         ret[pcount.toString()].topublish.data = data; 
@@ -78,7 +79,7 @@ function parse (buf) {
         ret[pcount.toString()].topublish.received_time = new Date().toISOString();
         ret[pcount.toString()].topublish.device_id = addr;
         ret[pcount.toString()].topublish.sequence_number = sequence_number;
-        if(topic == 'signpost/lab11/gps') {
+        if(topic == 'lab11/gps') {
             // GPS
             var day = ret[pcount.toString()].topublish.data.readUInt8(2);
             var month = ret[pcount.toString()].topublish.data.readUInt8(3);
