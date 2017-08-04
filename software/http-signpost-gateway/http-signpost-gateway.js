@@ -55,10 +55,12 @@ function parse (buf) {
     var ret = {};
     while(done == false) {
         var tlen = buf.readUInt8(index);
+        console.log("Topic length is: " + tlen);
         index += 1;
         var topic = buf.toString('utf-8',index, index+tlen);
         index += tlen;
         var dlen = buf.readUInt16BE(index);
+        console.log("Data length is: " + dlen);
         index += 2;
         var data = buf.slice(index,index+dlen);
         index += dlen;
@@ -67,7 +69,7 @@ function parse (buf) {
         ret[pcount.toString()].topic = topic; 
         ret[pcount.toString()].topublish = {};
         ret[pcount.toString()].topublish.data = data; 
-        ret[pcount.toString()].topublish.receiver  = 'lora'; 
+        ret[pcount.toString()].topublish.receiver  = 'http'; 
         ret[pcount.toString()].topublish.received_time = new Date().toISOString();
         ret[pcount.toString()].topublish.device_id = addr;
         ret[pcount.toString()].topublish.sequence_number = sequence_number;
@@ -97,6 +99,7 @@ function parse (buf) {
         }
 
         if(buf.length <= index) {
+            console.log("Done parsing " + pcount + " packets");
             done = true;
         }
     }
