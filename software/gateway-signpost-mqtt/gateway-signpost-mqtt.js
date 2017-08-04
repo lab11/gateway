@@ -356,7 +356,7 @@ function parse (topic, buf) {
 }
 
 var mqtt_client = mqtt.connect('mqtt://localhost');
-mqtt_client_lora.on('connect', function () {
+mqtt_client.on('connect', function () {
     // Subscribe to all packets
     mqtt_client.subscribe('signpost/lab11/#');
 
