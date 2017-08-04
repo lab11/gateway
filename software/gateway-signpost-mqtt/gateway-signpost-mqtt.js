@@ -365,8 +365,8 @@ mqtt_client.on('connect', function () {
                     pkt['_meta'].geohash = json.geohash;
                     pkt['_meta'].sequence_number = json.sequence_number;
                                                                                                    
-                    mqtt_client_outgoing.publish('gateway-data', JSON.stringify(pkt));
-                    mqtt_client_outgoing.publish('signpost/processed', JSON.stringify(pkt));
+                    mqtt_client.publish('gateway-data', JSON.stringify(pkt));
+                    mqtt_client.publish('signpost/processed', JSON.stringify(pkt));
                 }
             }
         } catch (e) {
