@@ -1,0 +1,13 @@
+[Unit]
+Description=Public Posts from signpost to local MQTT stream
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/http-signpost-gateway/http-signpost-gateway.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=http-signpost-gateway
+
+[Install]
+WantedBy=multi-user.target
