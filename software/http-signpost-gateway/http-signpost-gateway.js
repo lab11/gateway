@@ -63,6 +63,7 @@ function parse (buf) {
         var data = buf.slice(index,index+dlen);
         index += dlen;
         pcount += 1;
+        ret[pcount.toString()] = {};
         ret[pcount.toString()].topic = topic; 
         ret[pcount.toString()].topublish = {};
         ret[pcount.toString()].topublish.data = data; 
