@@ -371,11 +371,11 @@ mqtt_client.on('connect', function () {
                     var pkt = parse(topic,buf);
                 }
                 
-                pkt[_meta] = {};
-                pkt[_meta].device_id = json.device_id;
-                pkt[_meta].receive_time = json.receive_time;
-                pkt[_meta].receiver = json.receiver;
-                pkt[_meta].geohash = json.geohash;
+                pkt['_meta'] = {};
+                pkt['_meta'].device_id = json.device_id;
+                pkt['_meta'].receive_time = json.receive_time;
+                pkt['_meta'].receiver = json.receiver;
+                pkt['_meta'].geohash = json.geohash;
 
                 mqtt_client_outgoing.publish('gateway-data', JSON.stringify(pkt));
                 mqtt_client_outgoing.publish('signpost/lab11/processed', JSON.stringify(pkt));
