@@ -54,12 +54,27 @@ function parse (buf) {
     var pcount = 0;
     var ret = {};
     while(done == false) {
+        var total_len = buf.readUInt16BE(index);
+        index += 2;
+        var start_index = index;
         var tlen = buf.readUInt8(index);
+        if(tlen + 3 > total_len) {
+            console.log("Length parsing error - continueing");
+            index = start_index + total_len;
+            continue;
+        }
+
         console.log("Topic length is: " + tlen);
         index += 1;
         var topic = buf.toString('utf-8',index, index+tlen);
         index += tlen;
         var dlen = buf.readUInt16BE(index);
+        if(tlen + dlen + 3 > total_len) {
+            console.log("Length parsing error - continueing");
+            index = start_index + total_len;
+            continue;
+        }
+
         console.log("Data length is: " + dlen);
         index += 2;
         var data = buf.slice(index,index+dlen);
