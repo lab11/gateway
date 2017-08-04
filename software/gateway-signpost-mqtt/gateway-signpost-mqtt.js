@@ -197,7 +197,7 @@ function parse (topic, buf) {
                 channel_26: chan26,
             }
         }
-    } else if (topic == 'signpost/lab11/audio_spectrum') {
+    } else if (topic == 'signpost/lab11/audio') {
         if (message_type == 0x01) {
                         var temp = buf.readInt16BE(1) / 100.0;
             var humi = buf.readInt16BE(3) / 100.0;
@@ -250,7 +250,7 @@ function parse (topic, buf) {
                 '16000Hz': f_16000_hz,
             }
         }
-    } else if (topic == 'signpost/lab11/microwave_radar') {
+    } else if (topic == 'signpost/lab11/radar') {
         if (message_type == 0x01) {
             var motion = buf.readInt8(1) > 0;
             var speed = buf.readUInt32BE(2) / 1000.0;
