@@ -64,7 +64,7 @@ function parse (buf) {
             continue;
         }
 
-        console.log("Topic length is: " + tlen);
+        //console.log("Topic length is: " + tlen);
         index += 1;
         var topic = buf.toString('utf-8',index, index+tlen);
         index += tlen;
@@ -75,7 +75,7 @@ function parse (buf) {
             continue;
         }
 
-        console.log("Data length is: " + dlen);
+        //console.log("Data length is: " + dlen);
         index += 2;
         var data = buf.slice(index,index+dlen);
         index += dlen;
@@ -114,7 +114,7 @@ function parse (buf) {
         }
 
         if(buf.length <= index) {
-            console.log("Done parsing " + pcount + " packets");
+            //console.log("Done parsing " + pcount + " packets");
             done = true;
         }
     }
@@ -124,7 +124,7 @@ function parse (buf) {
 
 
 var _app = express();
-_app.use(expressBodyParser.raw({limit: '10kb'}));
+_app.use(expressBodyParser.raw({limit: '50kb'}));
 
 _app.listen(80, function() {
     console.log('Listening for HTTP Requests');
@@ -141,7 +141,7 @@ _app.post('/signpost', function(req, res) {
 
     //pkt returns an array of things to publish
     for(var key in pkt) {
-        console.log("Publishing to topic " + "signpost/" + pkt[key].topic);
+        //console.log("Publishing to topic " + "signpost/" + pkt[key].topic);
         mqtt_client_outgoing.publish('signpost/' + pkt[key].topic, JSON.stringify(pkt[key].topublish));
     }
 
