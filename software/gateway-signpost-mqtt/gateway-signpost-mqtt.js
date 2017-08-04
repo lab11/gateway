@@ -64,13 +64,13 @@ function parse (topic, buf) {
                     module5_energy_remaining_mWh: energy_module5,
                     module6_energy_remaining_mWh: energy_module6,
                     module7_energy_remaining_mWh: energy_module7,
-                    controller_energy_average_mWh: average_controller,
-                    module0_energy_average_mWh: average_module0,
-                    module1_energy_average_mWh: average_module1,
-                    module2_energy_average_mWh: average_module2,
-                    module5_energy_average_mWh: average_module5,
-                    module6_energy_average_mWh: average_module6,
-                    module7_energy_average_mWh: average_module7,
+                    controller_energy_average_mW: average_controller,
+                    module0_energy_average_mW: average_module0,
+                    module1_energy_average_mW: average_module1,
+                    module2_energy_average_mW: average_module2,
+                    module5_energy_average_mW: average_module5,
+                    module6_energy_average_mW: average_module6,
+                    module7_energy_average_mW: average_module7,
                 }
             } else {
                 return {
@@ -320,22 +320,14 @@ function parse (topic, buf) {
             queue_size = buf.readUInt8(1+j*2);
 
             return {
-                //energy estimations on mWh/packet. packetcount*(ble/pack+lora/pack)
                 device: 'signpost_radio_status',
-                "controller_lora_packets_sent": controller,
-                "2.4gHz_spectrum_lora_packets_sent": rf,
-                "ambient_sensing_lora_packets_sent": ambient,
-                "audio_spectrum_lora_packets_sent": audio,
-                "microwave_radar_lora_packets_sent": microwave,
-                "ucsd_air_quality_lora_packets_sent": ucsd,
-                "radio_status_lora_packets_sent": radio,
-                "controller_radio_energy_used_mWh": Number(controller*(0.000096+0.01)).toFixed(3),
-                "2.4gHz_spectrum_radio_energy_used_mWh":Number(rf*(0.000096+0.01)).toFixed(3),
-                "ambient_sensing_radio_energy_used_mWh":Number(ambient*(0.000096+0.01)).toFixed(3),
-                "audio_spectrum_radio_energy_used_mWh":Number(audio*(0.000096+0.01)).toFixed(3),
-                "microwave_radar_radio_energy_used_mWh":Number(microwave*(0.000096+0.01)).toFixed(3),
-                "ucsd_air_quality_radio_energy_used_mWh":Number(ucsd*(0.000096+0.01)).toFixed(3),
-                "radio_status_radio_energy_used_mWh":Number(radio*(0.000096+0.01)).toFixed(3),
+                "controller_packets_sent": controller,
+                "2.4gHz_spectrum_packets_sent": rf,
+                "ambient_sensing_packets_sent": ambient,
+                "audio_spectrum_packets_sent": audio,
+                "microwave_radar_packets_sent": microwave,
+                "ucsd_air_quality_packets_sent": ucsd,
+                "radio_status_packets_sent": radio,
                 "radio_queue_length": queue_size,
             }
         }
