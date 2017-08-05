@@ -124,6 +124,10 @@ var mqtt_client;
 function mqtt_on_connect() {
     console.log('Connected to MQTT ' + mqtt_client.options.href);
 
+    if(typeof(mqtt_on_connect.known_logs) == 'undefined') {
+        mqtt_on_connect.known_logs = {};
+    }
+
     mqtt_client.subscribe(TOPIC_MAIN_STREAM);
 
     // Called when we get a packet from MQTT
@@ -187,21 +191,27 @@ function mqtt_on_connect() {
                 adv_obj._meta = tags;
                 
                 //create the gcl name (it might already exist)
-                name = {"external-name": log_name}
-                var request = new XMLHttpRequest();
-                request.open("PUT", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl", false);
-                request.setRequestHeader('Content-Type', 'application/json');
-                request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
-                request.send(JSON.stringify(name));
-                response = JSON.parse(request.responseText);
-                if(response.code) {
-                    if(response.code == "409") {
-                        console.log("GCL already exists");
+                if(mqtt_on_connect.known_logs[log_name] == 'undefined') {
+                    name = {"external-name": log_name}
+                    var request = new XMLHttpRequest();
+                    request.timeout = 5000;
+                    request.open("PUT", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl", false);
+                    request.setRequestHeader('Content-Type', 'application/json');
+                    request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
+                    request.send(JSON.stringify(name));
+                    response = JSON.parse(request.responseText);
+                    if(response.code) {
+                        if(response.code == "409") {
+                            console.log("GCL already exists");
+                        } else {
+                            mqtt_on_connect.known_logs[log_name] = "";
+                        }
                     }
                 }
 
                 //post the data to the new gdp
                 var request = new XMLHttpRequest();
+                request.timeout = 5000;
                 request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, false);
                 request.setRequestHeader('Content-Type', 'application/json');
                 request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
