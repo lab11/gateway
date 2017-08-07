@@ -90,16 +90,16 @@ function parse (buf) {
         ret[pcount.toString()].topublish.sequence_number = sequence_number;
         if(topic == 'lab11/gps') {
             // GPS
-            var day = ret[pcount.toString()].topublish.data.readUInt8(2);
-            var month = ret[pcount.toString()].topublish.data.readUInt8(3);
-            var year = ret[pcount.toString()].topublish.data.readUInt8(4);
-            var hours = ret[pcount.toString()].topublish.data.readUInt8(5);
-            var minutes = ret[pcount.toString()].topublish.data.readUInt8(6);
-            var seconds = ret[pcount.toString()].topublish.data.readUInt8(7);
-            var latitude = ret[pcount.toString()].topublish.data.readInt32BE(8)/(10000*100.0);
-            var longitude = ret[pcount.toString()].topublish.data.readInt32BE(12)/(10000*100.0);
-            var fix = ['', 'No Fix', '2D', '3D'][ret[pcount.toString()].topublish.data.readUInt8(16)];
-            var satellite_count = ret[pcount.toString()].topublish.data.readUInt8(17);
+            var day = ret[pcount.toString()].topublish.data.readUInt8(1);
+            var month = ret[pcount.toString()].topublish.data.readUInt8(2);
+            var year = ret[pcount.toString()].topublish.data.readUInt8(3);
+            var hours = ret[pcount.toString()].topublish.data.readUInt8(4);
+            var minutes = ret[pcount.toString()].topublish.data.readUInt8(5);
+            var seconds = ret[pcount.toString()].topublish.data.readUInt8(6);
+            var latitude = ret[pcount.toString()].topublish.data.readInt32BE(7)/(10000*100.0);
+            var longitude = ret[pcount.toString()].topublish.data.readInt32BE(11)/(10000*100.0);
+            var fix = ['', 'No Fix', '2D', '3D'][ret[pcount.toString()].topublish.data.readUInt8(15)];
+            var satellite_count = ret[pcount.toString()].topublish.data.readUInt8(16);
 
             if (year >= 80) {
               year += 1900;
