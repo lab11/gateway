@@ -249,6 +249,38 @@ function parse (topic, buf) {
                 '6250Hz': f_6250_hz,
                 '16000Hz': f_16000_hz,
             }
+        } else if (message_type == 0x02) {
+            //read unix time
+            var utime = readUInt32BE(1);
+            values = [];
+            var i = 0;
+            for(; i < 10; i++) {
+                var date = new Date((utime+i)*1000).toISOString();
+                var f_63_hz = readUInt8(1+i*10+1)
+                var f_160_hz = readUInt8(1+i*10+2)
+                var f_400_hz = readUInt8(1+i*10+3)
+                var f_1000_hz = readUInt8(1+i*10+4)
+                var f_2500_hz = readUInt8(1+i*10+5)
+                var f_6250_hz = readUInt8(1+i*10+6)
+                var f_16000_hz = readUInt8(1+i*10+7)
+                freq = {
+                    device: 'signpost_audio_frequency',
+                     "63Hz": f_63_hz,
+                    '160Hz': f_160_hz,
+                    '400Hz': f_400_hz,
+                    '1000Hz': f_1000_hz,
+                    '2500Hz': f_2500_hz,
+                    '6250Hz': f_6250_hz,
+                    '16000Hz': f_16000_hz,
+                    '_meta': {
+                        'received_time': date,
+                    }
+                }
+
+                values.push(freq);
+            }
+
+
         }
     } else if (topic == 'signpost/lab11/radar') {
         if (message_type == 0x01) {
@@ -348,11 +380,37 @@ mqtt_client.on('connect', function () {
                 console.log(buf.toString('hex'));
                 var pkt = parse(topic,buf);
 
-                if(pkt) {
-                    pkt['_meta'] = {};
+                if(pkt.isArray()) {
+                    for(var i = 0; i < pkt.length; i++) {
+                        if(typeof(pkt[i]['_meta']) == 'undefined') {
+                            pkt[i]['_meta'] = {};
+                        }
+
+                        pkt[i]['_meta'].device_id = json.device_id; 
+                        pkt[i]['_meta'].gateway_id = 'signpost'; 
+
+                        if(typeof(pkt[i]['_meta'].received_time) == 'undefined') {
+                            pkt[i]['_meta'].received_time = json.received_time;
+                        }
+
+                        pkt[i]['_meta'].receiver = json.receiver;
+                        pkt[i]['_meta'].geohash = json.geohash;
+                        pkt[i]['_meta'].sequence_number = json.sequence_number;
+                                                                                                       
+                        mqtt_client.publish('gateway-data', JSON.stringify(pkt[i]));
+                        mqtt_client.publish('signpost/processed', JSON.stringify(pkt[i]));
+                    }
+                } else {
+                    if(typeof(pkt[i]['_meta']) == 'undefined') {
+                        pkt[i]['_meta'] = {};
+                    }
                     pkt['_meta'].device_id = json.device_id; 
                     pkt['_meta'].gateway_id = 'signpost'; 
-                    pkt['_meta'].received_time = json.received_time;
+
+                    if(typeof(pkt[i]['_meta'].received_time) == 'undefined') {
+                        pkt[i]['_meta'].received_time = json.received_time;
+                    }
+
                     pkt['_meta'].receiver = json.receiver;
                     pkt['_meta'].geohash = json.geohash;
                     pkt['_meta'].sequence_number = json.sequence_number;
