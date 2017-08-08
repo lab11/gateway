@@ -280,7 +280,7 @@ function parse (topic, buf) {
                 values.push(freq);
             }
 
-
+            return values;
         }
     } else if (topic == 'signpost/lab11/radar') {
         if (message_type == 0x01) {
