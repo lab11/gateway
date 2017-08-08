@@ -380,7 +380,7 @@ mqtt_client.on('connect', function () {
                 console.log(buf.toString('hex'));
                 var pkt = parse(topic,buf);
 
-                if(pkt.isArray) {
+                if(Array.isArray(pkt)) {
                     for(var i = 0; i < pkt.length; i++) {
                         if(typeof(pkt[i]['_meta']) == 'undefined') {
                             pkt[i]['_meta'] = {};
