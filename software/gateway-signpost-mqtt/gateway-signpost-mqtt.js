@@ -197,7 +197,7 @@ function parse (topic, buf) {
                 channel_26: chan26,
             }
         }
-    } else if (topic == 'signpost/lab11/audio') {
+    } else if (topic == 'signpost/lab11/ambient') {
         if (message_type == 0x01) {
                         var temp = buf.readInt16BE(1) / 100.0;
             var humi = buf.readInt16BE(3) / 100.0;
@@ -218,7 +218,7 @@ function parse (topic, buf) {
                 pressure_pascals: pres,
             }
         }
-    } else if (topic == 'signpost/lab11/ambient') {
+    } else if (topic == 'signpost/lab11/audio') {
         if (message_type == 0x01) {
             //these are in dB SPL! I simplified the math to some magic numbers
             //here's the rundown
