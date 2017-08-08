@@ -402,13 +402,13 @@ mqtt_client.on('connect', function () {
                     }
                 } else {
                     if(typeof(pkt['_meta']) == 'undefined') {
-                        pkt[i]['_meta'] = {};
+                        pkt['_meta'] = {};
                     }
                     pkt['_meta'].device_id = json.device_id; 
                     pkt['_meta'].gateway_id = 'signpost'; 
 
                     if(typeof(pkt['_meta'].received_time) == 'undefined') {
-                        pkt[i]['_meta'].received_time = json.received_time;
+                        pkt['_meta'].received_time = json.received_time;
                     }
 
                     pkt['_meta'].receiver = json.receiver;
