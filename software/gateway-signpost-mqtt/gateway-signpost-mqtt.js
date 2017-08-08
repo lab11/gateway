@@ -251,7 +251,7 @@ function parse (topic, buf) {
             }
         } else if (message_type == 0x02) {
             //read unix time
-            var utime = readUInt32BE(1);
+            var utime = buf.readUInt32BE(1);
             values = [];
             var i = 0;
             for(; i < 10; i++) {
