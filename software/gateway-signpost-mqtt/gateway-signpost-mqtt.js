@@ -256,13 +256,13 @@ function parse (topic, buf) {
             var i = 0;
             for(; i < 10; i++) {
                 var date = new Date((utime+i)*1000).toISOString();
-                var f_63_hz = readUInt8(1+i*10+1)
-                var f_160_hz = readUInt8(1+i*10+2)
-                var f_400_hz = readUInt8(1+i*10+3)
-                var f_1000_hz = readUInt8(1+i*10+4)
-                var f_2500_hz = readUInt8(1+i*10+5)
-                var f_6250_hz = readUInt8(1+i*10+6)
-                var f_16000_hz = readUInt8(1+i*10+7)
+                var f_63_hz = buf.readUInt8(1+i*10+1)
+                var f_160_hz = buf.readUInt8(1+i*10+2)
+                var f_400_hz = buf.readUInt8(1+i*10+3)
+                var f_1000_hz = buf.readUInt8(1+i*10+4)
+                var f_2500_hz = buf.readUInt8(1+i*10+5)
+                var f_6250_hz = buf.readUInt8(1+i*10+6)
+                var f_16000_hz = buf.readUInt8(1+i*10+7)
                 freq = {
                     device: 'signpost_audio_frequency',
                      "63Hz": f_63_hz,
@@ -380,7 +380,7 @@ mqtt_client.on('connect', function () {
                 console.log(buf.toString('hex'));
                 var pkt = parse(topic,buf);
 
-                if(pkt.isArray()) {
+                if(pkt.isArray) {
                     for(var i = 0; i < pkt.length; i++) {
                         if(typeof(pkt[i]['_meta']) == 'undefined') {
                             pkt[i]['_meta'] = {};
