@@ -1,0 +1,13 @@
+[Unit]
+Description=Take the internal mqtt and parse them
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-signpost-gateway/gateway-signpost-gateway.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-signpost-gateway
+
+[Install]
+WantedBy=multi-user.target

@@ -10,7 +10,6 @@ var fs            = require('fs');
 var ini           = require('ini');
 var mqtt          = require('mqtt');
 var addr          = require('os').networkInterfaces();
-var Geohash       = require('latlon-geohash');
 
 try {
     var config_file = fs.readFileSync('/etc/swarm-gateway/lora.conf', 'utf-8');
@@ -28,24 +27,6 @@ function pad (s, len) {
         s = '0' + s;
     }
     return s;
-}
-
-function get_hash (addr, hash) {
-    if(typeof get_hash.hashes == 'undefined') {
-        get_hash.hashes = {};
-    }
-
-    if(typeof hash !== 'undefined') {
-        //this must have been a gps packet so let it update the hash table
-        get_hash.hashes[addr] = hash;
-        return hash;
-    } else { 
-        if(typeof get_hash.hashes[addr] == 'undefined') {
-            return Geohash.encode(0,0,10);
-        } else {
-            return get_hash.hashes[addr];
-        }
-    }
 }
 
 function parse (buf) {
@@ -79,30 +60,6 @@ function parse (buf) {
         ret[pcount.toString()].topublish.received_time = new Date().toISOString();
         ret[pcount.toString()].topublish.device_id = addr;
         ret[pcount.toString()].topublish.sequence_number = sequence_number;
-        if(topic == 'lab11/gps') {
-            // GPS
-            var day = ret[pcount.toString()].topublish.data.readUInt8(1);
-            var month = ret[pcount.toString()].topublish.data.readUInt8(2);
-            var year = ret[pcount.toString()].topublish.data.readUInt8(3);
-            var hours = ret[pcount.toString()].topublish.data.readUInt8(4);
-            var minutes = ret[pcount.toString()].topublish.data.readUInt8(5);
-            var seconds = ret[pcount.toString()].topublish.data.readUInt8(6);
-            var latitude = ret[pcount.toString()].topublish.data.readInt32BE(7)/(10000*100.0);
-            var longitude = ret[pcount.toString()].topublish.data.readInt32BE(11)/(10000*100.0);
-            var fix = ['', 'No Fix', '2D', '3D'][ret[pcount.toString()].topublish.data.readUInt8(15)];
-            var satellite_count = ret[pcount.toString()].topublish.data.readUInt8(16);
-
-            if (year >= 80) {
-              year += 1900;
-            } else {
-              year += 2000;
-            }
-            
-            hash = Geohash.encode(latitude, longitude, 10);
-            ret[pcount.toString()].topublish.geohash = get_hash(addr,hash);
-        } else {
-            ret[pcount.toString()].topublish.geohash = get_hash(addr);
-        }
 
         if(buf.length <= index) {
             done = true;
@@ -131,7 +88,7 @@ mqtt_client_lora.on('connect', function () {
 
                 //pkt returns an array of things to publish
                 for(var key in pkt) {
-                    mqtt_client_outgoing.publish('signpost/' + pkt[key].topic, JSON.stringify(pkt[key].topublish));
+                    mqtt_client_outgoing.publish('signpost-preproc/' + pkt[key].topic, JSON.stringify(pkt[key].topublish));
                 }
             }
         } catch (e) {
