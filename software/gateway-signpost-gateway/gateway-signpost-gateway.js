@@ -80,7 +80,7 @@ function get_hash (addr, lat, lon) {
 }
 
 function add_geohash (topic, buf) {
-    if(topic == 'lab11/gps') {
+    if(topic == 'signpost-preproc/lab11/gps') {
         // GPS
         var day = buf.data.readUInt8(1);
         var month = buf.data.readUInt8(2);
