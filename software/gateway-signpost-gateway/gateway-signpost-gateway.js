@@ -99,9 +99,9 @@ function add_geohash (topic, buf) {
           year += 2000;
         }
         
-        buf.geohash = get_hash(addr,latitude,longitude);
+        buf.geohash = get_hash(buf.device_id,latitude,longitude);
     } else {
-        buf.geohash = get_hash(addr);
+        buf.geohash = get_hash(buf.device_id);
     }
 
     return buf;
