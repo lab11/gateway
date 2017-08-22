@@ -21,25 +21,34 @@ function get_hash (addr, lat, lon) {
         //this must have been a gps packet so let it update the hash table
         //is the  array defined
         if(typeof get_hash.hashes[addr] == 'undefined') {
+            get_hash.hashes[addr] = {};
             get_hash.hashes[addr].lat = [];
             get_hash.hashes[addr].lon = [];
             get_hash.hashes[addr].lat.push(lat)
             get_hash.hashes[addr].lon.push(lon)
+            console.log("New address")
             return Geohash.encode(lat,lon,11);
         }
         
         //first what is the current location?
-        var latsum = get_hash.hashes[addr].lat.reduce((precivous, current) => current += previous);
+        var latsum = get_hash.hashes[addr].lat.reduce((previous, current) => current += previous);
         var latav = latsum/get_hash.hashes[addr].lat.length;
-        var lonsum = get_hash.hashes[addr].lon.reduce((precivous, current) => current += previous);
+        var lonsum = get_hash.hashes[addr].lon.reduce((previous, current) => current += previous);
         var lonav = lonsum/get_hash.hashes[addr].lon.length;
         var curhash = Geohash.encode(latav,lonav,7);
         var newhash = Geohash.encode(lat,lon,7);
 
         //is the newhash in or a neighbor of curhash?
         var neighborhash = Geohash.neighbours(curhash);
-        var search = neighborhash.search(newhash);
-        if(search != -1) {
+        var found = false;
+        for(var key in neighborhash) {
+            if(neighborhash[key] == newhash || curhash == newhash) {
+                found = true;
+            }
+        }
+
+        if(found) {
+            console.log("Hash is a neighbor - averaging");
             //great it's a neighbor
             get_hash.hashes[addr].lat.push(lat)
             get_hash.hashes[addr].lon.push(lon)
@@ -54,6 +63,7 @@ function get_hash (addr, lat, lon) {
 
         } else {
             //not a neighbor - restart
+            console.log("Hash not a neighbor - clearing");
             get_hash.hashes[addr].lat = [];
             get_hash.hashes[addr].lon = [];
             get_hash.hashes[addr].lat.push(lat)
@@ -61,18 +71,18 @@ function get_hash (addr, lat, lon) {
         }
 
 
-        var latsum = get_hash.hashes[addr].lat.reduce((precivous, current) => current += previous);
+        var latsum = get_hash.hashes[addr].lat.reduce((previous, current) => current += previous);
         var latav = latsum/get_hash.hashes[addr].lat.length;
-        var lonsum = get_hash.hashes[addr].lon.reduce((precivous, current) => current += previous);
+        var lonsum = get_hash.hashes[addr].lon.reduce((previous, current) => current += previous);
         var lonav = lonsum/get_hash.hashes[addr].lon.length;
         return Geohash.encode(latav,lonav,11);
     } else { 
         if(typeof get_hash.hashes[addr] == 'undefined') {
             return Geohash.encode(0,0,11);
         } else {
-            var latsum = get_hash.hashes[addr].lat.reduce((precivous, current) => current += previous);
+            var latsum = get_hash.hashes[addr].lat.reduce((previous, current) => current += previous);
             var latav = latsum/get_hash.hashes[addr].lat.length;
-            var lonsum = get_hash.hashes[addr].lon.reduce((precivous, current) => current += previous);
+            var lonsum = get_hash.hashes[addr].lon.reduce((previous, current) => current += previous);
             var lonav = lonsum/get_hash.hashes[addr].lon.length;
             return Geohash.encode(latav,lonav,11);
         }
@@ -82,16 +92,16 @@ function get_hash (addr, lat, lon) {
 function add_geohash (topic, buf) {
     if(topic == 'signpost-preproc/lab11/gps') {
         // GPS
-        var day = buf.data.readUInt8(1);
-        var month = buf.data.readUInt8(2);
-        var year = buf.data.readUInt8(3);
-        var hours = buf.data.readUInt8(4);
-        var minutes = buf.data.readUInt8(5);
-        var seconds = buf.data.readUInt8(6);
-        var latitude = buf.data.readInt32BE(7)/(10000*100.0);
-        var longitude = buf.data.readInt32BE(11)/(10000*100.0);
-        var fix = ['', 'No Fix', '2D', '3D'][buf.data.readUInt8(15)];
-        var satellite_count = buf.data.readUInt8(16);
+        var day = buf.data.data[1];
+        var month = buf.data.data[2];
+        var year = buf.data.data[3];
+        var hours = buf.data.data[4];
+        var minutes = buf.data.data[5];
+        var seconds = buf.data.data[6];
+        var latitude = ((buf.data.data[7] << 24) + (buf.data.data[8] << 16) + (buf.data.data[9] << 8) + (buf.data.data[10]))/(10000*100.0);
+        var longitude = ((buf.data.data[11] << 24) + (buf.data.data[12] << 16) + (buf.data.data[13] << 8) + (buf.data.data[14]))/(10000*100.0);
+        var fix = ['', 'No Fix', '2D', '3D'][buf.data.data[15]];
+        var satellite_count = buf.data.data[16];
 
         if (year >= 80) {
           year += 1900;
