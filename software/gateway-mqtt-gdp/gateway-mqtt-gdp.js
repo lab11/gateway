@@ -191,7 +191,7 @@ function mqtt_on_connect() {
                 adv_obj._meta = tags;
                 
                 //create the gcl name (it might already exist)
-                if(mqtt_on_connect.known_logs[log_name] == 'undefined') {
+                if(typeof mqtt_on_connect.known_logs[log_name] == 'undefined') {
                     name = {"external-name": log_name}
                     var request = new XMLHttpRequest();
                     request.timeout = 5000;
@@ -200,10 +200,10 @@ function mqtt_on_connect() {
                     request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
                     request.send(JSON.stringify(name));
                     response = JSON.parse(request.responseText);
+                    console.log(response);
                     if(response.code) {
                         if(response.code == "409") {
                             console.log("GCL already exists");
-                        } else {
                             mqtt_on_connect.known_logs[log_name] = "";
                         }
                     }
@@ -217,6 +217,7 @@ function mqtt_on_connect() {
                 request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
                 request.send(JSON.stringify(adv_obj));
                 response = JSON.parse(request.responseText);
+                console.log(log_name);
                 console.log(response);
             }
         }
