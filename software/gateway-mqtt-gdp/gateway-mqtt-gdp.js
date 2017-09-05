@@ -132,6 +132,7 @@ function mqtt_on_connect() {
 
     // Called when we get a packet from MQTT
     mqtt_client.on('message', function (topic, message) {
+        start = new Date.now();
         if (topic == TOPIC_MAIN_STREAM) {
             // message is Buffer
             var adv_obj = JSON.parse(message.toString());
@@ -276,6 +277,8 @@ function mqtt_on_connect() {
                 }
             }
         }
+        end = new Date.now();
+        console.log(end - start);
     });
 };
 
