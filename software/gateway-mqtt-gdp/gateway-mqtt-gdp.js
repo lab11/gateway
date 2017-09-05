@@ -198,7 +198,7 @@ function mqtt_on_connect() {
                     var request = new XMLHttpRequest();
                     request.timeout = 5000;
                     request.open("PUT", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl", true);
-                    request.onload = function (e) {
+                    request.onload = function () {
                         if(request.readyState === 4) {
                             console.log("Received log creation reply");
                             try {
@@ -215,32 +215,32 @@ function mqtt_on_connect() {
                             }
 
                             //post the data to the new gdp
-                            var request = new XMLHttpRequest();
-                            request.timeout = 5000;
-                            request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, true);
-                            request.onload = function (e) {
-                                if(request.readyState === 4) {
+                            var req = new XMLHttpRequest();
+                            req.timeout = 5000;
+                            req.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, true);
+                            req.onload = function () {
+                                if(req.readyState === 4) {
                                     console.log("Received append reply");
                                     try {
-                                        response = JSON.parse(request.responseText);
+                                        response = JSON.parse(req.responseText);
                                         console.log(response);
                                     } catch (e) {
                                         console.log(e);
-                                        console.log(request.responseText);
+                                        console.log(req.responseText);
                                     }
                                 }
                             };
-                            request.onerror = function (e) {
-                              console.log(request.statusText);
+                            request.onerror = function () {
+                              console.log(req.statusText);
                             };
 
-                            request.setRequestHeader('Content-Type', 'application/json');
-                            request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
+                            req.setRequestHeader('Content-Type', 'application/json');
+                            req.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
                             console.log("Sending append request");
-                            request.send(JSON.stringify(adv_obj));
+                            req.send(JSON.stringify(adv_obj));
                         }
                     };
-                    request.onerror = function (e) {
+                    request.onerror = function () {
                       console.log(request.statusText);
                     };
                     request.setRequestHeader('Content-Type', 'application/json');
@@ -253,7 +253,7 @@ function mqtt_on_connect() {
                     var request = new XMLHttpRequest();
                     request.timeout = 5000;
                     request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, true);
-                    request.onload = function (e) {
+                    request.onload = function () {
                         if(request.readyState === 4) {
                             console.log("Received append reply");
                             try {
@@ -265,7 +265,7 @@ function mqtt_on_connect() {
                             }
                         }
                     };
-                    request.onerror = function (e) {
+                    request.onerror = function () {
                       console.log(request.statusText);
                     };
 
