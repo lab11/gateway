@@ -195,39 +195,51 @@ function mqtt_on_connect() {
                     name = {"external-name": log_name}
                     var request = new XMLHttpRequest();
                     request.timeout = 5000;
-                    request.open("PUT", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl", false);
+                    request.open("PUT", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl", true);
+					request.onload = function (e) {
+						try {
+                    	    response = JSON.parse(request.responseText);
+                    	} catch (e) {
+                    	    console.log(e);
+                    	    console.log(request.responseText);
+                    	}
+                    	if(response.code) {
+                    	    if(response.code == "409") {
+                    	        console.log("GCL already exists");
+                    	        mqtt_on_connect.known_logs[log_name] = "";
+                    	    }
+                    	}
+					};
+					request.onerror = function (e) {
+					  console.log(request.statusText);
+					};
                     request.setRequestHeader('Content-Type', 'application/json');
                     request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
                     request.send(JSON.stringify(name));
-                    try {
-                        response = JSON.parse(request.responseText);
-                    } catch (e) {
-                        console.log(e);
-                        console.log(request.responseText);
-                    }
-                    if(response.code) {
-                        if(response.code == "409") {
-                            console.log("GCL already exists");
-                            mqtt_on_connect.known_logs[log_name] = "";
-                        }
-                    }
+                    
                 }
 
                 //post the data to the new gdp
                 var request = new XMLHttpRequest();
                 request.timeout = 5000;
-                request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, false);
+                request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, true);
+				request.onload = function (e) {
+					try {
+                	    response = JSON.parse(request.responseText);
+                	    console.log(response);
+                	} catch (e) {
+                	    console.log(e);
+                	    console.log(request.responseText);
+                	}
+				};
+				request.onerror = function (e) {
+				  console.log(request.statusText);
+				};
+
                 request.setRequestHeader('Content-Type', 'application/json');
                 request.setRequestHeader("Authorization", "Basic " + btoa(config.username+':'+config.password));
                 request.send(JSON.stringify(adv_obj));
                 console.log(log_name);
-                try {
-                    response = JSON.parse(request.responseText);
-                    console.log(response);
-                } catch (e) {
-                    console.log(e);
-                    console.log(request.responseText);
-                }
             }
         }
     });
