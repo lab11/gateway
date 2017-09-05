@@ -199,7 +199,7 @@ function mqtt_on_connect() {
                     request.timeout = 5000;
                     request.open("PUT", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl", true);
                     request.onload = function (e) {
-                        if(readyState === 4) {
+                        if(request.readyState === 4) {
                             console.log("Received log creation reply");
                             try {
                                 response = JSON.parse(request.responseText);
@@ -219,7 +219,7 @@ function mqtt_on_connect() {
                             request.timeout = 5000;
                             request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, true);
                             request.onload = function (e) {
-                                if(readyState === 4) {
+                                if(request.readyState === 4) {
                                     console.log("Received append reply");
                                     try {
                                         response = JSON.parse(request.responseText);
@@ -254,7 +254,7 @@ function mqtt_on_connect() {
                     request.timeout = 5000;
                     request.open("POST", "https://gdp-rest-01.eecs.berkeley.edu/gdp/v1/gcl/" + log_name, true);
                     request.onload = function (e) {
-                        if(readyState === 4) {
+                        if(request.readyState === 4) {
                             console.log("Received append reply");
                             try {
                                 response = JSON.parse(request.responseText);
