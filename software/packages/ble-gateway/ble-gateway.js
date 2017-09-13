@@ -13,7 +13,7 @@ var debug                  = require('debug')('ble-gateway');
 var watchout               = require('watchout');
 var async                  = require('async');
 var gatewayId              = require('lab11-gateway-id');
-
+var fs                     = require('fs');
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
@@ -296,6 +296,9 @@ BleGateway.prototype.on_beacon = function (beacon) {
                         // Store this in the known parsers object
                         this._cached_parsers[request_url] = {};
                         this._cached_parsers[request_url]['parse.js'] = response.body;
+                        
+                        //cache the parser to the filesystem
+                        fs.writeFile('cached_parsers.json', this._cached_parsers.toString());
 
                         // Make the downloaded JS an actual function
                         // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
@@ -307,6 +310,8 @@ BleGateway.prototype.on_beacon = function (beacon) {
 
                     } else {
                         debug('Could not fetch parse.js after trying multiple times. (' + beacon.id + ')');
+                        cacheString = fs.readFileSync('cached_parsers.json', 'utf-8');
+                        this._cached_parsers = JSON.parse(cacheString);
                     }
                 };
 
