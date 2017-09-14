@@ -95,7 +95,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
     // We have seen an eddystone packet from the same address
     if (peripheral.id in this._device_to_data) {
-
+        
         // Lookup the correct device to get its parser URL identifier
         var device = this._device_to_data[peripheral.id];
 
@@ -272,6 +272,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
             if (!err) {
                 // Save this URL expansion. OK to just overwrite it each time.
                 this._cached_urls[short_url] = full_url;
+                fs.writeFile('cached_urls.json', JSON.stringify(this._cached_urls));
 
                 // Create space if this is a new beacon
                 if (!(beacon.id in this._device_to_data)) {
@@ -296,22 +297,31 @@ BleGateway.prototype.on_beacon = function (beacon) {
                         // Store this in the known parsers object
                         this._cached_parsers[request_url] = {};
                         this._cached_parsers[request_url]['parse.js'] = response.body;
+                        fs.writeFile('cached_parsers.json', JSON.stringify(this._cached_parsers));
                         
-                        //cache the parser to the filesystem
-                        fs.writeFile('cached_parsers.json', this._cached_parsers.toString());
-
                         // Make the downloaded JS an actual function
                         // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
                         try {
                             var parser = this.require_from_string(response.body, request_url);
                             this._cached_parsers[request_url].parser = parser;
                             parser.parseAdvertisement();
-                        } catch (e) {}
+                        } catch (e) {
+                            debug('Failed to parse advertisement after fetching parser');
+                        }
 
                     } else {
                         debug('Could not fetch parse.js after trying multiple times. (' + beacon.id + ')');
-                        cacheString = fs.readFileSync('cached_parsers.json', 'utf-8');
-                        this._cached_parsers = JSON.parse(cacheString);
+                        try {
+                            debug('Trying to find cached parser. (' + beacon.id + ')');
+                            cacheString = fs.readFileSync('cached_parsers.json', 'utf-8');
+                            this._cached_parsers = JSON.parse(cacheString);
+                            for (var r_url in this._cached_parsers) {
+                                var parser = this.require_from_string(this._cached_parsers[r_url]['parse.js'], r_url);
+                                this._cached_parsers[r_url].parser = parser;
+                            }
+                        } catch (e) { 
+                            debug('Failed to find cached parsers. (' + beacon.id + ')');
+                        }
                     }
                 };
 
@@ -321,7 +331,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
                     debug('Fetching ' + request_url + ' (' + beacon.id + ')');
 
                     // Now see if we can get parse.js
-                    async.retry({tries: 10, interval: 400}, function (cb, r) {
+                    async.retry({tries: 1, interval: 400}, function (cb, r) {
                         request(request_url, function (err, response, body) {
                             // We want to error if err or 503
                             var request_err = (err || response.statusCode==503);
@@ -334,15 +344,23 @@ BleGateway.prototype.on_beacon = function (beacon) {
 
             } else {
                 debug('Error getting full URL (' + short_url + ') after several tries.');
+                try{
+                    debug('Trying to find cached urls. (' + beacon.id + ')');
+                    cacheString = fs.readFileSync('cached_urls.json', 'utf-8');
+                    this._cached_urls = JSON.parse(cacheString);
+                } catch (e) {
+                    debug('Failed to find cached urls. (' + beacon.id + ')');
+                }
             }
         };
 
         if (short_url in this._cached_urls) {
             // We already know what this URL expands to. Just use that.
+            debug('Using cached url expansion for ' + beacon.id);
             got_expanded_url.call(this, null, this._cached_urls[short_url]);
         } else {
             // Try to expand the URL up to 10 times.
-            async.retry(10, function (cb, r) { urlExpander.expand(short_url, cb); }, got_expanded_url.bind(this));
+            async.retry(1, function (cb, r) { urlExpander.expand(short_url, cb); }, got_expanded_url.bind(this));
         }
 
     }
