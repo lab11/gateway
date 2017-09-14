@@ -16,7 +16,7 @@
     "url": "https://github.com/lab11/gateway/issues"
   },
   "dependencies": {
-    "ble-gateway": "^0.9.0",
+    "ble-gateway": "file:../packages/ble-gateway",
     "debug": "^2.2.0",
     "gateway-topics": "^0.1.0",
     "mqtt": "^1.12.0",
