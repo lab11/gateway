@@ -363,6 +363,24 @@ function parse (topic, buf) {
                 "radio_queue_length": queue_size,
             }
         }
+    } else if (topic == 'signpost/lab11/spectrum') {
+        var datastr = "";
+        if(message_type == 0x01) {
+            datastr = "max";
+        } else if(message_type = 0x02) {
+            datastr = "mean";
+        } else if(message_type = 0x03) {
+            datastr = "stddev";
+        }
+        var retobj = {};
+        retobj['device'] = 'signpost_rf_spectrum';
+        for (var i = 0; i < 80; i++) {
+            var lowend = 470+i*6;
+            var highend = 470+6+i*6;
+            var fullstr = lowend.toString()+"MHz"+"-"+highend.toString()+"MHz"+"_"+datastr;
+            retobj[fullstr] = buf.readInt8(1+i);
+        }
+        return retobj;
     }
 }
 
