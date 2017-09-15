@@ -249,7 +249,6 @@ BleGateway.prototype.on_beacon = function (beacon) {
         return;
       }
     }
-    this._device_id_ages[beacon.id] = Date.now();
 
     if (beacon.type == 'url') {
         debug('Found eddystone: ' + beacon.id + ' ' + beacon.url);
@@ -304,6 +303,9 @@ BleGateway.prototype.on_beacon = function (beacon) {
                         try {
                             var parser = this.require_from_string(response.body, request_url);
                             this._cached_parsers[request_url].parser = parser;
+
+                            //update the cache to indicate we actually have this parser
+                            this._device_id_ages[beacon.id] = Date.now();
                             parser.parseAdvertisement();
                         } catch (e) {
                             debug('Failed to parse advertisement after fetching parser');
@@ -319,6 +321,9 @@ BleGateway.prototype.on_beacon = function (beacon) {
                                 var parser = this.require_from_string(this._cached_parsers[r_url]['parse.js'], r_url);
                                 this._cached_parsers[r_url].parser = parser;
                             }
+
+                            //update the cache to indicate we actually have this parser
+                            this._device_id_ages[beacon.id] = Date.now();
                         } catch (e) { 
                             debug('Failed to find cached parsers. (' + beacon.id + ')');
                         }
@@ -331,8 +336,8 @@ BleGateway.prototype.on_beacon = function (beacon) {
                     debug('Fetching ' + request_url + ' (' + beacon.id + ')');
 
                     // Now see if we can get parse.js
-                    async.retry({tries: 1, interval: 400}, function (cb, r) {
-                        request(request_url, function (err, response, body) {
+                    async.retry({tries: 1, interval: 2000}, function (cb, r) {
+                        request({url: request_url, timeout:1000}, function (err, response, body) {
                             // We want to error if err or 503
                             var request_err = (err || response.statusCode==503);
                             cb(request_err, response);
