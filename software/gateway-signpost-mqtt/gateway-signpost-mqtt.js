@@ -367,9 +367,9 @@ function parse (topic, buf) {
         var datastr = "";
         if(message_type == 0x01) {
             datastr = "max";
-        } else if(message_type = 0x02) {
+        } else if(message_type == 0x02) {
             datastr = "mean";
-        } else if(message_type = 0x03) {
+        } else if(message_type == 0x03) {
             datastr = "stddev";
         }
         var retobj = {};

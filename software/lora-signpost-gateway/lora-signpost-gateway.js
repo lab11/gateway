@@ -38,7 +38,7 @@ function parse (buf) {
     
     var sequence_number = buf.readUInt8(6);
     
-    if(addr == 'c098e5c00003') { 
+    if(addr == 'c098e5120003') { 
         var done = false;
         var index = 7;
         var pcount = 0;
