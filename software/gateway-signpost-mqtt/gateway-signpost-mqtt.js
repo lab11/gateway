@@ -256,13 +256,13 @@ function parse (topic, buf) {
             var i = 0;
             for(; i < 10; i++) {
                 var date = new Date((utime+i)*1000).toISOString();
-                var f_63_hz = buf.readUInt8(1+i*7+1)
-                var f_160_hz = buf.readUInt8(1+i*7+2)
-                var f_400_hz = buf.readUInt8(1+i*7+3)
-                var f_1000_hz = buf.readUInt8(1+i*7+4)
-                var f_2500_hz = buf.readUInt8(1+i*7+5)
-                var f_6250_hz = buf.readUInt8(1+i*7+6)
-                var f_16000_hz = buf.readUInt8(1+i*7+7)
+                var f_63_hz = buf.readUInt8(4+i*7+1)
+                var f_160_hz = buf.readUInt8(4+i*7+2)
+                var f_400_hz = buf.readUInt8(4+i*7+3)
+                var f_1000_hz = buf.readUInt8(4+i*7+4)
+                var f_2500_hz = buf.readUInt8(4+i*7+5)
+                var f_6250_hz = buf.readUInt8(4+i*7+6)
+                var f_16000_hz = buf.readUInt8(4+i*7+7)
                 freq = {
                     device: 'signpost_audio_frequency',
                      "63Hz": f_63_hz,
