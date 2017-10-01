@@ -331,9 +331,6 @@ function parse (topic, buf) {
                     case 0x22:
                         radio = buf.readUInt8(1+j*2+1);
                     break;
-                    case 0x31:
-                        rf = buf.readUInt8(1+j*2+1);
-                    break;
                     case 0x32:
                         ambient = buf.readUInt8(1+j*2+1);
                     break;
@@ -346,6 +343,9 @@ function parse (topic, buf) {
                     case 0x34:
                         ucsd = buf.readUInt8(1+j*2+1);
                     break;
+                    case 0x36:
+                        rf = buf.readUInt8(1+j*2+1);
+                    break;
                 }
             }
 
@@ -353,13 +353,16 @@ function parse (topic, buf) {
 
             return {
                 device: 'signpost_radio_status',
-                "controller_packets_sent": controller,
-                "2.4gHz_spectrum_packets_sent": rf,
-                "ambient_sensing_packets_sent": ambient,
-                "audio_spectrum_packets_sent": audio,
-                "microwave_radar_packets_sent": microwave,
-                "ucsd_air_quality_packets_sent": ucsd,
-                "radio_status_packets_sent": radio,
+                packets_sent: {
+                    "controller": controller,
+                    "rf_spectrum": rf,
+                    "ambient_sensing": ambient,
+                    "audio_spectrum": audio,
+                    "microwave_radar": microwave,
+                    "ucsd_air_quality": ucsd,
+                    "radio_status": radio,
+                },
+                packets_delayed_for_muling: {},
                 "radio_queue_length": queue_size,
             }
         }
