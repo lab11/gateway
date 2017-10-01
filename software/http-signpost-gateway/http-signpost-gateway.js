@@ -38,7 +38,7 @@ function parse (buf) {
         index += 2;
         var start_index = index;
         var tlen = buf.readUInt8(index);
-        if(tlen + 3 > total_len) {
+        if(tlen + 2 > total_len) {
             console.log("Length parsing error - continueing");
             index = start_index + total_len;
             continue;
@@ -48,15 +48,15 @@ function parse (buf) {
         index += 1;
         var topic = buf.toString('utf-8',index, index+tlen);
         index += tlen;
-        var dlen = buf.readUInt16BE(index);
-        if(tlen + dlen + 3 > total_len) {
+        var dlen = buf.readUInt8(index);
+        if(tlen + dlen + 2 > total_len) {
             console.log("Length parsing error - continueing");
             index = start_index + total_len;
             continue;
         }
 
         //console.log("Data length is: " + dlen);
-        index += 2;
+        index += 1;
         var data = buf.slice(index,index+dlen);
         index += dlen;
         pcount += 1;
