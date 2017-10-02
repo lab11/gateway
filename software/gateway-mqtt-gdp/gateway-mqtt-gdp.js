@@ -162,9 +162,7 @@ function mqtt_on_connect() {
                 // tags section of the stored packet.
                 var tags = {};
                 for (var key in adv_obj['_meta']) {
-                    if (key != 'device_id' && key != 'received_time') {
-                        tags[key] = adv_obj['_meta'][key];
-                    }
+                    tags[key] = adv_obj['_meta'][key];
                 }
 
                 tags.device_id = device_id;
