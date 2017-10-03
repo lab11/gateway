@@ -35,8 +35,18 @@ function parse (buf) {
     for (var i=0; i<6; i++) {
         addr += pad(buf[i].toString(16), 2);
     }
+
+    if(typeof parse.last_sequence_number == 'undefined') {
+        parse.last_sequence_number = 0;
+    }
     
     var sequence_number = buf.readUInt8(6);
+    
+    if(parse.last_sequence_number == sequence_number) {
+        return {};
+    } else {
+        parse.last_sequence_number = sequence_number;
+    }
     
     var done = false;
     var index = 7;
