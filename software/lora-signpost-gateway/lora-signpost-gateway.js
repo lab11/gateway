@@ -36,16 +36,20 @@ function parse (buf) {
         addr += pad(buf[i].toString(16), 2);
     }
 
-    if(typeof parse.last_sequence_number == 'undefined') {
-        parse.last_sequence_number = 0;
+    if(typeof parse.last_sequence_numbers == 'undefined') {
+        parse.last_sequence_numbers = {};
+    }
+
+    if(typeof parse.last_sequence_numbers[addr] == 'undefined') {
+        parse.last_sequence_numbers[addr] = 0;
     }
     
     var sequence_number = buf.readUInt8(6);
     
-    if(parse.last_sequence_number == sequence_number) {
+    if(parse.last_sequence_numbers[addr] == sequence_number) {
         return {};
     } else {
-        parse.last_sequence_number = sequence_number;
+        parse.last_sequence_numbers[addr] = sequence_number;
     }
     
     var done = false;
