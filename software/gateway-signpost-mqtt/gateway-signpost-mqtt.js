@@ -352,7 +352,7 @@ function parse (topic, buf) {
             queue_size = buf.readUInt8(1+j*2);
 
             return {
-                device: 'signpost_radio_status',
+                device: 'signpost_radio',
                 packets_sent: {
                     "controller": controller,
                     "rf_spectrum": rf,
@@ -368,15 +368,17 @@ function parse (topic, buf) {
         }
     } else if (topic == 'signpost/lab11/spectrum') {
         var datastr = "";
+        var retobj = {};
         if(message_type == 0x01) {
             datastr = "max";
+            retobj['device'] = 'signpost_rf_spectrum_max';
         } else if(message_type == 0x02) {
             datastr = "mean";
+            retobj['device'] = 'signpost_rf_spectrum_mean';
         } else if(message_type == 0x03) {
             datastr = "stddev";
+            retobj['device'] = 'signpost_rf_spectrum_stddev';
         }
-        var retobj = {};
-        retobj['device'] = 'signpost_rf_spectrum';
         for (var i = 0; i < 80; i++) {
             var lowend = 470+i*6;
             var highend = 470+6+i*6;
