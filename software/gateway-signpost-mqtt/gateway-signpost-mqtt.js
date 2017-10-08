@@ -12,7 +12,7 @@ var mqtt          = require('mqtt');
 
 
 function parse (topic, buf) {
-    
+
     message_type = buf.readUInt8(0);
 
     if (topic == 'signpost/lab11/energy') {
@@ -91,7 +91,7 @@ function parse (topic, buf) {
                     module7_energy_remaining_mWh: energy_module7,
                 }
             }
-        }   
+        }
     } else if (topic == 'signpost/lab11/gps') {
         // GPS
         var day = buf.readUInt8(1);
@@ -110,7 +110,7 @@ function parse (topic, buf) {
         } else {
           year += 2000;
         }
-        
+
         var latitude_direction = 'N';
         if (latitude < 0) {
           latitude *= -1;
@@ -349,9 +349,25 @@ function parse (topic, buf) {
                 }
             }
 
-            queue_size = buf.readUInt8(1+j*2);
+            var eventual_index = j*2 + 2
+            var num_stored = buf.readUInt8(k);
+            var lognames = [];
+            var remainings = [];
+            j = 0;
+            for(; j < num_stored; j++) {
+              var log_remaining = buf.readUInt16BE(eventual_index);
+              eventual_index += 2;
+              var logname_len = buf.readUInt8(eventual_index);
+              eventual_index += 1;
+              var logname = buf.toString('utf8', eventual_index, eventual_index + logname_len);
+              eventual_index += logname_len;
+              lognames.push(logname);
+              remainings.push(log_remaining);
+            }
 
-            return {
+            queue_size = buf.readUInt8(eventual_index);
+
+            json = {
                 device: 'signpost_radio',
                 packets_sent: {
                     "controller": controller,
@@ -365,6 +381,12 @@ function parse (topic, buf) {
                 packets_delayed_for_muling: {},
                 "radio_queue_length": queue_size,
             }
+            j = 0;
+            for(; j < lognames.length; j++) {
+                json.packets_delayed_for_muling[logname[i]] = remainings[i];
+            }
+            console.log(json);
+            return json;
         }
     } else if (topic == 'signpost/lab11/spectrum') {
         var datastr = "";
@@ -409,8 +431,8 @@ mqtt_client.on('connect', function () {
                             pkt[i]['_meta'] = {};
                         }
 
-                        pkt[i]['_meta'].device_id = json.device_id; 
-                        pkt[i]['_meta'].gateway_id = 'signpost'; 
+                        pkt[i]['_meta'].device_id = json.device_id;
+                        pkt[i]['_meta'].gateway_id = 'signpost';
 
                         if(typeof(pkt[i]['_meta'].received_time) == 'undefined') {
                             pkt[i]['_meta'].received_time = json.received_time;
@@ -419,7 +441,7 @@ mqtt_client.on('connect', function () {
                         pkt[i]['_meta'].receiver = json.receiver;
                         pkt[i]['_meta'].geohash = json.geohash;
                         pkt[i]['_meta'].sequence_number = json.sequence_number;
-                                                                                                       
+
                         mqtt_client.publish('gateway-data', JSON.stringify(pkt[i]));
                         mqtt_client.publish('signpost/processed', JSON.stringify(pkt[i]));
                     }
@@ -427,8 +449,8 @@ mqtt_client.on('connect', function () {
                     if(typeof(pkt['_meta']) == 'undefined') {
                         pkt['_meta'] = {};
                     }
-                    pkt['_meta'].device_id = json.device_id; 
-                    pkt['_meta'].gateway_id = 'signpost'; 
+                    pkt['_meta'].device_id = json.device_id;
+                    pkt['_meta'].gateway_id = 'signpost';
 
                     if(typeof(pkt['_meta'].received_time) == 'undefined') {
                         pkt['_meta'].received_time = json.received_time;
@@ -437,7 +459,7 @@ mqtt_client.on('connect', function () {
                     pkt['_meta'].receiver = json.receiver;
                     pkt['_meta'].geohash = json.geohash;
                     pkt['_meta'].sequence_number = json.sequence_number;
-                                                                                                   
+
                     mqtt_client.publish('gateway-data', JSON.stringify(pkt));
                     mqtt_client.publish('signpost/processed', JSON.stringify(pkt));
                 }
