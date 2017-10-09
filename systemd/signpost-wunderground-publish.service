@@ -1,0 +1,13 @@
+[Unit]
+Description=signpost-wunderground-publish
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/signpost-wunderground-publish/signpost-wunderground-publish.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=signpost-wunderground-publish
+
+[Install]
+WantedBy=multi-user.target
