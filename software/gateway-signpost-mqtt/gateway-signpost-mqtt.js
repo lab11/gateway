@@ -156,7 +156,6 @@ function parse (topic, buf) {
             var chan25 = buf.readInt8(15);
             var chan26 = buf.readInt8(16);
 
-            console.log(buf);
             if (chan11 >= 0 ||
                 chan12 >= 0 ||
                 chan13 >= 0 ||
@@ -349,8 +348,63 @@ function parse (topic, buf) {
                 }
             }
 
+            queue_size = buf.readUInt8(1+j*2);
+
+            return {
+                device: 'signpost_radio',
+                packets_sent: {
+                    "controller": controller,
+                    "rf_spectrum": rf,
+                    "ambient_sensing": ambient,
+                    "audio_spectrum": audio,
+                    "microwave_radar": microwave,
+                    "ucsd_air_quality": ucsd,
+                    "radio_status": radio,
+                },
+                packets_delayed_for_muling: {},
+                "radio_queue_length": queue_size,
+            }
+        }
+        else if (message_type == 0x02) {
+            var controller = 0;
+            var audio = 0;
+            var microwave = 0;
+            var rf = 0;
+            var ambient = 0;
+            var radio = 0;
+            var ucsd = 0;
+
+            var num_mods = buf.readUInt8(1);
+            j = 0;
+            for(; j < num_mods; j++) {
+                switch(buf.readUInt8(1+j*2)) {
+                    case 0x20:
+                        controller = buf.readUInt8(1+j*2+1);
+                    break;
+                    case 0x22:
+                        radio = buf.readUInt8(1+j*2+1);
+                    break;
+                    case 0x32:
+                        ambient = buf.readUInt8(1+j*2+1);
+                    break;
+                    case 0x33:
+                        audio = buf.readUInt8(1+j*2+1);
+                    break;
+                    case 0x34:
+                        microwave = buf.readUInt8(1+j*2+1);
+                    break;
+                    case 0x34:
+                        ucsd = buf.readUInt8(1+j*2+1);
+                    break;
+                    case 0x36:
+                        rf = buf.readUInt8(1+j*2+1);
+                    break;
+                }
+            }
+
             var eventual_index = j*2 + 2
-            var num_stored = buf.readUInt8(k);
+            var num_stored = buf.readUInt8(eventual_index);
+            eventual_index += 1;
             var lognames = [];
             var remainings = [];
             j = 0;
@@ -364,7 +418,6 @@ function parse (topic, buf) {
               lognames.push(logname);
               remainings.push(log_remaining);
             }
-
             queue_size = buf.readUInt8(eventual_index);
 
             json = {
@@ -383,9 +436,8 @@ function parse (topic, buf) {
             }
             j = 0;
             for(; j < lognames.length; j++) {
-                json.packets_delayed_for_muling[logname[i]] = remainings[i];
+                json.packets_delayed_for_muling[lognames[j]] = remainings[j];
             }
-            console.log(json);
             return json;
         }
     } else if (topic == 'signpost/lab11/spectrum') {
@@ -422,9 +474,10 @@ mqtt_client.on('connect', function () {
         try {
             if(json.data) {
                 buf = Buffer.from(json.data);
+                console.log("Got " + topic + " packet from " + json.device_id);
                 console.log(buf.toString('hex'));
                 var pkt = parse(topic,buf);
-
+                console.log("packet: \n%j", pkt);
                 if(Array.isArray(pkt)) {
                     for(var i = 0; i < pkt.length; i++) {
                         if(typeof(pkt[i]['_meta']) == 'undefined') {
