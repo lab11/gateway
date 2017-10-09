@@ -86,6 +86,7 @@ mqtt_client.on('connect', function () {
             });
         } else {
             console.log('ERR: No weather station for ' + mac);
+            console.log('     Geohash is ' + packet._meta.geohash);
         }
     });
 });
