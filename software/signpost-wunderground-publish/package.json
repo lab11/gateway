@@ -1,0 +1,15 @@
+{
+  "name": "signpost-wunderground-publish",
+  "version": "1.0.0",
+  "description": "Push Signpost data to Wunderground",
+  "main": "signpost-wunderground-publish.js",
+  "dependencies": {
+    "wunderground-pws": "^1.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pat Pannuto",
+  "license": "ISC"
+}
