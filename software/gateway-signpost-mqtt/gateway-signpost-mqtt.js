@@ -475,9 +475,9 @@ mqtt_client.on('connect', function () {
             if(json.data) {
                 buf = Buffer.from(json.data);
                 console.log("Got " + topic + " packet from " + json.device_id);
-                console.log(buf.toString('hex'));
+                //console.log(buf.toString('hex'));
                 var pkt = parse(topic,buf);
-                console.log("packet: \n%j", pkt);
+                //console.log("packet: \n%j", pkt);
                 if(Array.isArray(pkt)) {
                     for(var i = 0; i < pkt.length; i++) {
                         if(typeof(pkt[i]['_meta']) == 'undefined') {
