@@ -277,7 +277,10 @@ function parse (topic, buf) {
                 }
 
                 values.push(freq);
-            } else if (message_type == 0x03) {
+            }
+
+            return values;
+        } else if (message_type == 0x03) {
             //read unix time
             var utime = buf.readUInt32BE(1);
             values = [];
@@ -310,6 +313,7 @@ function parse (topic, buf) {
 
             return values;
         }
+
     } else if (topic == 'signpost/lab11/radar') {
         if (message_type == 0x01) {
             var motion = buf.readInt8(1) > 0;
