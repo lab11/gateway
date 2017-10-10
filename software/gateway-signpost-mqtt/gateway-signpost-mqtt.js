@@ -277,6 +277,35 @@ function parse (topic, buf) {
                 }
 
                 values.push(freq);
+            } else if (message_type == 0x03) {
+            //read unix time
+            var utime = buf.readUInt32BE(1);
+            values = [];
+            var i = 0;
+            for(; i < 10; i++) {
+                var date = new Date((utime+i)*1000).toISOString();
+                var f_63_hz = buf.readUInt8(4+i*7+1)/10 + 50
+                var f_160_hz = buf.readUInt8(4+i*7+2)/10 + 50
+                var f_400_hz = buf.readUInt8(4+i*7+3)/10 + 50
+                var f_1000_hz = buf.readUInt8(4+i*7+4)/10 + 50
+                var f_2500_hz = buf.readUInt8(4+i*7+5)/10 + 50
+                var f_6250_hz = buf.readUInt8(4+i*7+6)/10 + 50
+                var f_16000_hz = buf.readUInt8(4+i*7+7)/10 + 50
+                freq = {
+                    device: 'signpost_audio_frequency',
+                     "63Hz": f_63_hz,
+                    '160Hz': f_160_hz,
+                    '400Hz': f_400_hz,
+                    '1000Hz': f_1000_hz,
+                    '2500Hz': f_2500_hz,
+                    '6250Hz': f_6250_hz,
+                    '16000Hz': f_16000_hz,
+                    '_meta': {
+                        'received_time': date,
+                    }
+                }
+
+                values.push(freq);
             }
 
             return values;
