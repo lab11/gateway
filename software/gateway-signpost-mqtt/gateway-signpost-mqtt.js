@@ -326,7 +326,7 @@ function parse (topic, buf) {
                 'velocity_m/s': speed,
                 'motion_confidence': motion_confidence,
             }
-        } if (message_type == 0x02) {
+        } else if (message_type == 0x02) {
             var utime = buf.readUInt32BE(1);
             values = [];
             var i = 0;
