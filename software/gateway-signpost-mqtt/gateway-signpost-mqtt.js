@@ -326,6 +326,25 @@ function parse (topic, buf) {
                 'velocity_m/s': speed,
                 'motion_confidence': motion_confidence,
             }
+        } if (message_type == 0x02) {
+            var utime = buf.readUInt32BE(1);
+            values = [];
+            var i = 0;
+            for(; i < 10; i++) {
+                var date = new Date((utime+i)*1000).toISOString();
+                var motion = buf.readUInt32(5+i*4)
+                freq = {
+                    device: 'signpost_microwave_radarv2',
+                     "motion_index": motion,
+                    '_meta': {
+                        'received_time': date,
+                    }
+                }
+
+                values.push(freq);
+            }
+
+            return values;
         }
     } else if (topic == 'signpost/lab11/aqm') {
         if (message_type == 0x01) {
