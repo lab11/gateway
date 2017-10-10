@@ -196,7 +196,7 @@ function parse (topic, buf) {
                 channel_26: chan26,
             }
         }
-    } else if (topic == 'signpost/lab11/ambient') {
+    } else if (topic == 'signpost/lab11/ambient' || topic == 'signpost/ambient') {
         if (message_type == 0x01) {
                         var temp = buf.readInt16BE(1) / 100.0;
             var humi = buf.readInt16BE(3) / 100.0;
@@ -519,6 +519,7 @@ var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client.on('connect', function () {
     // Subscribe to all packets
     mqtt_client.subscribe('signpost/lab11/#');
+    mqtt_client.subscribe('signpost/#');
 
     // Callback for each packet
     mqtt_client.on('message', function (topic, message) {
