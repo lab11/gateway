@@ -26,20 +26,25 @@ function parse (buf) {
     for (var i=0; i<6; i++) {
         addr += pad(buf[i].toString(16), 2);
     }
-    
+
     var sequence_number = buf.readUInt8(6);
-    
+
+    //console.log("addr: " + addr.toString("hex"));
     var done = false;
     var index = 7;
     var pcount = 0;
     var ret = {};
     while(done == false) {
         var total_len = buf.readUInt16BE(index);
+        if (total_len == 0) {
+            break;
+        }
+        //console.log('total len: ' + total_len);
         index += 2;
         var start_index = index;
         var tlen = buf.readUInt8(index);
         if(tlen + 2 > total_len) {
-            console.log("Length parsing error - continueing");
+            console.log("Topic length parsing error - continuing");
             index = start_index + total_len;
             continue;
         }
@@ -47,10 +52,11 @@ function parse (buf) {
         //console.log("Topic length is: " + tlen);
         index += 1;
         var topic = buf.toString('utf-8',index, index+tlen);
+        //console.log("topic: " + topic.toString("utf8"));
         index += tlen;
         var dlen = buf.readUInt8(index);
         if(tlen + dlen + 2 > total_len) {
-            console.log("Length parsing error - continueing");
+            console.log("Data length parsing error - continuing");
             index = start_index + total_len;
             continue;
         }
@@ -61,22 +67,22 @@ function parse (buf) {
         index += dlen;
         pcount += 1;
         ret[pcount.toString()] = {};
-        ret[pcount.toString()].topic = topic; 
+        ret[pcount.toString()].topic = topic;
         ret[pcount.toString()].topublish = {};
-        ret[pcount.toString()].topublish.data = data; 
-        ret[pcount.toString()].topublish.receiver  = 'http'; 
+        ret[pcount.toString()].topublish.data = data;
+        ret[pcount.toString()].topublish.receiver  = 'http';
         ret[pcount.toString()].topublish.received_time = new Date().toISOString();
         ret[pcount.toString()].topublish.device_id = addr;
         ret[pcount.toString()].topublish.sequence_number = sequence_number;
 
         if(buf.length <= index) {
-            //console.log("Done parsing " + pcount + " packets");
+            console.log("Done parsing " + pcount + " packets");
             done = true;
         }
     }
 
     return ret;
-}    
+}
 
 
 var _app = express();
@@ -90,6 +96,7 @@ var mqtt_client_outgoing = mqtt.connect('mqtt://localhost');
 _app.post('/signpost', function(req, res) {
     // Callback for each packet
     buf = req.body;
+
     console.log(buf.toString('hex'));
     if(buf.length > 6) {
         var pkt = parse(buf);
