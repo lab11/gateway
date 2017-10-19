@@ -8,7 +8,7 @@ Dependencies
 
 Need `mkenvimage` to prepare environment variables for u-boot.
 
-    apt get install u-boot-tools dfu-util
+    sudo apt install u-boot-tools dfu-util
 
 There are probably more that need to be added here that I have forgotten about.
 Please add them if you have issues.
