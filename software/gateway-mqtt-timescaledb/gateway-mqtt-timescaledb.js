@@ -5,10 +5,12 @@ Takes the stream of packets from the BLE gateway and publishes them to
 timescaledb.
 */
 
-var argv         = require('minimist')(process.argv.slice(2));
-var fs           = require('fs');
-var ini          = require('ini');
-var mqtt         = require('mqtt');
+var argv        = require('minimist')(process.argv.slice(2));
+var fs          = require('fs');
+var ini         = require('ini');
+var mqtt        = require('mqtt');
+const { Pool }  = require('pg');
+var flatten     = require('flat');
 
 // Main data MQTT topic
 var TOPIC_MAIN_STREAM = 'gateway-data';
@@ -30,10 +32,7 @@ try {
 
 
 // Add some reasonable defaults where needed
-if (! ('port'     in config) ) config.port     = 8086;
-if (! ('protocol' in config) ) config.protocol = 'http';
-if (! ('prefix'   in config) ) config.prefix   = '';
-
+if (! ('port'     in config) ) config.port     = 5432;
 
 // Let the command line override conf file settings
 if ('host'     in argv) config.host     = argv.host;
@@ -41,6 +40,15 @@ if ('port'     in argv) config.port     = argv.port;
 if ('database' in argv) config.database = argv.database;
 if ('username' in argv) config.username = argv.username;
 if ('password' in argv) config.password = argv.password;
+
+const pg_pool = new  Pool( {
+    user: config.username,
+    host: config.host,
+    database: config.database,
+    password: config.password,
+    port: config.port,
+    max: 20,
+})
 
 console.log("Using timescale at " + config.host +
         ":" + config.port + "  db=" + config.database)
@@ -135,6 +143,53 @@ function fix_measurement (field) {
 
 }
 
+function insert_data(table_obj);
+
+function create_table(table_obj) {
+    //how many rows is the table
+    var cols = "";
+    var i = 1;
+    for var key in table_obj {
+        string = string + " " (i*2).toString() + "$ " + (i*2+1).toString() + "$, ";
+        i = i + 1;
+    }
+
+    //I think this can be done better with postgres internal data converter!!
+    var names = [];
+    names.append(device);
+    for var key in table_obj {
+        names.append(key);
+        var meas = fix_measurment(table_obj[key]);
+        table_obj[key] = meas; 
+        switch(typeof meas) {
+        "string":
+            names.append('TEXT');
+        break;
+        "boolean":
+            names.append('BOOLEAN');
+        break;
+        "number":
+            names.append('DOUBLE PRECISION);
+        break;
+        }
+    }
+
+    pg_pool.query("CREATE TABLE $1 (" + 
+        "TIME TIMESTAMPTZ NOT NULL, " + cols + ")",names, (err, res) => {
+        if(err) {
+            console.log(err)
+        } else {
+            //make it a hyptertable!
+            pg_pool.query("SELECT create_hypertable('$1','time')",device, (err, res) => {
+                if(err) {
+                    console.log(err)
+                } else {
+                    insert_data(table_obj);
+                }
+            });
+        }
+    });
+}
 
 var mqtt_client;
 function mqtt_on_connect() {
@@ -149,68 +204,58 @@ function mqtt_on_connect() {
             // message is Buffer
             var adv_obj = JSON.parse(message.toString());
 
-            // Get device id
-            var device_id = undefined;
-            if ('_meta' in adv_obj) {
-                device_id = adv_obj._meta.device_id;
-            } else if ('id' in adv_obj) {
-                device_id = adv_obj.id;
-            }
-
+            // Get device - This is going to be our table name
+            var device = undefined;
+            if ('device' in adv_obj) {
+                device = adv_obj.device
+            } 
             // Make sure the device id is only alpha numerical characters
-            device_id.replace(/\W/g, '');
+            device.replace(/\W/g, '');
 
-            var device_class = adv_obj['device'];
-            delete adv_obj.device;
-
+            //Get the timestamp - this is special because we are parititioning
+            //over it
             var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
 
             // Continue on to post to timescaledb
-            if (device_id) {
+            if (device) {
 
-                // Add all keys that are in the _meta field to the
-                // tags section of the stored packet.
-                var tags = {};
-                for (var key in adv_obj['_meta']) {
-                    if (key != 'device_id' && key != 'received_time') {
-                        tags[key] = adv_obj['_meta'][key];
-                    }
+                // Delete device and timestamp
+                delete adv_obj.device;
+                delete adv_obj._meta.received_time
+
+                //Flatten the JSON object we go got the table, then remove
+                //all the depth strings
+                flatten(adv_obj);
+                table_obj = {};
+                for(var key in adv_obj) {
+                    table_obj[key.split(".")[0]] = adv_obj[key];
                 }
 
-                tags.device_id = device_id;
-                tags.device_class = device_class;
-
-                // Delete meta key and possible id key
-                delete adv_obj._meta;
-                delete adv_obj.id;
-
                 // Only publish if there is some data
-                if (Object.keys(adv_obj).length > 0) {
-                    for (var key in adv_obj) {
-                        var fields = fix_measurement(adv_obj[key]);
-
-                        var point = [
-                            key,
-                            tags,
-                            fields,
-                            timestamp
-                        ];
-
-                        //is there a table that exists for this device?
-                        // - if not create one
-                        // - don't forget to make it a hyptertable!
-
-                        //there is a table that exists
-                        // - do we have more values than columns?
-                        //  - add a column
-                        // - no?
-                        //  - insert row
-                    }
+                if (Object.keys(table_obj).length > 0) {
+                    //is there a table that exists for this device?
+                    console.log("Checking for table!");
+                    pg_pool.query("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = $1)",[device], (err, res) => {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            console.log(result.rows);
+                            if(result.rows[0] == 'false') {
+                                //create one
+                                create_table(table_obj);
+                            } else {
+                                //it exists- post the data
+                                insert_data(table_obj);
+                            }
+                        }
+                    });
                 }
             }
         }
     });
 };
+
+
 
 
 if ('remote' in argv) {
