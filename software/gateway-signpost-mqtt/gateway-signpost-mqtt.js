@@ -332,7 +332,7 @@ function parse (topic, buf) {
             var i = 0;
             for(; i < 20; i++) {
                 var date = new Date((utime+i)*1000).toISOString();
-                var motion = buf.readUInt8(5+i)
+                var motion = buf.readUInt8(5+i);
                 freq = {
                     device: 'signpost_microwave_radar',
                      "motion_index": motion,
