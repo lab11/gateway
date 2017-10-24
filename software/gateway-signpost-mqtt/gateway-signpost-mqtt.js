@@ -330,7 +330,7 @@ function parse (topic, buf) {
             var utime = buf.readUInt32BE(1);
             values = [];
             var i = 0;
-            for(; i < 10; i++) {
+            for(; i < 20; i++) {
                 var date = new Date((utime+i)*1000).toISOString();
                 var motion = buf.readUInt32(5+i*4)
                 freq = {
