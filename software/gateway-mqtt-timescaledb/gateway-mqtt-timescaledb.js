@@ -143,9 +143,11 @@ function fix_measurement (field) {
 
 }
 
-function insert_data(table_obj);
+function insert_data(device, timestamp, table_obj) {
+    console.log("Insterting the data now!");
+}
 
-function create_table(table_obj) {
+function create_table(device, timestamp, table_obj) {
     //how many rows is the table
     var cols = "";
     var i = 1;
@@ -173,7 +175,14 @@ function create_table(table_obj) {
         break;
         }
     }
+     
+    console.log("vars string");
+    console.log(cols);
 
+    console.log("Name and type string:");
+    console.log(names);
+    
+    console.log("Trying to create table!");
     pg_pool.query("CREATE TABLE $1 (" + 
         "TIME TIMESTAMPTZ NOT NULL, " + cols + ")",names, (err, res) => {
         if(err) {
@@ -184,7 +193,7 @@ function create_table(table_obj) {
                 if(err) {
                     console.log(err)
                 } else {
-                    insert_data(table_obj);
+                    insert_data(device, timestampe, table_obj);
                 }
             });
         }
@@ -242,10 +251,10 @@ function mqtt_on_connect() {
                             console.log(result.rows);
                             if(result.rows[0] == 'false') {
                                 //create one
-                                create_table(table_obj);
+                                create_table(device, table_obj);
                             } else {
                                 //it exists- post the data
-                                insert_data(table_obj);
+                                insert_data(device, table_obj);
                             }
                         }
                     });
