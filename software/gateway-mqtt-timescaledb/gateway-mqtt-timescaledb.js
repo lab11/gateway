@@ -151,27 +151,27 @@ function create_table(device, timestamp, table_obj) {
     //how many rows is the table
     var cols = "";
     var i = 1;
-    for var key in table_obj {
-        string = string + " " (i*2).toString() + "$ " + (i*2+1).toString() + "$, ";
+    for (var key in table_obj) {
+        cols = cols + " " (i*2).toString() + "$ " + (i*2+1).toString() + "$, ";
         i = i + 1;
     }
 
     //I think this can be done better with postgres internal data converter!!
     var names = [];
-    names.append(device);
-    for var key in table_obj {
-        names.append(key);
+    names.push(device);
+    for (var key in table_obj) {
+        names.push(key);
         var meas = fix_measurment(table_obj[key]);
         table_obj[key] = meas; 
         switch(typeof meas) {
-        "string":
-            names.append('TEXT');
+        case "string":
+            names.push('TEXT');
         break;
-        "boolean":
-            names.append('BOOLEAN');
+        case "boolean":
+            names.push('BOOLEAN');
         break;
-        "number":
-            names.append('DOUBLE PRECISION);
+        case "number":
+            names.push('DOUBLE PRECISION');
         break;
         }
     }
@@ -205,7 +205,6 @@ function mqtt_on_connect() {
     console.log('Connected to MQTT ' + mqtt_client.options.href);
 
     mqtt_client.subscribe(TOPIC_MAIN_STREAM);
-    mqtt_client.subscribe(TOPIC_OCCUPANCY_STREAM);
 
     // Called when we get a packet from MQTT
     mqtt_client.on('message', function (topic, message) {
@@ -234,11 +233,13 @@ function mqtt_on_connect() {
 
                 //Flatten the JSON object we go got the table, then remove
                 //all the depth strings
-                flatten(adv_obj);
+                adv_copy = flatten(adv_obj);
                 table_obj = {};
-                for(var key in adv_obj) {
-                    table_obj[key.split(".")[0]] = adv_obj[key];
+                for(var key in adv_copy) {
+                    table_obj[key.split(".")[1]] = adv_copy[key];
                 }
+                console.log(adv_obj);
+                console.log(table_obj);
 
                 // Only publish if there is some data
                 if (Object.keys(table_obj).length > 0) {
@@ -248,13 +249,14 @@ function mqtt_on_connect() {
                         if (err) {
                             console.log(err);
                         } else {
-                            console.log(result.rows);
-                            if(result.rows[0] == 'false') {
+                            console.log(res.rows[0].exists);
+                            if(res.rows[0].exists == false) {
                                 //create one
-                                create_table(device, table_obj);
+                                console.log('Calling create table');
+                                create_table(device, timestamp, table_obj);
                             } else {
                                 //it exists- post the data
-                                insert_data(device, table_obj);
+                                insert_data(device, timestamp, table_obj);
                             }
                         }
                     });

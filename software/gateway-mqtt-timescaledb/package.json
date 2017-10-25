@@ -4,6 +4,8 @@
   "description": "Forward gateway MQTT streams to timescaledb instance",
   "main": "gateway-mqtt-timescaledb.js",
   "dependencies": {
+    "flat": "^4.0.0",
+    "pg": "^7.3.0",
     "ini": "^1.3.4",
     "mqtt": "^1.11.0",
     "util": "^0.10.3"
@@ -13,8 +15,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "flat",
-    "pg",
     "MQTT",
     "timescaledb",
     "lab11",
