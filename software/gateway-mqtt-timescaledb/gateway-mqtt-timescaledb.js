@@ -174,7 +174,7 @@ function insert_data(device, timestamp, table_obj) {
         } else {
             console.log('posted successfully!');
         }
-    }
+    });
 }
 
 function create_table(device, timestamp, table_obj) {
@@ -249,7 +249,7 @@ function mqtt_on_connect() {
 
             //Get the timestamp - this is special because we are parititioning
             //over it
-            var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
+            var timestamp  = new Date(adv_obj['_meta']['received_time']).toISOString();
 
             // Continue on to post to timescaledb
             if (device) {
