@@ -10,6 +10,7 @@ var fs          = require('fs');
 var ini         = require('ini');
 var mqtt        = require('mqtt');
 const { Pool }  = require('pg');
+var format      = require('pg-format');
 var flatten     = require('flat');
 
 // Main data MQTT topic
@@ -150,10 +151,8 @@ function insert_data(device, timestamp, table_obj) {
 function create_table(device, timestamp, table_obj) {
     //how many rows is the table
     var cols = "";
-    var i = 1;
     for (var key in table_obj) {
-        cols = cols + " " (i*2).toString() + "$ " + (i*2+1).toString() + "$, ";
-        i = i + 1;
+        cols = cols + ", %I %s";
     }
 
     //I think this can be done better with postgres internal data converter!!
@@ -161,8 +160,8 @@ function create_table(device, timestamp, table_obj) {
     names.push(device);
     for (var key in table_obj) {
         names.push(key);
-        var meas = fix_measurment(table_obj[key]);
-        table_obj[key] = meas; 
+        var meas = fix_measurement(table_obj[key]);
+        switch(typeof table_obj[key])
         switch(typeof meas) {
         case "string":
             names.push('TEXT');
@@ -176,24 +175,24 @@ function create_table(device, timestamp, table_obj) {
         }
     }
      
-    console.log("vars string");
-    console.log(cols);
-
-    console.log("Name and type string:");
-    console.log(names);
-    
     console.log("Trying to create table!");
-    pg_pool.query("CREATE TABLE $1 (" + 
-        "TIME TIMESTAMPTZ NOT NULL, " + cols + ")",names, (err, res) => {
+    //These are dynamic queries!!!
+    //Which means the are prone to sql injection attacks
+    //Postgres supports 'format' execution statements to prevent against this
+    //but I can't get that to work, so I'm going to run it client-side
+    //Therefore we are as safe as the node-pg-format library
+    var qstring = format.withArray('CREATE TABLE %I (TIME TIMESTAMPTZ NOT NULL' + cols + ')',names);
+    console.log(qstring);
+    pg_pool.query(qstring, [], (err, res) => {
         if(err) {
             console.log(err)
         } else {
             //make it a hyptertable!
-            pg_pool.query("SELECT create_hypertable('$1','time')",device, (err, res) => {
+            pg_pool.query("SELECT create_hypertable($1,'time')",[device], (err, res) => {
                 if(err) {
                     console.log(err)
                 } else {
-                    insert_data(device, timestampe, table_obj);
+                    insert_data(device, timestamp, table_obj);
                 }
             });
         }
@@ -236,10 +235,10 @@ function mqtt_on_connect() {
                 adv_copy = flatten(adv_obj);
                 table_obj = {};
                 for(var key in adv_copy) {
-                    table_obj[key.split(".")[1]] = adv_copy[key];
+                    if(typeof adv_copy[key] != 'object') {
+                        table_obj[key.split(".")[key.split(".").length -1]] = adv_copy[key];
+                    }
                 }
-                console.log(adv_obj);
-                console.log(table_obj);
 
                 // Only publish if there is some data
                 if (Object.keys(table_obj).length > 0) {
