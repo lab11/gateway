@@ -166,11 +166,42 @@ function insert_data(device, timestamp, table_obj) {
         values.push(meas);
     }
 
-    qstring = format.withArray("INSERT INTO %I (TIME" + cols + ") VALUES ($1" + vals + ")",names);
+    var qstring = format.withArray("INSERT INTO %I (TIME" + cols + ") VALUES ($1" + vals + ")",names);
     //console.log(qstring); 
     pg_pool.query(qstring, values, (err, res) => {
         if(err) {
             console.log(err)
+            //was this error due to adding a field?
+            /*if(err.code == 42703) {
+                //we can pull the erroneous column out of the err code
+                var column_name = err.error.split("\"")[1];
+                var params = [];
+                params.push(device);
+                params.push(column_name);
+
+                switch(typeof table_obj[column_name]) {
+                case "string":
+                    params.push('TEXT');
+                break;
+                case "boolean":
+                    params.push('BOOLEAN');
+                break;
+                case "number":
+                    params.push('DOUBLE PRECISION');
+                break;
+                }
+
+                //then add the column to the table
+                var astring = format.withArray("ALTER TABLE %I ADD COLUMN %I %s",params);
+                pg_pool.query(astring, (err, res) => {
+                    if(err) {
+                        console.log("Failed to alter table");
+                    } else {
+                        console.log("Trying insert again");
+                        insert_data(device, timestampt, table_obj);
+                    }
+                }
+            }*/
         } else {
             console.log('posted successfully!');
         }
