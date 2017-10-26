@@ -160,8 +160,7 @@ function create_table(device, timestamp, table_obj) {
     names.push(device);
     for (var key in table_obj) {
         names.push(key);
-        var meas = fix_measurement(table_obj[key]);
-        switch(typeof table_obj[key])
+        var meas = fix_measurement(table_obj[key])['value'];
         switch(typeof meas) {
         case "string":
             names.push('TEXT');
