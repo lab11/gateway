@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish Gateway Advertisements to Timescaledb
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/gateway-mqtt-timescaledb/gateway-mqtt-timescaledb.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-mqtt-timescaledb
+
+[Install]
+WantedBy=multi-user.target
