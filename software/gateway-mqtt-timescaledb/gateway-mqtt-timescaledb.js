@@ -145,7 +145,7 @@ function fix_measurement (field) {
 }
 
 function insert_data(device, timestamp, table_obj) {
-    console.log("Insterting the data now!");
+    //console.log("Insterting the data now!");
 
     var cols = "";
     var vals = "";
@@ -167,7 +167,7 @@ function insert_data(device, timestamp, table_obj) {
     }
 
     qstring = format.withArray("INSERT INTO %I (TIME" + cols + ") VALUES ($1" + vals + ")",names);
-    console.log(qstring); 
+    //console.log(qstring); 
     pg_pool.query(qstring, values, (err, res) => {
         if(err) {
             console.log(err)
@@ -210,7 +210,7 @@ function create_table(device, timestamp, table_obj) {
     //but I can't get that to work, so I'm going to run it client-side
     //Therefore we are as safe as the node-pg-format library
     var qstring = format.withArray('CREATE TABLE %I (TIME TIMESTAMPTZ NOT NULL' + cols + ')',names);
-    console.log(qstring);
+    //console.log(qstring);
     pg_pool.query(qstring, [], (err, res) => {
         if(err) {
             console.log(err)
@@ -220,6 +220,7 @@ function create_table(device, timestamp, table_obj) {
                 if(err) {
                     console.log(err)
                 } else {
+                    console.log("Created successfully!");
                     insert_data(device, timestamp, table_obj);
                 }
             });
@@ -261,7 +262,7 @@ function mqtt_on_connect() {
                 //Flatten the JSON object we go got the table, then remove
                 //all the depth strings
                 adv_copy = flatten(adv_obj);
-                table_obj = {};
+                var table_obj = {};
                 for(var key in adv_copy) {
                     if(typeof adv_copy[key] != 'object') {
                         table_obj[key.split(".")[key.split(".").length -1]] = adv_copy[key];
@@ -269,17 +270,18 @@ function mqtt_on_connect() {
                 }
 
                 // Only publish if there is some data
+                console.log("Attempting to push to timescale");
                 if (Object.keys(table_obj).length > 0) {
                     //is there a table that exists for this device?
-                    console.log("Checking for table!");
+                    //console.log("Checking for table!");
                     pg_pool.query("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = $1)",[device], (err, res) => {
                         if (err) {
                             console.log(err);
                         } else {
-                            console.log(res.rows[0].exists);
+                            //console.log(res.rows[0].exists);
                             if(res.rows[0].exists == false) {
                                 //create one
-                                console.log('Calling create table');
+                                //console.log('Calling create table');
                                 create_table(device, timestamp, table_obj);
                             } else {
                                 //it exists- post the data
