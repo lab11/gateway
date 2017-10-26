@@ -146,6 +146,35 @@ function fix_measurement (field) {
 
 function insert_data(device, timestamp, table_obj) {
     console.log("Insterting the data now!");
+
+    var cols = "";
+    var vals = "";
+    var i = 2;
+    for (var key in table_obj) {
+        cols = cols + ", %I";
+        vals = vals + ", $" + i.toString();
+        i = i + 1
+    }
+
+    var names = [];
+    var values = [];
+    names.push(device);
+    values.push(timestamp);
+    for (var key in table_obj) {
+        names.push(key);
+        var meas = fix_measurement(table_obj[key])['value'];
+        values.push(meas);
+    }
+
+    qstring = format.withArray("INSERT INTO %I (TIME" + cols + ") VALUES ($1" + vals + ")",names);
+    console.log(qstring); 
+    pg_pool.query(qstring, values, (err, res) => {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log('posted successfully!');
+        }
+    }
 }
 
 function create_table(device, timestamp, table_obj) {
