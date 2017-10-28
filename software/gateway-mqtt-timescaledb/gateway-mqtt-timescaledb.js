@@ -49,6 +49,7 @@ const pg_pool = new  Pool( {
     password: config.password,
     port: config.port,
     max: 20,
+    ssl: true,
 })
 
 console.log("Using timescale at " + config.host +
