@@ -4,6 +4,7 @@
 var fs   = require('fs');
 
 // var async     = require('async');
+var enocean    = require('node-enocean')();
 var gatewayId  = require('lab11-gateway-id');
 var mqtt       = require('mqtt');
 var serialport = require('serialport');
@@ -12,7 +13,7 @@ var watchout   = require('watchout');
 
 // var GatewayTopics = require('gateway-topics');
 
-var enocean = require( "node-enocean" )();  // require node-enocen
+
 
 var MQTT_TOPIC_NAME = 'gateway-data';
 
@@ -25,12 +26,14 @@ serialport.list(function (err, ports) {
   } else {
     ports.forEach(function (port) {
       if (port.pnpId && port.pnpId.indexOf('EnOcean') != -1) {
+        console.log('Using serial port ' + port.comName);
         gatewayId.id(function (addr) {
           _gateway_id = addr;
 
-          _mqtt_client = mqtt.connect('mqtt://c098e5c00007.device.lab11.eecs.umich.edu');
+          _mqtt_client = mqtt.connect('mqtt://localhost');
           _mqtt_client.on('connect', function () {
-            enocean.listen("/dev/ttyUSB1");
+            console.log('Connected to MQTT');
+            enocean.listen(port.comName);
           });
         });
       }
