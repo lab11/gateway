@@ -1,0 +1,26 @@
+{
+  "name": "enocean-generic-gateway",
+  "version": "0.1.0",
+  "description": "Capture Enocean packets.",
+  "main": "enocean-generic-gateway.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "dependencies": {
+    "lab11-gateway-id": "^0.1.1",
+    "mqtt": "^1.12.0",
+    "node-enocean": "^3.3.0",
+    "serialport": "^6.0.4",
+    "watchout": "0.0.5"
+  }
+}
