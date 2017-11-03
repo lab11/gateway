@@ -48,8 +48,8 @@ enocean.on("ready", function () {
   enocean.startLearning();
 });
 
-enocean.on("learned",function(data){
-	// console.log(data)
+enocean.on("learned", function (data) {
+	console.log('Learned about ' + data.eepType + '(' + data.id + ')');
 });
 
 enocean.on("known-data", function (data) {
