@@ -1,0 +1,15 @@
+[connection]
+id=wahoo
+uuid=d3dbba5f-d147-4a72-9ad3-7bc7e6858893
+type=wifi
+
+[wifi]
+ssid=wahoo
+mode=infrastructure
+
+[ipv6]
+method=auto
+
+[ipv4]
+method=auto
+
