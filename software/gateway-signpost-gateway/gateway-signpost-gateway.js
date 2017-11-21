@@ -12,6 +12,21 @@ var mqtt          = require('mqtt');
 var addr          = require('os').networkInterfaces();
 var Geohash       = require('latlon-geohash');
 
+// Read in the config file to get the parameters. If the parameters are not set
+// or the file does not exist, we exit this program.
+try {
+    var config_file = fs.readFileSync('/etc/swarm-gateway/signpost-admin.conf', 'utf-8');
+    var config = ini.parse(config_file);
+    if (config.username == undefined || config.username == '' ||
+        config.password == undefined || config.password == '') {
+        throw new Exception('no settings');
+    }
+} catch (e) {console.log(e)
+    console.log('Could not find /etc/swarm-gateway/signpost-admin.conf');
+    process.exit(1);
+}
+
+
 function get_hash (addr, lat, lon) {
     if(typeof get_hash.hashes == 'undefined') {
         get_hash.hashes = {};
@@ -118,6 +133,8 @@ function add_geohash (topic, buf) {
 }    
 
 var mqtt_client = mqtt.connect('mqtt://localhost');
+var mqtt_external = mqtt.connect('mqtt://localhost:8883',{username: config.username, password: config.password});
+
 mqtt_client.on('connect', function () {
     // Subscribe to all packets
     mqtt_client.subscribe('signpost-preproc/#');
@@ -127,7 +144,7 @@ mqtt_client.on('connect', function () {
         var json = JSON.parse(message.toString());
         try {
             var pkt = add_geohash(topic,json);
-            mqtt_client.publish('signpost/' + topic.slice(17), JSON.stringify(pkt));
+            mqtt_external.publish('signpost/' + pkt.device_id + topic.slice(17), JSON.stringify(pkt));
         } catch (e) {
             console.log(e)
         }

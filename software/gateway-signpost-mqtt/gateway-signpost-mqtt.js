@@ -10,12 +10,27 @@ var fs            = require('fs');
 var ini           = require('ini');
 var mqtt          = require('mqtt');
 
+// Read in the config file to get the parameters. If the parameters are not set
+// or the file does not exist, we exit this program.
+try {
+    var config_file = fs.readFileSync('/etc/swarm-gateway/signpost-lab11.conf', 'utf-8');
+    var config = ini.parse(config_file);
+    if (config.username == undefined || config.username == '' ||
+        config.password == undefined || config.password == '') {
+        throw new Exception('no settings');
+    }
+} catch (e) {console.log(e)
+    console.log('Could not find /etc/swarm-gateway/signpost-lab11.conf');
+    process.exit(1);
+}
+
+
 
 function parse (topic, buf) {
 
     message_type = buf.readUInt8(0);
 
-    if (topic == 'signpost/lab11/energy') {
+    if (topic.endsWith('lab11/energy')) {
         // Controller
         if (message_type == 0x01) {
             // Energy
@@ -92,7 +107,7 @@ function parse (topic, buf) {
                 }
             }
         }
-    } else if (topic == 'signpost/lab11/gps') {
+    } else if (topic.endsWith('lab11/gps')) {
         // GPS
         var day = buf.readUInt8(1);
         var month = buf.readUInt8(2);
@@ -137,7 +152,7 @@ function parse (topic, buf) {
             timestamp: utcDate.toISOString(),
             satellite_count: satellite_count,
         }
-    } else if (topic == 'signpost/lab11/2.4ghz_spectrum') {
+    } else if (topic.endsWith('lab11/2.4ghz_spectrum')) {
         if (message_type == 0x01) {
             var chan11 = buf.readInt8(1);
             var chan12 = buf.readInt8(2);
@@ -196,7 +211,7 @@ function parse (topic, buf) {
                 channel_26: chan26,
             }
         }
-    } else if (topic == 'signpost/lab11/ambient' || topic == 'signpost/ambient') {
+    } else if (topic.endsWith('lab11/ambient') || topic.endsWith('ambient')) {
         if (message_type == 0x01) {
                         var temp = buf.readInt16BE(1) / 100.0;
             var humi = buf.readInt16BE(3) / 100.0;
@@ -217,7 +232,7 @@ function parse (topic, buf) {
                 pressure_pascals: pres,
             }
         }
-    } else if (topic == 'signpost/lab11/audio') {
+    } else if (topic.endsWith('lab11/audio')) {
         if (message_type == 0x01) {
             //these are in dB SPL! I simplified the math to some magic numbers
             //here's the rundown
@@ -314,7 +329,7 @@ function parse (topic, buf) {
             return values;
         }
 
-    } else if (topic == 'signpost/lab11/radar') {
+    } else if (topic.endsWith('lab11/radar')) {
         if (message_type == 0x01) {
             var motion = buf.readInt8(1) > 0;
             var speed = buf.readUInt32BE(2) / 1000.0;
@@ -346,7 +361,7 @@ function parse (topic, buf) {
 
             return values;
         }
-    } else if (topic == 'signpost/lab11/aqm') {
+    } else if (topic.endsWith('lab11/aqm')) {
         if (message_type == 0x01) {
             var co2_ppm = buf.readUInt16BE(1);
             var VOC_PID_ppb = buf.readUInt32BE(3);
@@ -362,7 +377,7 @@ function parse (topic, buf) {
                 humidity_percent: humidity_percent,
             }
         }
-    } else if (topic == 'signpost/lab11/radio-status') {
+    } else if (topic.endsWith('lab11/radio-status')) {
         if (message_type == 0x01) {
             var controller = 0;
             var audio = 0;
@@ -492,7 +507,7 @@ function parse (topic, buf) {
             }
             return json;
         }
-    } else if (topic == 'signpost/lab11/spectrum') {
+    } else if (topic.endsWith('lab11/spectrum')) {
         var datastr = "";
         var retobj = {};
         if(message_type == 0x01) {
@@ -516,13 +531,15 @@ function parse (topic, buf) {
 }
 
 var mqtt_client = mqtt.connect('mqtt://localhost');
+var mqtt_external = mqtt.connect('mqtt://localhost:8883',{username: config.username, password: config.password});
+
 mqtt_client.on('connect', function () {
     // Subscribe to all packets
-    mqtt_client.subscribe('signpost/lab11/#');
-    mqtt_client.subscribe('signpost/#');
+    mqtt_external.subscribe('signpost/+/lab11/#');
+    mqtt_external.subscribe('signpost/#');
 
     // Callback for each packet
-    mqtt_client.on('message', function (topic, message) {
+    mqtt_external.on('message', function (topic, message) {
         var json = JSON.parse(message.toString());
         try {
             if(json.data) {
