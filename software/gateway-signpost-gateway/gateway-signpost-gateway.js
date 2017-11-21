@@ -144,7 +144,7 @@ mqtt_client.on('connect', function () {
         var json = JSON.parse(message.toString());
         try {
             var pkt = add_geohash(topic,json);
-            mqtt_external.publish('signpost/' + pkt.device_id + topic.slice(17), JSON.stringify(pkt));
+            mqtt_external.publish('signpost/' + pkt.device_id + '/' + topic.slice(17), JSON.stringify(pkt));
         } catch (e) {
             console.log(e)
         }
