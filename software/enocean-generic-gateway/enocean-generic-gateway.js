@@ -81,3 +81,10 @@ enocean.on("known-data", function (data) {
 
   _mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
 });
+
+enocean.on('learn-mode-stop', function (result) {
+	// If for any reason learning stops, start it again!
+	// Learning seems to stop for all sorts of reasons. Not good for a generic
+	// gateway!
+	enocean.startLearning();
+});
