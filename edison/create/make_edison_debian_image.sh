@@ -2,15 +2,16 @@
 
 # Usage:
 #
-#  ./make_edison_debian_image.sh --version 0.1.0 --umich --triumvi
+#  ./make_edison_debian_image.sh --version 0.1.0 --umich --triumvi --enocean
 #
-#  --umich and --triumvi are optional
+#  --umich, --triumvi, and --enocean are optional
 #
 #  Pass --uboot to build an edison-compatible u-boot from source.
 
 # Parse arguments
 UMICH=0
 TRIUMVI=0
+ENOCEAN=0
 UBOOT=0
 
 while [[ $# -gt 0 ]]
@@ -18,22 +19,25 @@ do
 key="$1"
 
 case $key in
-    --version)
-    VERSION="$2"
-    shift # past argument
-    ;;
-    --umich)
-    UMICH=1
-    ;;
-    --triumvi)
-    TRIUMVI=1
-    ;;
-    --uboot)
-    UBOOT=1
-    ;;
-    *)
-            # unknown option
-    ;;
+	--version)
+	VERSION="$2"
+	shift # past argument
+	;;
+	--umich)
+	UMICH=1
+	;;
+	--triumvi)
+	TRIUMVI=1
+	;;
+	--enocean)
+	ENOCEAN=1
+	;;
+	--uboot)
+	UBOOT=1
+	;;
+	*)
+	# unknown option
+	;;
 esac
 shift # past argument or value
 done
@@ -42,6 +46,7 @@ done
 VERSION_STRING=$VERSION-edison
 if [[ $UMICH -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-umich; fi
 if [[ $TRIUMVI -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-triumvi; fi
+if [[ $ENOCEAN -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-enocean; fi
 OUTFILENAME="swarm_gateway-$VERSION_STRING"
 
 if [[ "VER$VERSION" == "VER" ]]; then
@@ -52,7 +57,7 @@ fi
 read -p "Creating image named $OUTFILENAME. Look good? " -n 1 -r
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
-    exit 1
+	exit 1
 fi
 echo ""
 
@@ -206,8 +211,17 @@ printf '%s\n' 'nameserver 8.8.8.8' 'nameserver 8.8.4.4' > $ROOTDIR/etc/resolvcon
 $CHROOTCMD resolvconf -u
 
 # Install node.js
-$CHROOTCMD curl -sL https://deb.nodesource.com/setup_6.x | $CHROOTCMD bash -
+$CHROOTCMD curl -sL https://deb.nodesource.com/setup_8.x | $CHROOTCMD bash -
 $CHROOTCMD apt -y install nodejs
+
+# Hack it cause NPM is terrible
+# https://github.com/npm/npm/issues/19265
+sed -i "s/require('os').cpus().length/1/g" $ROOTDIR/usr/lib/node_modules/npm/node_modules/worker-farm/lib/farm.js
+
+# Hack it cause NPM is terrible
+# https://github.com/npm/npm/pull/18921
+# https://github.com/npm/npm/issues/16853
+sed -i "s/function removeObsoleteDep (child, log) {/function removeObsoleteDep (child, log) {return;/g" $ROOTDIR/usr/lib/node_modules/npm/lib/install/deps.js
 
 # Install package for DDNS script support
 $CHROOTCMD pip3 install dnspython3
@@ -280,11 +294,15 @@ if [ ! -d node_modules ]; then
 	echo "***** Rebuilding node_modules"
 	mkdir -p $ROOTDIR/home/debian/gateway/software/node_modules
 	for i in $ROOTDIR/home/debian/gateway/software/* ; do
-		if [[ -d $i ]] && [[ $i != "node_modules" ]]; then
+		folder=`basename $i`
+		if [[ -d $i ]] && [[ $folder != "node_modules" ]] && [[ $folder != "packages" ]]; then
 			pushd $i > /dev/null
+			# ln -s ../node_modules .
+			PREFIX=/home/debian/gateway/software/$folder
+			$CHROOTCMD npm --prefix $PREFIX install --build-from-source --unsafe-perm
+			cp -r node_modules/* ../node_modules/
+			rm -rf node_modules
 			ln -s ../node_modules .
-			PREFIX=/home/debian/gateway/software/`basename $i`
-			$CHROOTCMD npm --prefix $PREFIX install --build-from-source
 			popd > /dev/null
 		fi;
 	done
@@ -320,6 +338,11 @@ if [[ $TRIUMVI -eq 1 ]]; then
 	ln -s ../ieee802154-triumvi-gateway.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	ln -s ../ssh-reverse-tunnel.service         $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 	rm $ROOTDIR/etc/systemd/system/multi-user.target.wants/adv-gateway-ip.service
+fi
+
+# Enable enocean service
+if [[ $ENOCEAN -eq 1 ]]; then
+	ln -s ../enocean-generic-gateway.service    $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 fi
 
 # Umich specific services
