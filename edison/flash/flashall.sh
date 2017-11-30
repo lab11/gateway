@@ -19,6 +19,7 @@ IMAGE_ROOT=""
 GATEWAY_ID=""
 HW_MODEL=""
 FTPROG=0
+ONLYFS=0
 
 while [[ $# -gt 0 ]]
 do
@@ -40,6 +41,9 @@ case $key in
     --ftprog)
     FTPROG=1
     ;;
+    --onlyfs)
+    ONLYFS=1
+    ;;
     *)
             # unknown option
     ;;
@@ -48,13 +52,13 @@ shift # past argument or value
 done
 
 function usage {
-	echo "usage: sudo ./flashall.sh <gateway id> <image root> <model>"
-	echo "examp: sudo ./flashall.sh c0:98:e5:c0:00:01 swarm_gateway-2.0.0-edison-umich edison-v3"
+	echo "usage: sudo ./flashall.sh --id <gateway id> --image <image root> --model <model>"
+	echo "examp: sudo ./flashall.sh --id c0:98:e5:c0:00:01 --image swarm_gateway-2.0.0-edison-umich --model edison-v3"
 }
 
 # Make sure we got valid ID
 if [ ${#GATEWAY_ID} -ne 17 ]; then
-	echo "ERROR: Invalid gateway ID"
+	echo "ERROR: Invalid gateway ID $GATEWAY_ID"
 	usage
 	exit
 fi
@@ -65,6 +69,10 @@ if [[ ! " $VALID_MODELS " =~ " $HW_MODEL " ]]; then
 	echo "Valid models: $VALID_MODELS"
 	usage
 	exit
+fi
+
+if [[ $ONLYFS -eq 1 ]]; then
+	echo "Only flashing the boot, root, and home partitions"
 fi
 
 BASE=${GATEWAY_ID:0:12}
@@ -86,7 +94,8 @@ mkenvimage -s 65536 -r -o u-boot/edison-gateway-custom.bin u-boot/edison-gateway
 LOG_FILENAME="flash.log"
 OUTPUT_LOG_CMD="2>&1 | tee -a ${LOG_FILENAME} | ( sed -n '19 q'; head -n 1; cat >/dev/null )"
 
-
+DFUTOOL="dfu-util"
+echo Using $DFUTOOL
 
 if [ ! -f $IMAGE_ROOT.root ]; then
     echo "File $IMAGE_ROOT.root not found!"
@@ -113,11 +122,11 @@ if [ ! -f ${IFWI_DFU_FILE}-00-dfu.bin ]; then
 fi
 
 function flash-command-try {
-	eval sudo dfu-util -v -d ${USB_VID}:${USB_PID} $@ $OUTPUT_LOG_CMD
+	eval sudo $DFUTOOL -v -d ${USB_VID}:${USB_PID} $@ $OUTPUT_LOG_CMD
 }
 
 function flash-dfu-ifwi {
-	ifwi_hwid_found=`sudo dfu-util -l -d ${USB_VID}:${USB_PID} | grep -c $1`
+	ifwi_hwid_found=`sudo ${DFUTOOL} -l -d ${USB_VID}:${USB_PID} | grep -c $1`
 	if [ $ifwi_hwid_found -ne 0 ];
 	then
 		flash-command ${@:2}
@@ -136,8 +145,8 @@ function flash-command {
 function flash-debug {
 	echo "DEBUG: lsusb"
 	lsusb
-	echo "DEBUG: dfu-util -l"
-	dfu-util -l
+	echo "DEBUG: ${DFUTOOL} -l"
+	$DFUTOOL -l
 }
 
 function dfu-wait {
@@ -145,7 +154,7 @@ function dfu-wait {
 	if [ -z "$@" ]; then
 		echo "Please plug and reboot the board"
         fi
-	while [ `sudo dfu-util -l -d ${USB_VID}:${USB_PID} | grep Found | grep -c ${USB_VID}` -eq 0 ] \
+	while [ `sudo ${DFUTOOL} -l -d ${USB_VID}:${USB_PID} | grep Found | grep -c ${USB_VID}` -eq 0 ] \
 		&& [ $TIMEOUT_SEC -gt 0 ] && [ $(( TIMEOUT_SEC-- )) ];
 	do
 		sleep 1
@@ -163,7 +172,7 @@ function dfu-wait {
 	fi
 }
 
-if [[ $UBOOT -eq 1 ]]; then
+if [[ $FTPROG -eq 1 ]]; then
 	echo "Setting the FTDI parameters for the gateway"
 	./ftx_prog --manufacturer Lab11 --product "swarm-gateway serial" --new-serial-number $ADDR_USB_FTDI > /dev/null
 fi
@@ -176,6 +185,7 @@ VARIANT_FILE="u-boot/edison-gateway-custom.bin"
 
 dfu-wait
 
+if [[ $ONLYFS -eq 0 ]]; then
 echo "Flashing IFWI"
 
 flash-dfu-ifwi ifwi00  --alt ifwi00  -D "${IFWI_DFU_FILE}-00-dfu.bin"
@@ -209,6 +219,7 @@ echo "Flashing U-Boot Environment Backup"
 flash-command --alt u-boot-env1 -D "${VARIANT_FILE}" -R
 echo "Rebooting to apply partition changes"
 dfu-wait no-prompt
+fi
 
 echo "Flashing boot partition (kernel)"
 flash-command --alt boot -D "${IMAGE_ROOT}.boot"
