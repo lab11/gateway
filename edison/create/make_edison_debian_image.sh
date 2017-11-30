@@ -328,14 +328,14 @@ if [[ $UMICH -eq 1 ]]; then
 	$CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
 
 	# Install sensu
-	$CHROOTCMD wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | $CHROOTCMD apt-key add -
-	echo "deb     https://sensu.global.ssl.fastly.net/apt sensu main" > $ROOTDIR/etc/apt/sources.list.d/sensu.list
-	$CHROOTCMD apt update
-	$CHROOTCMD apt -y install sensu
-	rm $ROOTDIR/etc/init.d/sensu*
-	wget https://raw.githubusercontent.com/sensu/sensu-build/master/sensu_configs/systemd/sensu-client.service -O $ROOTDIR/etc/systemd/system/sensu-client.service
-	ln -s ../sensu-client.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
-	cp -r gateway-private/sensu $ROOTDIR/etc/
+	# $CHROOTCMD wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | $CHROOTCMD apt-key add -
+	# echo "deb     https://sensu.global.ssl.fastly.net/apt sensu main" > $ROOTDIR/etc/apt/sources.list.d/sensu.list
+	# $CHROOTCMD apt update
+	# $CHROOTCMD apt -y install sensu
+	# rm $ROOTDIR/etc/init.d/sensu*
+	# wget https://raw.githubusercontent.com/sensu/sensu-build/master/sensu_configs/systemd/sensu-client.service -O $ROOTDIR/etc/systemd/system/sensu-client.service
+	# ln -s ../sensu-client.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+	# cp -r gateway-private/sensu $ROOTDIR/etc/
 	$CHROOTCMD npm --prefix /home/debian/gateway-tools/gateway install --build-from-source getmac
 
 	# Make sure we have the config information for internal gateways
