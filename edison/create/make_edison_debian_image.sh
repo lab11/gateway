@@ -166,6 +166,9 @@ cp -r $ROOTDIR_CLEAN $ROOTDIR
 # Make /tmp writable
 chmod 777 $ROOTDIR/tmp
 
+# Make /dev/null usable
+chmod 666 $ROOTDIR/dev/null
+
 # I don't know why we have to do this.
 # The first time I ran this script this was already done. Later, it changed,
 # and didn't work until I ran this command.
@@ -289,6 +292,16 @@ ln -s /lib/systemd/system/bluetooth.target $ROOTDIR/etc/systemd/system/multi-use
 # Not sure what the other arguments that systemd-rc-local-generator wants are...
 $CHROOTCMD /lib/systemd/system-generators/systemd-rc-local-generator /etc/systemd/system a b
 
+# Set NPM's cache directory so it doesn't try to use your user. This is mostly
+# a tocken effort as it doesn't fix all of the tools that use your username's
+# directory, but hey, here we are.
+$CHROOTCMD npm config set cache /home/debian/.npm
+
+# HACK to get git packages to clone properly. We need git to run as root,
+# and no amount of --unsafe-perm or --user 0 seems to make that happen.
+# https://github.com/npm/npm/issues/19299
+sed -i "s/Object.assign(gitOpts, _gitOpts)/gitOpts.uid = 0; gitOpts.gid = 0; Object.assign(gitOpts, _gitOpts)/g" $ROOTDIR/usr/lib/node_modules/npm/node_modules/pacote/lib/util/git.js
+
 # Install node packages for the gateway software
 if [ ! -d node_modules ]; then
 	echo "***** Rebuilding node_modules"
@@ -297,9 +310,10 @@ if [ ! -d node_modules ]; then
 		folder=`basename $i`
 		if [[ -d $i ]] && [[ $folder != "node_modules" ]] && [[ $folder != "packages" ]]; then
 			pushd $i > /dev/null
-			# ln -s ../node_modules .
 			PREFIX=/home/debian/gateway/software/$folder
 			$CHROOTCMD npm --prefix $PREFIX install --build-from-source --unsafe-perm
+
+			# Merge all node modules into a single directory to save space.
 			cp -r node_modules/* ../node_modules/
 			rm -rf node_modules
 			ln -s ../node_modules .
@@ -312,6 +326,9 @@ else
 	echo "***** Using existing node modules"
 	cp -r node_modules $ROOTDIR/home/debian/gateway/software/node_modules
 fi
+
+# Undo hack so that things in the future are not installed as root.
+sed -i "s/gitOpts.uid = 0; gitOpts.gid = 0; Object.assign(gitOpts, _gitOpts)/Object.assign(gitOpts, _gitOpts)/g" $ROOTDIR/usr/lib/node_modules/npm/node_modules/pacote/lib/util/git.js
 
 # Setup gateway services
 
