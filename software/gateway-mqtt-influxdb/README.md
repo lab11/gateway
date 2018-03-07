@@ -29,3 +29,14 @@ Example:
     username = user
     password = secure
     prefix = gateway/
+
+Settings can also be overridden with command line arguments:
+
+    --host        host of influxdb server
+    --port        port of influxdb server
+    --protocol    http|https
+    --database    database to write data to
+    --username    username to authenticate with
+    --password    password to authenticate with
+    --prefix      path to prepend to `write` API requests
+    --config      change the file path of the config file.

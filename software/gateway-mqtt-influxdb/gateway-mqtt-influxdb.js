@@ -19,18 +19,25 @@ var TOPIC_OCCUPANCY_STREAM = 'occupancy/+';
 var DATA_LIMIT_LINES = 200000;
 var DATA_LIMIT_TIME  = 15*1000;
 
+// Default config file path
+var config_file = '/etc/swarm-gateway/influxdb.conf';
+
+// Check if the user wants to override that.
+if ('config' in argv) {
+    config_file = argv.config;
+}
 
 // Read in the config file to get the parameters. If the parameters are not set
 // or the file does not exist, we exit this program.
 try {
-    var config_file = fs.readFileSync('/etc/swarm-gateway/influxdb.conf', 'utf-8');
+    var config_file = fs.readFileSync(config_file, 'utf-8');
     var config = ini.parse(config_file);
     if (config.host == undefined || config.host == '' ||
         config.database == undefined || config.database == '') {
         throw new Exception('no settings');
     }
 } catch (e) {console.log(e)
-    console.log('Could not find /etc/swarm-gateway/influxdb.conf or influxdb not configured.');
+    console.log('Could not find ' + config_file + ' or influxdb not configured.');
     process.exit(1);
 }
 
