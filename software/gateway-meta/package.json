@@ -1,0 +1,16 @@
+{
+  "name": "gateway-meta",
+  "version": "1.0.0",
+  "description": "",
+  "main": "gateway-meta.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.0",
+    "lab11-gateway-id": "^0.1.1",
+    "mqtt": "^2.16.0"
+  }
+}
