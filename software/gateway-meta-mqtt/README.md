@@ -1,4 +1,4 @@
-Gateway Meta
+Gateway Meta MQTT
 ============
 
 Publishes metadata about the gateway as a data stream.
