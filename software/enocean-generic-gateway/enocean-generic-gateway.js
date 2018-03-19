@@ -63,6 +63,10 @@ enocean.on("known-data", function (data) {
 		}
 	};
 
+  if (data.rssi) {
+    out.rssi = data.rssi;
+  }
+
   for (var shortname in data.data) {
     var item = data.data[shortname];
     // Skip any information about the learn bit.
