@@ -20,6 +20,7 @@ GATEWAY_ID=""
 HW_MODEL=""
 FTPROG=0
 ONLYFS=0
+ONLYHOME=0
 
 while [[ $# -gt 0 ]]
 do
@@ -43,6 +44,9 @@ case $key in
     ;;
     --onlyfs)
     ONLYFS=1
+    ;;
+    --onlyhome)
+    ONLYHOME=1
     ;;
     *)
             # unknown option
@@ -71,8 +75,17 @@ if [[ ! " $VALID_MODELS " =~ " $HW_MODEL " ]]; then
 	exit
 fi
 
+if [[ $ONLYFS -eq 1 ]] && [[ $ONLYHOME -eq 1 ]]; then
+  echo "ERROR: Cannot do onlyfs and onlyhome"
+  exit
+fi
+
 if [[ $ONLYFS -eq 1 ]]; then
 	echo "Only flashing the boot, root, and home partitions"
+fi
+
+if [[ $ONLYHOME -eq 1 ]]; then
+	echo "Only flashing the home partition"
 fi
 
 BASE=${GATEWAY_ID:0:12}
@@ -185,7 +198,7 @@ VARIANT_FILE="u-boot/edison-gateway-custom.bin"
 
 dfu-wait
 
-if [[ $ONLYFS -eq 0 ]]; then
+if [[ $ONLYFS -eq 0 ]] && [[ $ONLYHOME -eq 0 ]]; then
 echo "Flashing IFWI"
 
 flash-dfu-ifwi ifwi00  --alt ifwi00  -D "${IFWI_DFU_FILE}-00-dfu.bin"
@@ -221,11 +234,13 @@ echo "Rebooting to apply partition changes"
 dfu-wait no-prompt
 fi
 
+if [[ $ONLYHOME -eq 0 ]]; then
 echo "Flashing boot partition (kernel)"
 flash-command --alt boot -D "${IMAGE_ROOT}.boot"
 
 echo "Flashing rootfs, (it can take up to 10 minutes... Please be patient)"
 flash-command --alt rootfs -D "${IMAGE_ROOT}.root"
+fi
 
 echo "Flashing home, (it can take up to 10 minutes... Please be patient)"
 flash-command -v --alt home -D "${IMAGE_ROOT}.home" -R
