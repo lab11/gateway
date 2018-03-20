@@ -36,4 +36,7 @@ fi
 ### uncomment to try to turn on wifi during boot without systemd
 # screen -S "ifup wlan0" -d -m ifup wlan0
 
+### uncomment to connect to a wifi network at boot
+##NOWIFI nmcli con up id WIFI_CONFIG
+
 exit 0

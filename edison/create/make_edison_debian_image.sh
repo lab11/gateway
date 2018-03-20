@@ -13,6 +13,7 @@ UMICH=0
 TRIUMVI=0
 ENOCEAN=0
 UBOOT=0
+UVA=0
 
 while [[ $# -gt 0 ]]
 do
@@ -35,6 +36,9 @@ case $key in
 	--uboot)
 	UBOOT=1
 	;;
+	--uva)
+	UVA=1
+	;;
 	*)
 	# unknown option
 	;;
@@ -45,6 +49,7 @@ done
 # Build output file name for this copy of the edison
 VERSION_STRING=$VERSION-edison
 if [[ $UMICH -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-umich; fi
+if [[ $UVA -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-uva; fi
 if [[ $TRIUMVI -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-triumvi; fi
 if [[ $ENOCEAN -eq 1 ]]; then VERSION_STRING=$VERSION_STRING-enocean; fi
 OUTFILENAME="swarm_gateway-$VERSION_STRING"
@@ -346,6 +351,7 @@ ln -s ../gateway-internet-leds.service   $ROOTDIR/etc/systemd/system/multi-user.
 ln -s ../gateway-internet-reboot.service $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 ln -s ../gateway-mqtt-reboot.service     $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 ln -s ../gateway-server.service          $ROOTDIR/etc/systemd/system/multi-user.target.wants/
+ln -s ../gateway-meta-mqtt.service       $ROOTDIR/etc/systemd/system/multi-user.target.wants/
 
 # Enable other services for a triumvi gateway
 if [[ $TRIUMVI -eq 1 ]]; then
@@ -363,7 +369,7 @@ if [[ $ENOCEAN -eq 1 ]]; then
 fi
 
 # Umich specific services
-if [[ $UMICH -eq 1 ]]; then
+if [[ $UMICH -eq 1 ]] || [[ $UVA -eq 1 ]]; then
 	# Create a default user "debian" with the correct password and settings
 	$CHROOTCMD useradd -m debian -p '\$6\$8FSbjofK.cgC3M$.gkGcDrdnUlsbKxxjYVfwBWK5zW5TNa2r7XICejwwDIOWT.99iv9wCM.VvxOCeaWE9ik/P6tRgW8sH0Z0tCbZ/' -G adm,sudo,dialout -s /bin/bash
 
@@ -390,6 +396,17 @@ else
 	# Create a default user "debian" with the password "swarmgateway"
 	# echo swarmgateway | mkpasswd -m sha-512 -s | sed "s/\\$/\\\\$/g"
 	$CHROOTCMD useradd -m debian -p '\$6\$zXSccm7zraCL\$VvpKt.PYTuDfUyrOvGc6s5rYmNa0.e3G3WN4gnHedTS6L36ZCjisMsSkH6Q5u9vRIU.A4hB5/xWUjBCSkGC0w/' -G adm,sudo,dialout -s /bin/bash
+fi
+
+# UVA Customization
+if [[ $UVA -eq 1 ]]; then
+	# Change influx server to uva influx server
+	mv $ROOTDIR/etc/swarm-gateway/influxdb-uva.conf mv $ROOTDIR/etc/swarm-gateway/influxdb.conf
+
+	# Add connecting to wifi to rc.local
+	# sudo nmcli con up id wahoo
+	sed -i "s/##NOWIFI//g" $ROOTDIR/etc/rc.local
+	sed -i "s/WIFI_CONFIG/wahoo/g" $ROOTDIR/etc/rc.local
 fi
 
 # Setup permissions
