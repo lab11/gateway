@@ -401,7 +401,7 @@ fi
 # UVA Customization
 if [[ $UVA -eq 1 ]]; then
 	# Change influx server to uva influx server
-	mv $ROOTDIR/etc/swarm-gateway/influxdb-uva.conf mv $ROOTDIR/etc/swarm-gateway/influxdb.conf
+	mv $ROOTDIR/etc/swarm-gateway/influxdb-uva.conf $ROOTDIR/etc/swarm-gateway/influxdb.conf
 
 	# Add connecting to wifi to rc.local
 	# sudo nmcli con up id wahoo
