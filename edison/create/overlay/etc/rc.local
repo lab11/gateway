@@ -12,20 +12,26 @@
 # Do setup on the first boot after flashing
 /opt/edison/first-install.sh
 
-# Make sure that we were able to set the FTDI properties on the CC2538 FTDI
-# chip. This will fail to happen if the DFU USB is still plugged in because
-# the USB bus is hidden in that case.
-FTDI_CHECK=`python -m serial.tools.list_ports "swarm-gateway cc2538" -q`
-if [[ "$FTDI_CHECK" == "" ]]; then
-	echo "Running set MAC addresses again to try to configure the FTDI chip."
-	/opt/edison/set_mac_addresses.sh
+# Only do the next part for edison-v3 (or newer) gateways.
+MODEL=`cat /factory/model`
+if [[ "$MODEL" != "edison-v2" ]]; then
+
+	# Make sure that we were able to set the FTDI properties on the CC2538 FTDI
+	# chip. This will fail to happen if the DFU USB is still plugged in because
+	# the USB bus is hidden in that case.
+	FTDI_CHECK=`python -m serial.tools.list_ports "swarm-gateway cc2538" -q`
+	if [[ "$FTDI_CHECK" == "" ]]; then
+		echo "Running set MAC addresses again to try to configure the FTDI chip."
+		/opt/edison/set_mac_addresses.sh
+	fi
+
+	# Configure the CC2538
+	/home/debian/gateway/startup/edison-v3-cc2538/flash_cc2538.sh
+
+	# Configure the LE910
+	/home/debian/gateway/startup/edison-v3-le910/set_apn.sh
+
 fi
-
-# Configure the CC2538
-/home/debian/gateway/startup/edison-v3-cc2538/flash_cc2538.sh
-
-# Configure the LE910
-/home/debian/gateway/startup/edison-v3-le910/set_apn.sh
 
 ### uncomment to disable USB device mode and enable host mode for the OTG port
 # rmmod g_multi || true
@@ -37,6 +43,6 @@ fi
 # screen -S "ifup wlan0" -d -m ifup wlan0
 
 ### uncomment to connect to a wifi network at boot
-##NOWIFI nmcli con up id WIFI_CONFIG
+##NOWIFI screen -S "connectwahoo" -d -m /opt/edison/connect_wahoo.sh
 
 exit 0

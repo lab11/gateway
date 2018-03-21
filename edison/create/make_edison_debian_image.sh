@@ -406,7 +406,6 @@ if [[ $UVA -eq 1 ]]; then
 	# Add connecting to wifi to rc.local
 	# sudo nmcli con up id wahoo
 	sed -i "s/##NOWIFI//g" $ROOTDIR/etc/rc.local
-	sed -i "s/WIFI_CONFIG/wahoo/g" $ROOTDIR/etc/rc.local
 fi
 
 # Setup permissions
