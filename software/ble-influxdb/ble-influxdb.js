@@ -204,6 +204,17 @@ noble.on('discover', function (peripheral) {
             case '50':
                 adv_obj.device_type = 'torch';
                 break;
+            case '00':
+                adv_obj.device_type = 'test';
+                if (advertisement.manufacturerData) {
+                    if (advertisement.manufacturerData.length >= 17) {
+			var seqno = advertisement.manufacturerData.readUIntLE(13,4);
+                        var adv_int = 0.625*advertisement.manufacturerData.readUIntLE(7,2);
+                        adv_obj.sequence_number = seqno;
+                        console.log(peripheral.id+','+seqno+','+adv_int);
+                    }
+                }
+                break;
             case '70':
                 adv_obj.device_type = 'powerblade';
 
