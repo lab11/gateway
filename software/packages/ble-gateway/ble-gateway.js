@@ -95,7 +95,7 @@ BleGateway.prototype.on_discover = function (peripheral) {
 
     // We have seen an eddystone packet from the same address
     if (peripheral.id in this._device_to_data) {
-        
+
         // Lookup the correct device to get its parser URL identifier
         var device = this._device_to_data[peripheral.id];
 
@@ -271,7 +271,7 @@ BleGateway.prototype.on_beacon = function (beacon) {
             if (!err) {
                 // Save this URL expansion. OK to just overwrite it each time.
                 this._cached_urls[short_url] = full_url;
-                fs.writeFile('cached_urls.json', JSON.stringify(this._cached_urls));
+                fs.writeFileSync('cached_urls.json', JSON.stringify(this._cached_urls));
 
                 // Create space if this is a new beacon
                 if (!(beacon.id in this._device_to_data)) {
@@ -296,8 +296,8 @@ BleGateway.prototype.on_beacon = function (beacon) {
                         // Store this in the known parsers object
                         this._cached_parsers[request_url] = {};
                         this._cached_parsers[request_url]['parse.js'] = response.body;
-                        fs.writeFile('cached_parsers.json', JSON.stringify(this._cached_parsers));
-                        
+                        fs.writeFileSync('cached_parsers.json', JSON.stringify(this._cached_parsers));
+
                         // Make the downloaded JS an actual function
                         // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
                         try {
