@@ -4,6 +4,7 @@ var fs        = require('fs');
 
 var async     = require('async');
 var argv      = require('minimist')(process.argv.slice(2));
+var debug     = require('debug')('http-devhub-publish');
 var ini       = require('ini');
 var gatewayId = require('lab11-gateway-id');
 var mqtt      = require('mqtt');
@@ -41,6 +42,7 @@ function main () {
     var devhub_sensors = {};
 
     // First fetch all of the sensors in the devhub database.
+    debug('Fetching list of all sensors.');
     request('https://devhub.virginia.edu/api/'+config.api_key+'/sensors', function (error, response, body) {
         if (error) {
             console.log('error fetching sensors list')
@@ -51,6 +53,7 @@ function main () {
             console.log('bad http response: ' + response.statusCode);
             return;
         }
+        debug('Received list of all sensors.');
 
         // var _mqtt_client = mqtt.connect('mqtt://localhost');
 
@@ -70,26 +73,29 @@ function main () {
 
         // Iterate all buildings to get all sensor readings.
         var buildings = Object.keys(devhub_sensors);
-        for (let building of buildings) {
+        debug('number of buildings: ' + buildings.length);
+        async.eachOfSeries(buildings, function (building, i, callback) {
             // Skip buildings with "/" in their name for now as getting data from
             // them doesn't work.
             if (building.indexOf('/') > -1) {
                 return;
             }
 
-            var sensors = devhub_sensors[building];
+            debug('Retrieving sensor readings for building: ' + building);
+
+            var sensor_types = devhub_sensors[building];
 
             // Get functions to fetch all sensor readings for each building.
             var get_value_functions = [];
-            for (let sensor_type of sensors) {
+            for (let sensor_type of sensor_types) {
                 if (sensor_type.length > 0) {
                     get_value_functions.push(get_sensor_data.bind(null, config.api_key, building, sensor_type))
                 }
             }
 
             // Issue all of the sensor fetch requests in parallel.
-            async.parallel(get_value_functions,
-                function(err, results) {
+            async.series(get_value_functions, function(err, results) {
+                debug('Got all for a building.');
                 // Results is a list of all the returns from `get_sensor_data`.
 
                 var out = {};
@@ -122,11 +128,22 @@ function main () {
                 }
 
                 console.log(out);
-                // _mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                callback();
             });
-        }
+        }, function () {
+            // We're done looping in this function!
+            // _mqtt_client.end();
+        });
 
-        // _mqtt_client.end();
+        // Iterate all buildings to get all sensor readings.
+        // var buildings = Object.keys(devhub_sensors);
+        // for (let building of buildings) {
+
+        //         // _mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+
+        // }
+
+
     });
 }
 
@@ -135,6 +152,7 @@ function get_sensor_data (api_key, name, sensor, callback) {
     name = encodeURIComponent(name);
     sensor = encodeURIComponent(sensor);
     var request_url = 'https://devhub.virginia.edu/api/'+api_key+'/sensors/'+name+'/'+sensor+'/lastrecorded';
+    // console.log(request_url)
     var request_obj = {
         uri: request_url,
         timeout: 30000,
@@ -167,5 +185,5 @@ function title_case(str) {
         }
     );
 }
-
+main();
 // setInterval(main, 50*60*1000);
