@@ -1,0 +1,19 @@
+{
+  "name": "http-devhub-publish",
+  "version": "1.0.0",
+  "description": "",
+  "main": "http-devhub-publish.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.1",
+    "ini": "^1.3.5",
+    "lab11-gateway-id": "^0.1.1",
+    "minimist": "^1.2.0",
+    "mqtt": "^2.18.1",
+    "request": "^2.87.0"
+  }
+}

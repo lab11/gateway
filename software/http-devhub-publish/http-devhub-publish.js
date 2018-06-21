@@ -1,0 +1,171 @@
+#!/usr/bin/env node
+
+var fs        = require('fs');
+
+var async     = require('async');
+var argv      = require('minimist')(process.argv.slice(2));
+var ini       = require('ini');
+var gatewayId = require('lab11-gateway-id');
+var mqtt      = require('mqtt');
+var request   = require('request');
+
+// Get the ID for this gateway
+var _gateway_id = '';
+gatewayId.id(function (addr) {
+    _gateway_id = addr;
+});
+
+
+// Default config file path
+var config_file = '/etc/swarm-gateway/devhub.conf';
+
+// Check if the user wants to override that.
+if ('config' in argv) {
+    config_file = argv.config;
+}
+
+// Read in the config file to get the parameters. If the parameters are not set
+// or the file does not exist, we exit this program.
+try {
+    var config_file = fs.readFileSync(config_file, 'utf-8');
+    var config = ini.parse(config_file);
+    if (config.api_key == undefined || config.api_key == '') {
+        throw new Exception('no settings');
+    }
+} catch (e) {console.log(e)
+    console.log('Could not find ' + config_file + ' or devhub not configured.');
+    process.exit(1);
+}
+
+function main () {
+    var devhub_sensors = {};
+
+    // First fetch all of the sensors in the devhub database.
+    request('https://devhub.virginia.edu/api/'+config.api_key+'/sensors', function (error, response, body) {
+        if (error) {
+            console.log('error fetching sensors list')
+            console.log(error);
+            return;
+        }
+        if (response.statusCode != 200) {
+            console.log('bad http response: ' + response.statusCode);
+            return;
+        }
+
+        // var _mqtt_client = mqtt.connect('mqtt://localhost');
+
+        let sensors = JSON.parse(body);
+
+        // Group them by building name into:
+        // {
+        //    building_name: [sensor1, sensor2]
+        // }
+        for (let sensor of sensors) {
+            if (sensor.Name in devhub_sensors) {
+                devhub_sensors[sensor.Name].push(sensor.Type);
+            } else {
+                devhub_sensors[sensor.Name] = [sensor.Type];
+            }
+        }
+
+        // Iterate all buildings to get all sensor readings.
+        var buildings = Object.keys(devhub_sensors);
+        for (let building of buildings) {
+            // Skip buildings with "/" in their name for now as getting data from
+            // them doesn't work.
+            if (building.indexOf('/') > -1) {
+                return;
+            }
+
+            var sensors = devhub_sensors[building];
+
+            // Get functions to fetch all sensor readings for each building.
+            var get_value_functions = [];
+            for (let sensor_type of sensors) {
+                if (sensor_type.length > 0) {
+                    get_value_functions.push(get_sensor_data.bind(null, config.api_key, building, sensor_type))
+                }
+            }
+
+            // Issue all of the sensor fetch requests in parallel.
+            async.parallel(get_value_functions,
+                function(err, results) {
+                // Results is a list of all the returns from `get_sensor_data`.
+
+                var out = {};
+
+                // Find the max time of the sensor readings. This will allow us
+                // to ignore old measurements.
+                var max_time = '';
+                for (let measurement of results) {
+                    if (measurement.time > max_time) {
+                        max_time = measurement.time;
+                    }
+                }
+
+                // Only add the measurements that are at that time.
+                for (let measurement of results) {
+                    if (measurement.time == max_time) {
+                        out[measurement.key] = measurement.value;
+                    }
+                }
+
+                // Add in the other fields that make the whole gateway system work.
+                out.device = 'devhub';
+                out._meta = {
+                    received_time: max_time,
+                    device_id: 1,
+                    receiver: 'http-devhub-publish',
+                    gateway_id: _gateway_id,
+                    location_general: 'UVA',
+                    location_specific: title_case(building)
+                }
+
+                console.log(out);
+                // _mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+            });
+        }
+
+        // _mqtt_client.end();
+    });
+}
+
+
+function get_sensor_data (api_key, name, sensor, callback) {
+    name = encodeURIComponent(name);
+    sensor = encodeURIComponent(sensor);
+    var request_url = 'https://devhub.virginia.edu/api/'+api_key+'/sensors/'+name+'/'+sensor+'/lastrecorded';
+    var request_obj = {
+        uri: request_url,
+        timeout: 30000,
+    };
+	request(request_obj, function (error, response, body) {
+        if (error) {
+            console.log(error)
+            console.log(request_url)
+        }
+	  	// Result looks like:
+        // {"Name":"ROTUNDA","Type":"Electric Demand","Value":20.8519,"Unit":"kW","Time":"2018-06-21T15:00:00.000Z"}
+        try {
+            console.log(body)
+            data = JSON.parse(body);
+            var key = data.Type.replace(/\s+/g, '_').toLowerCase() + '_' + data.Unit;
+            callback(null, {'key':key, 'value':data.Value, 'time':data.Time});
+        } catch (err) {
+            console.log('JSON failed')
+            console.log(body)
+            console.log(request_url)
+        }
+	});
+}
+
+function title_case(str) {
+    return str.replace(
+        /\w\S*/g,
+        function(txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        }
+    );
+}
+
+// setInterval(main, 50*60*1000);
