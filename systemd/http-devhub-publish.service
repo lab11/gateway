@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Data from UVA Devhub
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/http-devhub-publish/http-devhub-publish.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=http-devhub-publish
+
+[Install]
+WantedBy=multi-user.target
