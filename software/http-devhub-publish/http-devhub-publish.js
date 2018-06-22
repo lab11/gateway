@@ -10,12 +10,13 @@ var gatewayId = require('lab11-gateway-id');
 var mqtt      = require('mqtt');
 var request   = require('request');
 
+var MQTT_TOPIC_NAME = 'gateway-data';
+
 // Get the ID for this gateway
 var _gateway_id = '';
 gatewayId.id(function (addr) {
     _gateway_id = addr;
 });
-
 
 // Default config file path
 var config_file = '/etc/swarm-gateway/devhub.conf';
@@ -55,7 +56,7 @@ function main () {
         }
         debug('Received list of all sensors.');
 
-        // var _mqtt_client = mqtt.connect('mqtt://localhost');
+        var mqtt_client = mqtt.connect('mqtt://localhost');
 
         let sensors = JSON.parse(body);
 
@@ -71,13 +72,28 @@ function main () {
             }
         }
 
-        // Iterate all buildings to get all sensor readings.
+        // Iterate all buildings to get all sensor readings. Well, iterating all
+        // buildings takes forever (on the order of 1.5 hours). So instead we
+        // just capture buildings likely to be of interest.
         var buildings = Object.keys(devhub_sensors);
         debug('number of buildings: ' + buildings.length);
-        async.eachOfSeries(buildings, function (building, i, callback) {
+        var buildings_of_interest = [
+            'ROTUNDA',
+            'RICE HALL',
+            'OLSSON HALL',
+            'THORNTON HALL',
+            'ALBERT H SMALL BUILDING',
+            'HEATING PLANT',
+            'CAVALIER SUBSTATION',
+            'ALDERMAN SUBSTATION 15KV',
+            'MATERIALS SCIENCE',
+            'JOHN PAUL JONES ARENA',
+        ];
+        async.eachOfSeries(buildings_of_interest, function (building, i, callback) {
             // Skip buildings with "/" in their name for now as getting data from
             // them doesn't work.
             if (building.indexOf('/') > -1) {
+                callback(null);
                 return;
             }
 
@@ -127,23 +143,14 @@ function main () {
                     location_specific: title_case(building)
                 }
 
-                console.log(out);
-                callback();
+                mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                callback(null);
             });
         }, function () {
             // We're done looping in this function!
-            // _mqtt_client.end();
+            debug('Finished retrieving data from buildings');
+            mqtt_client.end();
         });
-
-        // Iterate all buildings to get all sensor readings.
-        // var buildings = Object.keys(devhub_sensors);
-        // for (let building of buildings) {
-
-        //         // _mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
-
-        // }
-
-
     });
 }
 
@@ -165,7 +172,6 @@ function get_sensor_data (api_key, name, sensor, callback) {
 	  	// Result looks like:
         // {"Name":"ROTUNDA","Type":"Electric Demand","Value":20.8519,"Unit":"kW","Time":"2018-06-21T15:00:00.000Z"}
         try {
-            console.log(body)
             data = JSON.parse(body);
             var key = data.Type.replace(/\s+/g, '_').toLowerCase() + '_' + data.Unit;
             callback(null, {'key':key, 'value':data.Value, 'time':data.Time});
@@ -185,5 +191,7 @@ function title_case(str) {
         }
     );
 }
+
 main();
-// setInterval(main, 50*60*1000);
+// Run every 50 minutes.
+setInterval(main, 50*60*1000);
