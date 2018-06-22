@@ -57,99 +57,101 @@ function main () {
         debug('Received list of all sensors.');
 
         var mqtt_client = mqtt.connect('mqtt://localhost');
+        mqtt_client.on('connect', function () {
 
-        let sensors = JSON.parse(body);
+            let sensors = JSON.parse(body);
 
-        // Group them by building name into:
-        // {
-        //    building_name: [sensor1, sensor2]
-        // }
-        for (let sensor of sensors) {
-            if (sensor.Name in devhub_sensors) {
-                devhub_sensors[sensor.Name].push(sensor.Type);
-            } else {
-                devhub_sensors[sensor.Name] = [sensor.Type];
-            }
-        }
-
-        // Iterate all buildings to get all sensor readings. Well, iterating all
-        // buildings takes forever (on the order of 1.5 hours). So instead we
-        // just capture buildings likely to be of interest.
-        var buildings = Object.keys(devhub_sensors);
-        debug('number of buildings: ' + buildings.length);
-        var buildings_of_interest = [
-            'ROTUNDA',
-            'RICE HALL',
-            'OLSSON HALL',
-            'THORNTON HALL',
-            'ALBERT H SMALL BUILDING',
-            'HEATING PLANT',
-            'CAVALIER SUBSTATION',
-            'ALDERMAN SUBSTATION 15KV',
-            'MATERIALS SCIENCE',
-            'JOHN PAUL JONES ARENA',
-        ];
-        async.eachOfSeries(buildings_of_interest, function (building, i, callback) {
-            // Skip buildings with "/" in their name for now as getting data from
-            // them doesn't work.
-            if (building.indexOf('/') > -1) {
-                callback(null);
-                return;
-            }
-
-            debug('Retrieving sensor readings for building: ' + building);
-
-            var sensor_types = devhub_sensors[building];
-
-            // Get functions to fetch all sensor readings for each building.
-            var get_value_functions = [];
-            for (let sensor_type of sensor_types) {
-                if (sensor_type.length > 0) {
-                    get_value_functions.push(get_sensor_data.bind(null, config.api_key, building, sensor_type))
+            // Group them by building name into:
+            // {
+            //    building_name: [sensor1, sensor2]
+            // }
+            for (let sensor of sensors) {
+                if (sensor.Name in devhub_sensors) {
+                    devhub_sensors[sensor.Name].push(sensor.Type);
+                } else {
+                    devhub_sensors[sensor.Name] = [sensor.Type];
                 }
             }
 
-            // Issue all of the sensor fetch requests in parallel.
-            async.series(get_value_functions, function(err, results) {
-                debug('Got all for a building.');
-                // Results is a list of all the returns from `get_sensor_data`.
+            // Iterate all buildings to get all sensor readings. Well, iterating all
+            // buildings takes forever (on the order of 1.5 hours). So instead we
+            // just capture buildings likely to be of interest.
+            var buildings = Object.keys(devhub_sensors);
+            debug('number of buildings: ' + buildings.length);
+            var buildings_of_interest = [
+                'ROTUNDA',
+                'RICE HALL',
+                'OLSSON HALL',
+                'THORNTON HALL',
+                'ALBERT H SMALL BUILDING',
+                'HEATING PLANT',
+                'CAVALIER SUBSTATION',
+                'ALDERMAN SUBSTATION 15KV',
+                'MATERIALS SCIENCE',
+                'JOHN PAUL JONES ARENA',
+            ];
+            async.eachOfSeries(buildings_of_interest, function (building, i, callback) {
+                // Skip buildings with "/" in their name for now as getting data from
+                // them doesn't work.
+                if (building.indexOf('/') > -1) {
+                    callback(null);
+                    return;
+                }
 
-                var out = {};
+                debug('Retrieving sensor readings for building: ' + building);
 
-                // Find the max time of the sensor readings. This will allow us
-                // to ignore old measurements.
-                var max_time = '';
-                for (let measurement of results) {
-                    if (measurement.time > max_time) {
-                        max_time = measurement.time;
+                var sensor_types = devhub_sensors[building];
+
+                // Get functions to fetch all sensor readings for each building.
+                var get_value_functions = [];
+                for (let sensor_type of sensor_types) {
+                    if (sensor_type.length > 0) {
+                        get_value_functions.push(get_sensor_data.bind(null, config.api_key, building, sensor_type))
                     }
                 }
 
-                // Only add the measurements that are at that time.
-                for (let measurement of results) {
-                    if (measurement.time == max_time) {
-                        out[measurement.key] = measurement.value;
+                // Issue all of the sensor fetch requests in parallel.
+                async.series(get_value_functions, function(err, results) {
+                    debug('Got all for a building.');
+                    // Results is a list of all the returns from `get_sensor_data`.
+
+                    var out = {};
+
+                    // Find the max time of the sensor readings. This will allow us
+                    // to ignore old measurements.
+                    var max_time = '';
+                    for (let measurement of results) {
+                        if (measurement.time > max_time) {
+                            max_time = measurement.time;
+                        }
                     }
-                }
 
-                // Add in the other fields that make the whole gateway system work.
-                out.device = 'devhub';
-                out._meta = {
-                    received_time: max_time,
-                    device_id: 1,
-                    receiver: 'http-devhub-publish',
-                    gateway_id: _gateway_id,
-                    location_general: 'UVA',
-                    location_specific: title_case(building)
-                }
+                    // Only add the measurements that are at that time.
+                    for (let measurement of results) {
+                        if (measurement.time == max_time) {
+                            out[measurement.key] = measurement.value;
+                        }
+                    }
 
-                mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
-                callback(null);
+                    // Add in the other fields that make the whole gateway system work.
+                    out.device = 'devhub';
+                    out._meta = {
+                        received_time: max_time,
+                        device_id: 'A',
+                        receiver: 'http-devhub-publish',
+                        gateway_id: _gateway_id,
+                        location_general: 'UVA',
+                        location_specific: title_case(building)
+                    }
+
+                    mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                    callback(null);
+                });
+            }, function () {
+                // We're done looping in this function!
+                debug('Finished retrieving data from buildings');
+                mqtt_client.end();
             });
-        }, function () {
-            // We're done looping in this function!
-            debug('Finished retrieving data from buildings');
-            mqtt_client.end();
         });
     });
 }
@@ -176,9 +178,11 @@ function get_sensor_data (api_key, name, sensor, callback) {
             var key = data.Type.replace(/\s+/g, '_').toLowerCase() + '_' + data.Unit;
             callback(null, {'key':key, 'value':data.Value, 'time':data.Time});
         } catch (err) {
+            console.log(err)
             console.log('JSON failed')
             console.log(body)
             console.log(request_url)
+            callback(null, {'key':'', 'value':'', 'time':''});
         }
 	});
 }
