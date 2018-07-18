@@ -1,0 +1,34 @@
+{
+  "name": "thread-gateway",
+  "version": "0.0.1",
+  "description": "Ble Gateway ====================",
+  "main": "ble-gateway.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "author": "Neal Jackson <neal.jackson@berkeley.edu>",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^1.5.2",
+    "coap": "^0.22.0",
+    "debug": "^2.2.0",
+    "expand-url": "^0.1.3",
+    "lab11-gateway-id": "^0.1.1",
+    "lodash": "^3.10.1",
+    "request": "^2.67.0",
+    "watchout": "0.0.5",
+    "yargs": "^3.31.0"
+  },
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "directories": {
+    "example": "examples"
+  },
+  "devDependencies": {}
+}
