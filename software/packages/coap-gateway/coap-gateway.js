@@ -117,7 +117,7 @@ CoapGateway.prototype.on_request = function (req, res) {
                 adv_obj._meta = {
                   received_time: received_time,
                   device_id:     device_id,
-                  receiver:      'ble-gateway',
+                  receiver:      'coap-gateway',
                   gateway_id:    this._gateway_id
                 };
 
@@ -340,17 +340,17 @@ if (require.main === module) {
         })
         .argv;
 
-    var bleg = new CoapGateway();
+    var coapg = new CoapGateway();
 
-    bleg.on('payload', function (adv_obj) {
+    coapg.on('payload', function (adv_obj) {
         console.log(adv_obj);
     });
 
-    bleg.on('local', function (local_obj) {
+    coapg.on('local', function (local_obj) {
         console.log(local_obj);
     });
 
-    bleg.start();
+    coapg.start();
 
 }else {
     module.exports = new CoapGateway();
