@@ -17,7 +17,7 @@ var fs                     = require('fs');
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
-var watchdog = new watchout(1*60*1000, function(didCancelWatchdog) {
+var watchdog = new watchout(30*60*1000, function(didCancelWatchdog) {
     if (didCancelWatchdog) {
         // benign
     } else {
@@ -33,7 +33,7 @@ var am_submodule = (require.main !== module);
 
 // Hardcoded constant for the name of the JavaScript that has the functions
 // we care about for this gateway.
-var FILENAME_PARSE = 'parse.js'
+var FILENAME_PARSE = 'parse_thread.js'
 
 // Hardcoded constant for the timeout window to check for a new parse.js
 var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
@@ -72,9 +72,19 @@ ThreadGateway.prototype.start = function () {
 
 // Called on each request
 ThreadGateway.prototype.on_request = function (req, res) {
+  try {
 
+    // Get device id
+    var id_len = req.payload.readUInt8(0);
+    var device_id = req.payload.slice(1, 1+id_len).toString('hex');
+    debug(req.code + " request from " + device_id + " for resource " + req.url);
+    var payload = req.payload.slice(1+id_len);
+
+    debug(req.url);
     if (req.url === "/discovery") {
-      this.get_parser(req.payload);
+      var url_len = payload.readUInt8(0);
+      var parser_url = 'https://' + payload.toString('utf8', 1, url_len+1);
+      this.get_parser(device_id, parser_url);
       return;
     }
 
@@ -82,119 +92,80 @@ ThreadGateway.prototype.on_request = function (req, res) {
     var received_time = new Date().toISOString();
 
     // We have seen an discovery packet from the same address
-    if (peripheral.id in this._device_to_data) {
+    if (device_id in this._device_to_data) {
 
-        // Lookup the correct device to get its parser URL identifier
-        var device = this._device_to_data[peripheral.id];
+      // Lookup the correct device to get its parser URL identifier
+      var device = this._device_to_data[device_id];
 
-        // Check to see if a parser is available
-        if (device.request_url in this._cached_parsers) {
-            var parser = this._cached_parsers[device.request_url];
+      // Check to see if a parser is available
+      if (device.request_url in this._cached_parsers) {
+        var parser = this._cached_parsers[device.request_url];
 
-            // Unless told not to, we parse advertisements
-            if (am_submodule || !argv.noParseAdvertisements) {
+        // Unless told not to, we parse payloads
+        if (am_submodule || !argv.noParsePayloads) {
 
-                // Check if we have some way to parse the advertisement
-                if (parser.parser && parser.parser.parseAdvertisement) {
+          // Check if we have some way to parse the payload
+          if (parser.parser && parser.parser.parsePayload) {
 
-                    var parse_advertisement_done = function (adv_obj, local_obj) {
+            var parse_payload_done = function (adv_obj, local_obj) {
 
-                        // only continue if the result was valid
-                        if (adv_obj) {
-                            adv_obj.id = peripheral.id;
+              // only continue if the result was valid
+              if (adv_obj) {
+                adv_obj.id = device_id;
 
-                            // Add a _meta key with some more information
-                            adv_obj._meta = {
-                                received_time: received_time,
-                                device_id:     peripheral.id,
-                                receiver:      'ble-gateway',
-                                gateway_id:    this._gateway_id
-                            };
+                // Add a _meta key with some more information
+                adv_obj._meta = {
+                  received_time: received_time,
+                  device_id:     device_id,
+                  receiver:      'ble-gateway',
+                  gateway_id:    this._gateway_id
+                };
 
-                            // We broadcast on "advertisement"
-                            this.emit('advertisement', adv_obj);
+                // We broadcast on "payload"
+                this.emit('payload', adv_obj);
 
-                            // Tickle the watchdog now that we have successfully
-                            // handled a pakcet.
-                            watchdog.reset();
+                // Tickle the watchdog now that we have successfully
+                // handled a pakcet.
+                watchdog.reset();
 
-                            // Now check if the device wants to do something
-                            // with the parsed advertisement.
-                            if ((am_submodule || !argv.noPublish) && parser.parser.publishAdvertisement) {
-                                parser.parser.publishAdvertisement(adv_obj);
-                            }
-                        }
-
-                        // Local data is optional
-                        if (local_obj) {
-                            // Add a _meta key with some more information
-                            local_obj._meta = {
-                                received_time: received_time,
-                                device_id:     peripheral.id,
-                                receiver:      'ble-gateway',
-                                gateway_id:    this._gateway_id,
-                                base_url:      device.url
-                            };
-
-                            // We broadcast on "local"
-                            this.emit('local', local_obj);
-                        }
-                    };
-
-                    // Call the device specific advertisement parse function.
-                    // Give it the done callback.
-                    try {
-                        // add the device ID for parsers to see
-                        peripheral.advertisement.advertiser_id = peripheral.id;
-                        parser.parser.parseAdvertisement(peripheral.advertisement, parse_advertisement_done.bind(this));
-                    } catch (e) {
-                        debug('Error calling parse function for ' + peripheral.id + '\n' + e);
-                    }
+                // Now check if the device wants to do something
+                // with the parsed payload.
+                if ((am_submodule || !argv.noPublish) && parser.parser.publishPayload) {
+                  parser.parser.publishPayload(adv_obj);
                 }
+              }
+
+              // Local data is optional
+              if (local_obj) {
+                // Add a _meta key with some more information
+                local_obj._meta = {
+                  received_time: received_time,
+                  device_id:     device_id,
+                  receiver:      'thread-gateway',
+                  gateway_id:    this._gateway_id,
+                  base_url:      device.url
+                };
+
+                // We broadcast on "local"
+                this.emit('local', local_obj);
+              }
+            };
+
+            // Call the device specific payload parse function.
+            // Give it the done callback.
+            try {
+              // add the device ID for parsers to see
+              parser.parser.parsePayload(device_id, req.url, payload, parse_payload_done.bind(this));
+            } catch (e) {
+              debug('Error calling parse function for ' + device_id + '\n' + e);
             }
-
-            // Unless told not to, we see if this device wants us to connect
-            if (am_submodule || !argv.noParseServices) {
-
-                var parse_services_done = function (data_obj) {
-                    if (data_obj) {
-                        data_obj.id = peripheral.id;
-
-                        // After device-specific code is done, disconnect and handle
-                        // returned object.
-                        peripheral.disconnect((disconnect_error) => {
-                            if (!disconnect_error) {
-                                // Broadcast this on "data"
-                                this.emit('data', data_obj);
-
-                                // Tickle the watchdog now that we have successfully
-                                // handled a pakcet.
-                                watchdog.reset();
-
-                                // Now check if the device wants to do something
-                                // with the parsed service data.
-                                if ((am_submodule || !argv.noPublish) && parser.parser.publishServiceData) {
-                                    parser.parser.publishServiceData(data_obj);
-                                }
-                            }
-                        });
-                    }
-                }
-
-                // Check if we have some code to connect
-                if (parser.parser && parser.parser.parseServices) {
-                    // Use noble to connect to the BLE device
-                    peripheral.connect((connect_error) => {
-                        if (!connect_error) {
-                            // After a successful connection, let the
-                            // device specific code read services and whatnot.
-                            parser.parser.parseServices(peripheral, parse_services_done.bind(this));
-                        }
-                    });
-                }
-            }
+          }
         }
+      }
     }
+  } catch(e) {
+    debug(e);
+  }
 };
 
 // Load the downloaded code into a useable module
@@ -226,28 +197,22 @@ ThreadGateway.prototype.get_base_url = function (full_url) {
 }
 
 // function to acquire parser from discovery message
-ThreadGateway.prototype.get_parser = function (payload) {
+ThreadGateway.prototype.get_parser = function (device_id, parser_url) {
   // Tickle the watchdog
   watchdog.reset();
 
-  // Get device id
-  var id_len = payload.readUInt8(0);
-  var id = payload.slice(1, id_len);
-  var url_len = payload.readUInt8(id_len+1);
-  var url = payload.toString(id_len+1, url_len);
-
   // We keep a list of the last time we updated for each device, this allows
   // the gateway to pull down new parse.js files when they update
-  if (id in this._device_id_ages) {
-    if ((Date.now() - this._device_id_ages[id]) < PARSE_JS_CACHE_TIME_IN_MS) {
+  if (device_id in this._device_id_ages) {
+    if ((Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
       return;
     }
   }
 
-  debug('Discovered device: ' + id + ' ' + url);
+  debug('Discovered device: ' + device_id + ' ' + parser_url);
 
-  var short_url = url;
-  var url_path = url.parse(url).pathname;
+  var short_url = parser_url;
+  var url_path = url.parse(parser_url).pathname;
 
   // This is called when we successfully get the expanded URL.
   var got_expanded_url = function (err, full_url) {
@@ -257,24 +222,24 @@ ThreadGateway.prototype.get_parser = function (payload) {
       fs.writeFileSync('cached_urls.json', JSON.stringify(this._cached_urls));
 
       // Create space if this is an unseen device
-      if (!(id in this._device_to_data)) {
-        this._device_to_data[id] = {};
+      if (!(device_id in this._device_to_data)) {
+        this._device_to_data[device_id] = {};
       }
 
       // Get only the base (not index.html, for instance)
       var base_url = this.get_base_url(full_url);
 
       // Store that
-      this._device_to_data[id]['url'] = base_url;
+      this._device_to_data[device_id]['url'] = base_url;
 
       // Figure out the URL we are going to fetch, and store that
       var request_url = base_url + FILENAME_PARSE;
-      this._device_to_data[id]['request_url'] = request_url;
+      this._device_to_data[device_id]['request_url'] = request_url;
 
       // This is called after we successfully try to fetch parse.js
       var got_parse_js = function (err, response) {
         if (!err && response.statusCode == 200) {
-          debug('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + id + ')');
+          debug('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + device_id + ')');
 
           // Store this in the known parsers object
           this._cached_parsers[request_url] = {};
@@ -288,16 +253,17 @@ ThreadGateway.prototype.get_parser = function (payload) {
             this._cached_parsers[request_url].parser = parser;
 
             //update the cache to indicate we actually have this parser
-            this._device_id_ages[id] = Date.now();
-            parser.parseAdvertisement();
+            this._device_id_ages[device_id] = Date.now();
+            parser.parsePayload();
           } catch (e) {
-            debug('Failed to parse advertisement after fetching parser');
+            console.log(e);
+            debug('Failed to parse payload after fetching parser');
           }
 
         } else {
-          debug('Could not fetch parse.js after trying multiple times. (' + id + ')');
+          debug('Could not fetch parse.js after trying multiple times. (' + device_id + ')');
           try {
-            debug('Trying to find cached parser. (' + id + ')');
+            debug('Trying to find cached parser. (' + device_id + ')');
             cacheString = fs.readFileSync('cached_parsers.json', 'utf-8');
             this._cached_parsers = JSON.parse(cacheString);
             for (var r_url in this._cached_parsers) {
@@ -306,9 +272,9 @@ ThreadGateway.prototype.get_parser = function (payload) {
             }
 
             //update the cache to indicate we actually have this parser
-            this._device_id_ages[id] = Date.now();
+            this._device_id_ages[device_id] = Date.now();
           } catch (e) {
-            debug('Failed to find cached parsers. (' + id + ')');
+            debug('Failed to find cached parsers. (' + device_id + ')');
           }
         }
       };
@@ -316,7 +282,7 @@ ThreadGateway.prototype.get_parser = function (payload) {
       // Check if we already know about this URL
       if (!(request_url in this._cached_parsers)) {
         // Don't have this one yet, so lets get it
-        debug('Fetching ' + request_url + ' (' + id + ')');
+        debug('Fetching ' + request_url + ' (' + device_id + ')');
 
         // Now see if we can get parse.js
         async.retry({tries: 1, interval: 2000}, function (cb, r) {
@@ -327,24 +293,24 @@ ThreadGateway.prototype.get_parser = function (payload) {
           });
         }, got_parse_js.bind(this));
       } else {
-        debug('Using cached parse.js for ' + id);
+        debug('Using cached parse.js for ' + device_id);
       }
 
     } else {
       debug('Error getting full URL (' + short_url + ') after several tries.');
       try{
-        debug('Trying to find cached urls. (' + id + ')');
+        debug('Trying to find cached urls. (' + device_id + ')');
         cacheString = fs.readFileSync('cached_urls.json', 'utf-8');
         this._cached_urls = JSON.parse(cacheString);
       } catch (e) {
-        debug('Failed to find cached urls. (' + id + ')');
+        debug('Failed to find cached urls. (' + device_id + ')');
       }
     }
   };
 
   if (short_url in this._cached_urls) {
     // We already know what this URL expands to. Just use that.
-    debug('Using cached url expansion for ' + id);
+    debug('Using cached url expansion for ' + device_id);
     got_expanded_url.call(this, null, this._cached_urls[short_url]);
   } else {
     // Try to expand the URL up to 10 times.
@@ -360,8 +326,8 @@ if (require.main === module) {
     var argv = require('yargs')
         .help('h')
         .alias('h', 'help')
-        .option('no-parse-advertisements', {
-            describe: 'this gateway should not parse advertisements',
+        .option('no-parse-payloads', {
+            describe: 'this gateway should not parse payload',
             boolean: true,
         })
         .option('no-parse-services', {
@@ -376,7 +342,7 @@ if (require.main === module) {
 
     var bleg = new ThreadGateway();
 
-    bleg.on('advertisement', function (adv_obj) {
+    bleg.on('payload', function (adv_obj) {
         console.log(adv_obj);
     });
 
