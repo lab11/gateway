@@ -1,72 +1,74 @@
-Ble Gateway
+COAP Gateway
 ====================
 
-This is designed to be a modular gateway for BLE devices.
-Its core principle is allowing devices to specify how to parse the data
-they provide and what to do with that data.
-It does this by allowing devices to specify their own JavaScript functions
-that now how to take the data encoded in their advertisements and services
-and format it into a JavaScript object. The gateway further allows devices
-to provide JavaScript functions that know what to do with the parsed data.
-
-
+This is designed to be a modular gateway for devices using COAP.  Its core
+principle is allowing devices to specify how to parse the data they provide and
+what to do with that data.  It does this by allowing devices to specify their
+own JavaScript functions that now how to take the data encoded in their packets
+and format it into a JavaScript object. The gateway further allows devices to
+provide JavaScript functions that know what to do with the parsed data.
 
 Quick Overview
 --------------
 
 This script:
 
-1. Listens for Eddystone BLE advertisements.
-2. Upon finding an Eddystone packet, it pulls out the embedded URL and uses
-it to fetch a `parse.js` file at `<URL>/parse.js`. If the URL already specifies
+1. Waits for a COAP message to `/discovery` with a URL.
+2. Upon receiving such a packet, it pulls out the embedded URL and uses
+it to fetch a `parse_coap.js` file at `<URL>/parse_coap.js`. If the URL already specifies
 a particular file, it removes the filename and uses just the base. For example,
-if the Eddystone URL is:
+if the URL is:
 
         http://example.com/folder/index.html
 
-    the gateway will use just `http://example.com/folder/` and look for `parse.js` at:
+    the gateway will use just `http://example.com/folder/` and look for `parse_coap.js` at:
 
-        http://example.com/folder/parse.js
-3. If that `parse.js` file exists, the gateway will use the contained JavaScript functions
+        http://example.com/folder/parse_coap.js
+3. If that `parse_coap.js` file exists, the gateway will use the contained JavaScript functions
 to parse other advertisements the device sends in the future.
 
 
-To use this gateway with your BLE device
+To use this gateway with your COAP device
 ------------------------------------
 
-1. Configure your device to advertise (at least) an Eddystone URL packet.
+1. Configure your device to periodically send (at least) a COAP discovery URL packet.
+This packet should be formed as follows:
+
+
+| 1 byte               | N bytes   | 1 byte         | M bytes |
+| -------------------- | --------- | -------------- | ------- |
+| Device ID length (N) | Device ID | URL Length (M) | URL     |
+
+
 The URL should point to a webserver
-path where you can host the needed JavaScript code. For example, the Eddystone
+path where you can host the needed JavaScript code. For example, the
 URL should be a shortened version of something like:
 
         https://rawgit.com/org/project/device/
 
-    The scan response of that advertisement or a second advertisement
-    can be completely device specific. It can contain
-    data or not. This is what the gateway will use
-    to parse data from the device.
+Packets besides the discovery packet
+can be completely device specific. They can contain
+data or not. The `parse_coap.js` is what the gateway will use
+to parse data from these packets.
 
-    If you wish, you can advertise additional custom advertisements. Each will
-    be passed to the same parse function, however.
-
-2. Create a `parse.js` file and host it in the directory pointed to by the
+2. Create a `parse_coap.js` file and host it in the directory pointed to by the
 Eddystone URL. For example:
 
-        https://github.com/org/project/device/parse.js
+        https://github.com/org/project/device/parse_coap.js
 
-    See below for how to create the `parse.js` file.
+    See below for how to create the `parse_coap.js` file.
 
 
 
-`parse.js`
+`parse_coap.js`
 ----------
 
-A `parse.js` file contains one or several functions that process advertisements
-and devices that the gateway sees. When creating a `parse.js` file, you only
+A `parse_coap.js` file contains one or several functions that process advertisements
+and devices that the gateway sees. When creating a `parse_coap.js` file, you only
 need to implement and export the functions you wish to support. The gateway
 will ignore missing functions.
 
-The template of a `parse.js` file looks like:
+The template of a `parse_coap.js` file looks like:
 
 ```js
 // This function is called by the gateway when a non-Eddystone advertisement
@@ -76,82 +78,40 @@ The template of a `parse.js` file looks like:
 // locally on the gateway. This can be used to store and share data that
 // may be useful for interacting with the device, but should not be stored
 // outside of the device.
-var parseAdvertisement = function (advertisement, done) {};
-
-// This function allows you to return an object with data collected from
-// reading device services and characteristics. When this function is called,
-// the gateway will pass in a noble peripheral object that is already connected.
-// This function must read and services and characteristics that it wishes to
-// and call done() with a JavaScript object.
-var parseServices = function (peripheral, done) {};
-
-// This function will be called with the parsed advertisement data and allows
-// you to do something application specific with it.
-var publishAdvertisement = function (adv_obj) {};
-
-// This function allows you to publish formatted data from services.
-var publishServiceData = function (data_obj) {};
+var parsePayload = function (device_id, resource_url, payload, done) {};
 
 // Only include here the functions you support. The gateway will only
 // call the functions that are exported.
 module.exports = {
-    parseAdvertisement: parseAdvertisement,
-    parseServices: parseServices,
-    publishAdvertisement: publishAdvertisement,
-    publishServiceData: publishServiceData,
+    parsePayload: parsePayload,
 };
 ```
 
-The `advertisement` and `peripheral` parameters are objects
-from the [noble](https://github.com/sandeepmistry/noble) BLE
-library. For more information on how those objects are structured,
-see the noble documentation.
-
-One simple example of a `parse.js` file might look like:
+One simple example of a `parse_coap.js` file might look like:
 
 ```js
-var parse_advertisement = function (advertisement, cb) {
+var parse_payload = function (device_id, resource_url, payload, cb) {
+    if(device_id != null) {
+      var out = {
+        device_id: device_id,
+      }
 
-    var name = advertisement.localName;
-    var service_uuid = parseInt(advertisement.serviceData[0].uuid, 16);
+      if (resource_url === '/resource') {
+        out.resource = payload.readUint8();
+      }
 
-    var out = {
-        name: name,
-        uuid: service_uuid
-    };
-    cb(out);
+      cb(out);
+      return;
+    }
+
+    cb(null);
 }
 
-module.exports = {
-    parseAdvertisement: parse_advertisement
-};
-```
-
-Slightly more complex:
-
-```js
-var parse_advertisement = function (advertisement, cb) {
-
-    var name = advertisement.localName;
-    var service_uuid = parseInt(advertisement.serviceData[0].uuid, 16);
-
-    var out = {
-        name: name,
-        uuid: service_uuid
-    };
-
-    // Data that should only be on the gateway and never shared.
-    var local = {
-        manufacturer_data: advertisement.manufacturerData
-    };
-    cb(out, local);
-}
 
 module.exports = {
-    parseAdvertisement: parse_advertisement
+parsePayload: parse_payload
 };
 ```
-
 
 Extending the Gateway
 ---------------------
@@ -163,22 +123,16 @@ events.
 
 
 ```js
-var BleGateway = require('ble-gateway');
+var CoapGateway = require('ble-gateway');
 
 // Receive formatted advertisement data objects.
 // adv_obj.id will be the peripheral id that it was captured from.
-BleGateway.on('advertisement', function (adv_obj) {
-	...
-});
-
-// Receive formatted objects from reading device services.
-// data_obj.id will be the peripheral id that it was captured from.
-BleGateway.on('data', function (data_obj) {
+CoapGateway.on('payload', function (adv_obj) {
 	...
 });
 
 // Get everything going.
-BleGateway.start();
+CoapGateway.start();
 ```
 
 
@@ -189,18 +143,3 @@ Gateway Usage
 npm install
 ./ble-gateway.js
 ```
-
-Changelog
----------
-
-- Version `0.8.0`: Added `local` stream for data that should only be on the gateway.
-
-Questions
----------
-
-- How to let devices trigger common parsing functions (like Cloudcomm)?
-Likely that a device will want to be able to use a common gateway function.
-- Is there anyway to make downloading and running arbitrary JavaScript safe?
-- How to specify what to do with the data?
-- How to securely get a key off of the device to publish the data with?
-- How to match formatted output data with a website publishing script?
