@@ -9,7 +9,7 @@ var server                 = coap.createServer();
 var request                = require('request');
 var urlExpander            = require('expand-url');
 var _                      = require('lodash');
-var debug                  = require('debug')('thread-gateway');
+var debug                  = require('debug')('coap-gateway');
 var watchout               = require('watchout');
 var async                  = require('async');
 var gatewayId              = require('lab11-gateway-id');
@@ -33,14 +33,14 @@ var am_submodule = (require.main !== module);
 
 // Hardcoded constant for the name of the JavaScript that has the functions
 // we care about for this gateway.
-var FILENAME_PARSE = 'parse_thread.js'
+var FILENAME_PARSE = 'parse_coap.js'
 
 // Hardcoded constant for the timeout window to check for a new parse.js
 var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
 
-// Main object for the ThreadGateway
-var ThreadGateway = function () {
-    debug('Creating a new thread gateway');
+// Main object for the CoapGateway
+var CoapGateway = function () {
+    debug('Creating a new coap gateway');
     this._device_to_data = {};
 
     // Keep a map of URL -> parse.js parsers so we don't have to re-download
@@ -56,10 +56,10 @@ var ThreadGateway = function () {
 };
 
 // We use the EventEmitter pattern to return parsed objects
-util.inherits(ThreadGateway, events.EventEmitter);
+util.inherits(CoapGateway, events.EventEmitter);
 
 // Call .start() to run the gateway functionality
-ThreadGateway.prototype.start = function () {
+CoapGateway.prototype.start = function () {
     // Get the gateway ID for the running gateway to include in the data packets.
     this._gateway_id = '';
     gatewayId.id((id) => {
@@ -71,7 +71,7 @@ ThreadGateway.prototype.start = function () {
 };
 
 // Called on each request
-ThreadGateway.prototype.on_request = function (req, res) {
+CoapGateway.prototype.on_request = function (req, res) {
   try {
 
     // Get device id
@@ -141,7 +141,7 @@ ThreadGateway.prototype.on_request = function (req, res) {
                 local_obj._meta = {
                   received_time: received_time,
                   device_id:     device_id,
-                  receiver:      'thread-gateway',
+                  receiver:      'coap-gateway',
                   gateway_id:    this._gateway_id,
                   base_url:      device.url
                 };
@@ -169,7 +169,7 @@ ThreadGateway.prototype.on_request = function (req, res) {
 };
 
 // Load the downloaded code into a useable module
-ThreadGateway.prototype.require_from_string = function (src, filename) {
+CoapGateway.prototype.require_from_string = function (src, filename) {
     var m = new module.constructor();
     m.paths = module.paths;
     m._compile(src, filename);
@@ -180,7 +180,7 @@ ThreadGateway.prototype.require_from_string = function (src, filename) {
 // So, something like "https://a.com/folder/page.html?q=1#here"
 // should turn in to "https://a.com/folder/"
 // function get_base_url (full_url) {
-ThreadGateway.prototype.get_base_url = function (full_url) {
+CoapGateway.prototype.get_base_url = function (full_url) {
     var parsed_url = url.parse(full_url);
     parsed_url.query = '';
     parsed_url.hash = '';
@@ -197,7 +197,7 @@ ThreadGateway.prototype.get_base_url = function (full_url) {
 }
 
 // function to acquire parser from discovery message
-ThreadGateway.prototype.get_parser = function (device_id, parser_url) {
+CoapGateway.prototype.get_parser = function (device_id, parser_url) {
   // Tickle the watchdog
   watchdog.reset();
 
@@ -340,7 +340,7 @@ if (require.main === module) {
         })
         .argv;
 
-    var bleg = new ThreadGateway();
+    var bleg = new CoapGateway();
 
     bleg.on('payload', function (adv_obj) {
         console.log(adv_obj);
@@ -353,5 +353,5 @@ if (require.main === module) {
     bleg.start();
 
 }else {
-    module.exports = new ThreadGateway();
+    module.exports = new CoapGateway();
 }
