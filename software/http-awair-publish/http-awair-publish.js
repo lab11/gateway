@@ -102,7 +102,6 @@ function get_sensor_data (token) {
 
                 mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
                 // console.log(out);
-                break;
             }
 
         } catch (err) {
