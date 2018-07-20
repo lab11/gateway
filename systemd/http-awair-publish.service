@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Data from Awair Cloud
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/http-awair-publish/http-awair-publish.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=http-awair-publish
+
+[Install]
+WantedBy=multi-user.target
