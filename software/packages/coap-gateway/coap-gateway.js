@@ -14,6 +14,7 @@ var watchout               = require('watchout');
 var async                  = require('async');
 var gatewayId              = require('lab11-gateway-id');
 var fs                     = require('fs');
+var bigInt                 = require('big-integer');
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
@@ -73,12 +74,20 @@ CoapGateway.prototype.start = function () {
 // Called on each request
 CoapGateway.prototype.on_request = function (req, res) {
   try {
-
+    var ptr = 0;
     // Get device id
-    var id_len = req.payload.readUInt8(0);
-    var device_id = req.payload.slice(1, 1+id_len).toString('hex');
-    debug(req.code + " request from " + device_id + " for resource " + req.url);
-    var payload = req.payload.slice(1+id_len);
+    var id_len = req.payload.readUInt8(ptr);
+    ptr++;
+    var device_id = req.payload.slice(ptr, ptr+id_len).toString('hex');
+    debug(device_id);
+    ptr += id_len;
+    var version = req.payload.readUInt8(ptr);
+    ptr++;
+    var t_sec = bigInt(req.payload.readInt32LE(ptr)) + bigInt(req.payload.readInt32LE(ptr+32/8) << 32);
+    ptr += 64/8;
+    var t_usec = req.payload.readInt32LE(ptr);
+    ptr += 32/8;
+    var payload = req.payload.slice(ptr);
 
     debug(req.url);
     if (req.url === "/discovery") {
@@ -89,9 +98,9 @@ CoapGateway.prototype.on_request = function (req, res) {
     }
 
     // Get the time
+    var sent_time = new Date(t_sec*1000 + t_usec/1000).toISOString();
     var received_time = new Date().toISOString();
-
-    // We have seen an discovery packet from the same address
+    // We have seen a discovery packet from the same address
     if (device_id in this._device_to_data) {
 
       // Lookup the correct device to get its parser URL identifier
@@ -115,6 +124,8 @@ CoapGateway.prototype.on_request = function (req, res) {
 
                 // Add a _meta key with some more information
                 adv_obj._meta = {
+                  version: version,
+                  sent_time: sent_time,
                   received_time: received_time,
                   device_id:     device_id,
                   receiver:      'coap-gateway',

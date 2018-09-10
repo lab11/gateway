@@ -1,6 +1,6 @@
 {
   "name": "coap-gateway",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "COAP Gateway ====================",
   "main": "coap-gateway.js",
   "scripts": {
@@ -14,6 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^1.5.2",
+    "big-integer": "^1.6.36",
     "coap": "^0.22.0",
     "debug": "^2.2.0",
     "expand-url": "^0.1.3",
