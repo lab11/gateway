@@ -189,7 +189,15 @@ function mqtt_on_connect() {
             var device_class = adv_obj['device'];
             delete adv_obj.device;
 
-            var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
+            // use sent time if it exists and is less than and within 2 seconds of recv time
+            var recv_time = new Date(adv_obj['_meta']['received_time']).getTime();
+            var timestamp = recv_time;
+            if ('sent_time' in adv_obj['_meta']) {
+              var sent_time = new Date(adv_obj['_meta']['sent_time']).getTime();
+              if (Math.abs(recv_time - sent_time)/1000.0 < 2 && recv_time - sent_time > 0) {
+                timestamp = sent_time;
+              }
+            }
 
             // Continue on to post to influxdb
             if (device_id) {
@@ -198,7 +206,7 @@ function mqtt_on_connect() {
                 // tags section of the stored packet.
                 var tags = {};
                 for (var key in adv_obj['_meta']) {
-                    if (key != 'device_id' && key != 'received_time') {
+                    if (key != 'device_id' && key != 'received_time' && key != 'sent_time') {
                         tags[key] = adv_obj['_meta'][key];
                     }
                 }
