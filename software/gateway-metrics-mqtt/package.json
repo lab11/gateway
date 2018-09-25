@@ -1,0 +1,19 @@
+{
+  "name": "gateway-metrics-mqtt",
+  "version": "0.0.1",
+  "description": "Publishes gateway os metrics/resources on mqtt",
+  "main": "gateway-metrics-mqtt.js",
+  "dependencies": {
+    "async": "^2.6.1",
+    "lab11-gateway-id": "^0.1.1",
+    "metrics-os": "^1.0.1",
+    "mqtt": "^2.18.8",
+    "pg-format": "^1.0.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Neal Jackson",
+  "license": "MIT"
+}
