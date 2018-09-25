@@ -98,8 +98,15 @@ CoapGateway.prototype.on_request = function (req, res) {
     }
 
     // Get the time
-    var sent_time = new Date(t_sec*1000 + t_usec/1000).toISOString();
-    var received_time = new Date().toISOString();
+    var sent_time = new Date(t_sec*1000 + t_usec/1000);
+    var received_time = new Date();
+    var timestamp = received_time.getTime();
+    if (Math.abs(timestamp - sent_time.getTime())/1000.0 < 2 && timestamp - sent_time.getTime() > 0) {
+      timestamp = sent_time.getTime();
+    }
+    received_time = received_time.toISOString();
+    sent_time = sent_time.toISOString();
+
     // We have seen a discovery packet from the same address
     if (device_id in this._device_to_data) {
 
@@ -125,6 +132,7 @@ CoapGateway.prototype.on_request = function (req, res) {
                 // Add a _meta key with some more information
                 adv_obj._meta = {
                   version: version,
+                  timestamp: timestamp,
                   sent_time: sent_time,
                   received_time: received_time,
                   device_id:     device_id,

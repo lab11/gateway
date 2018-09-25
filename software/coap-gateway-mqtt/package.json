@@ -1,0 +1,27 @@
+{
+  "name": "coap-gateway-mqtt",
+  "version": "0.2.0",
+  "description": "Publish COAP packets to MQTT topic.",
+  "main": "coap-gateway-mqtt.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab11/gateway.git"
+  },
+  "author": "Neal Jackson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lab11/gateway/issues"
+  },
+  "dependencies": {
+    "coap-gateway": "0.0.7",
+    "debug": "^2.2.0",
+    "gateway-topics": "^0.1.0",
+    "mqtt": "^1.14.1",
+    "yargs": "^3.31.0"
+  },
+  "homepage": "https://github.com/lab11/gateway#readme",
+  "devDependencies": {}
+}
