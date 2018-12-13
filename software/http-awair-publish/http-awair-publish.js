@@ -66,7 +66,8 @@ function get_sensor_data (token) {
                         'temp': 'Temperature_°C',
                         'humid': 'Humidity_%',
                         'co2': 'co2_ppm',
-                        'voc': 'voc_ppb'
+                        'voc': 'voc_ppb',
+                        'pm25': 'pm2.5_μg/m3'
                     };
 
                     // Save the score
