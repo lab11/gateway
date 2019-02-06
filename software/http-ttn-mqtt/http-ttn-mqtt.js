@@ -67,12 +67,7 @@ mqtt_client.on('connect', function () {
     var client = new ttn.DataClient(config.appID, config.accessKey, 'us-west.thethings.network:1883');
     debug('Connected to TTN')
 
-
     client.on("uplink", function (devID, payload) {
-        console.log("Received uplink from ", devID)
-        console.log(payload)
-        console.log(payload.metadata.gateways)
-
         var out = {};
 
         // We definitely want the extracted data if it exists.
