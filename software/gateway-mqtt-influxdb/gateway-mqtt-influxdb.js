@@ -79,7 +79,7 @@ function fix_measurement (field) {
 
     function fix_measurement_no_objects (subfield) {
         if (typeof subfield === 'object') {
-            return JSON.stringify(field);
+            return JSON.stringify(subfield);
         } else if (subfield === null) {
             return 'null';
         } else if (typeof subfield === 'number') {
@@ -87,17 +87,17 @@ function fix_measurement (field) {
         } else if (typeof subfield === 'boolean') {
             return subfield;
         } else if (typeof subfield === 'string') {
-            if (field.lower() === 'true') {
+            if (subfield.toLowerCase() === 'true') {
                 return true;
-            } else if (field.lower() === 'false') {
+            } else if (subfield.toLowerCase() === 'false') {
                 return false;
-            } else if (isFloat(field)) {
-                parseFloat(field);
+            } else if (isFloat(subfield)) {
+                parseFloat(subfield);
             } else {
-                return field;
+                return subfield;
             }
         } else {
-            return JSON.stringify(field);
+            return JSON.stringify(subfield);
         }
     }
 
