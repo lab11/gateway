@@ -135,7 +135,7 @@ function update_data (mqtt_client, user, pass) {
                 try {
                     last_day = fs.readFileSync(__dirname + '/' + user + '.last', 'utf-8');
                 } catch (e) {}
-                last_day = new Date(last_day);
+                last_day = new Date(last_day + ' 00:00:00 EST');
 
                 // Keep track of what will be the new last day.
                 var first_day = undefined;
@@ -148,7 +148,7 @@ function update_data (mqtt_client, user, pass) {
                     if (fields.length == 51) {
                         var account_no = fields[0];
                         var recorder_id = fields[1];
-                        var day = new Date(fields[2]);
+                        var day = new Date(fields[2] + ' 00:00:00 EST');
 
                         if (day <= last_day) {
                             // Days are order in descending order.
