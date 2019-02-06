@@ -46,6 +46,8 @@ try {
 
 
 function update_data (mqtt_client, user, pass) {
+    console.log('Getting data for ' + user);
+
 
     const req_login = {
       url: 'https://mydom.dominionenergy.com/siteminderagent/forms/login.fcc',
@@ -179,8 +181,6 @@ function update_data (mqtt_client, user, pass) {
                                 gateway_id: _gateway_id
                             }
                             mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
-
-
                         }
 
                         // Publish daily energy too.
@@ -196,6 +196,8 @@ function update_data (mqtt_client, user, pass) {
                             gateway_id: _gateway_id
                         }
                         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+
+                        console.log('Published for ' + day);
                     }
                 }
 
@@ -211,8 +213,11 @@ function update_data (mqtt_client, user, pass) {
 }
 
 function update_all_data () {
+    console.log('Running fetch for all power data.');
+
     var mqtt_client = mqtt.connect('mqtt://localhost');
     mqtt_client.on('connect', function () {
+        console.log('MQTT connected');
         for (var user_index in config.usernames) {
             var user = config.usernames[user_index];
             var pass = config.passwords[user_index];
