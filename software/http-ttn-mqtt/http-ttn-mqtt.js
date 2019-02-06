@@ -126,8 +126,11 @@ mqtt_client.on('connect', function () {
             out.geohash = ghash;
         }
 
+        // Make special measurement for mapping purposes.
+        if ('geohash' in out && 'rssi' in out) {
+            out.rssimap = {rssi: out.rssi, geohash: out.geohash};
+        }
 
-        console.log(out);
         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
 
     });
