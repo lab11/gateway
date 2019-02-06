@@ -10,7 +10,7 @@ var Geohash   = require('latlon-geohash');
 var mqtt      = require('mqtt');
 
 
-
+var MQTT_TOPIC_NAME = 'gateway-data';
 
 
 // Default config file path
