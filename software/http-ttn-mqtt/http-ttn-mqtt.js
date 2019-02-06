@@ -7,6 +7,7 @@ var debug     = require('debug')('http-ttn-mqtt');
 var ini       = require('ini');
 var ttn       = require('ttn');
 var Geohash   = require('latlon-geohash');
+var mqtt      = require('mqtt');
 
 
 
