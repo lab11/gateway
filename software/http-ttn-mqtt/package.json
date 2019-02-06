@@ -1,0 +1,18 @@
+{
+  "name": "http-ttn-mqtt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "http-ttn-mqtt.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^4.1.1",
+    "ini": "^1.3.5",
+    "latlon-geohash": "^1.1.0",
+    "minimist": "^1.2.0",
+    "ttn": "^2.3.1"
+  }
+}
