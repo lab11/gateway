@@ -163,10 +163,13 @@ function update_data (mqtt_client, user, pass) {
                         // Iterate all 30 minute intervals
                         for (var i=0; i<48; i++) {
                             let tstamp = new Date(day.getTime() + (30*(i+1))*60000).toISOString();
-                            let kw = parseFloat(fields[i+3]);
+                            let kwh = parseFloat(fields[i+3]);
                             // console.log(tstamp + '  :  ' + kw);
 
-                            daily_kwh += (0.5 * kw);
+                            daily_kwh += kwh;
+
+                            // Double to get kW since these are 30 minute intervals.
+                            let kw = 2.0 * kwh;
 
                             // Publish 30 minute interval measurement.
                             var out = {
