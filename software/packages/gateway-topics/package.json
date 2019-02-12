@@ -1,6 +1,6 @@
 {
   "name": "gateway-topics",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Split global data stream up by device.",
   "main": "gateway-topics.js",
   "dependencies": {

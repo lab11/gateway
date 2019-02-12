@@ -51,8 +51,14 @@ _mqtt_client.on('connect', function () {
     _mqtt_client.subscribe(TOPIC_TOPICS);
 
     _mqtt_client.on('message', function (topic, message) {
-        var topic_list = JSON.parse(message.toString());
 
+        var topic_list = [];
+        try {
+          JSON.parse(message.toString());
+        }
+        catch(err) {
+          console.log(err)
+        }
         advertising_topics = topic_list;
     });
 });
