@@ -467,7 +467,7 @@ _mqtt_client.on('connect', function () {
 						now.getUTCMinutes(),
 						now.getUTCSeconds()]));
 					spi_cs.writeSync(1);
-				}, 60*1000)
+				}, 10*1000)
 			}
 		});
 	});
