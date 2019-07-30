@@ -83,6 +83,13 @@ CoapGateway.prototype.on_request = function (req, res) {
     ptr += id_len;
     var version = req.payload.readUInt8(ptr);
     ptr++;
+    var seq_no = 0;
+    debug("version " + version.toString())
+    if (version > 1) {
+      seq_no = req.payload.readUInt32LE(ptr);
+      ptr+=4;
+      debug("seq " + seq_no.toString())
+    }
     var t_sec = bigInt(req.payload.readInt32LE(ptr)) + bigInt(req.payload.readInt32LE(ptr+32/8) << 32);
     ptr += 64/8;
     var t_usec = req.payload.readInt32LE(ptr);
@@ -128,6 +135,7 @@ CoapGateway.prototype.on_request = function (req, res) {
               // only continue if the result was valid
               if (adv_obj) {
                 adv_obj.id = device_id;
+                adv_obj.seq_no = seq_no;
 
                 // Add a _meta key with some more information
                 adv_obj._meta = {
