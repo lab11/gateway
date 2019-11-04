@@ -38,15 +38,17 @@ try {
     process.exit(1);
 }
 
-function get_sensor_data (token) {
+// Gets a list of devices for this awair account.
+function get_awair_devices (token) {
     var request_obj = {
         headers: {
             'Authorization': 'Bearer ' + token
         },
-        uri: 'https://internal.awair.is/v1.1/users/self/devices'
+        // uri: 'https://internal.awair.is/v1.1/users/self/devices'
+        uri: 'http://developer-apis.awair.is/v1/users/self/devices'
     };
 
-	request(request_obj, function (error, response, body) {
+    request(request_obj, function (error, response, body) {
         if (error) {
             console.log(error)
             console.log(request_url)
@@ -54,6 +56,63 @@ function get_sensor_data (token) {
 
         try {
             data = JSON.parse(body);
+            if ('devices' in data) {
+                for (var device_index in data.devices) {
+                    var device = data.devices[device_index];
+                    console.log(device);
+
+                    var device_type = device.deviceType;
+                    var device_id = device.deviceId;
+                    var mac_address = device.macAddress;
+
+                    get_sensor_data(token, device_type, device_id, mac_address);
+                }
+            }
+        } catch (err) {
+            console.log(err)
+            console.log(body)
+        }
+    });
+}
+
+function get_sensor_data (token, device_type, device_id, mac_address) {
+    var request_obj = {
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        // uri: 'https://internal.awair.is/v1.1/devices/'+device_type+'/'+device_id+'/events/score?desc=true&limit=1'
+        // uri: 'http://developer-apis.awair.is/v1/users/self/devices/'+device_type+'/'+device_id+'/events/score?desc=true&limit=1'
+        // uri: 'https://internal.awair.is/v1.1/users/self/devices'
+        // uri: 'http://developer-apis.awair.is/v1/users/self/devices'
+        // uri: 'https://internal.awair.is/v1.1/users/self/devices/8532/air-data/latest'
+        // uri: 'https://internal.awair.is/v1.1/users/self/devices/awair-glow/8532/score/latest'
+        // uri: 'http://developer-apis.awair.is/v1/users/self/devices/awair-glow/8532/air-data/latest'
+        uri: 'http://developer-apis.awair.is/v1/users/self/devices/'+device_type+'/'+device_id+'/air-data/latest'
+        // uri: 'https://internal.awair.is/v1.1/users/self/devices/awair-r2/3301/air-data/latest'
+
+        // uri: 'https://internal.awair.is/v1.1/devices/awair-glow/8532/events/score?desc=true&limit=1'
+        // uri: 'https://internal.awair.is/v1.1/devices/awair-r2/3301/events/score?desc=true&limit=1'
+
+        // uri: 'https://internal.awair.is/v1.2/devices/awair-glow/8532/timeline?from=2019-05-22T19:19:10.657076&to=2019-05-28T19:19:10.657076'
+        // uri: 'https://internal.awair.is/v1.2/devices/awair-glow/8532/timeline'
+    };
+
+    // console.log(request_obj);
+
+// http://developer-apis.awair.is/v1/users/self/devices/8532/air-data/latest"
+// data_url = "/air-data/latest"
+
+	request(request_obj, function (error, response, body) {
+        if (error) {
+            console.log(error)
+            console.log(request_url)
+        }
+
+        // console.log(body)
+
+        try {
+            data = JSON.parse(body);
+// console.log(data);
 
             for (let device of data.data) {
 
@@ -61,7 +120,7 @@ function get_sensor_data (token) {
 
                 var timestamp = new Date().toISOString();
 
-                if ('score' in device) {
+                if ('score' in device && 'sensors' in device) {
                     var mapping = {
                         'temp': 'Temperature_°C',
                         'humid': 'Humidity_%',
@@ -71,20 +130,24 @@ function get_sensor_data (token) {
                     };
 
                     // Save the score
-                    out.awair_score = device.score.score;
+                    out.awair_score = device.score;
 
                     // Save the measured data
-                    for (var measurement in device.score.sensor) {
-                        if (measurement in mapping) {
-                            out[mapping[measurement]] = device.score.sensor[measurement];
+                    for (var measurement_index in device.sensors) {
+                        measurement_name = device.sensors[measurement_index].comp;
+                        measurement_value = device.sensors[measurement_index].value;
+                        if (measurement_name in mapping) {
+                            out[mapping[measurement_name]] = measurement_value;
                         } else {
-                            out[measurement] = device.score.sensor[measurement];
+                            console.log(out)
+                            console.log(device.sensor)
+                            out[measurement_name] = measurement_value;
                         }
                     }
 
                     // Get the timestamp if provided
-                    if ('timestamp' in device.score) {
-                        timestamp = device.score.timestamp;
+                    if ('timestamp' in device) {
+                        timestamp = device.timestamp;
                     }
                 }
 
@@ -93,16 +156,17 @@ function get_sensor_data (token) {
                 }
 
                 // Add in the other fields that make the whole gateway system work.
-                out.device = device.type;
+                out.device = device_type;
                 out._meta = {
                     received_time: timestamp,
-                    device_id: 'awair-' + device.id,
+                    device_id: 'awair-' + device_id,
                     receiver: 'http-awair-publish',
-                    gateway_id: _gateway_id
+                    gateway_id: _gateway_id,
+                    awair_mac_address: mac_address,
                 }
 
                 mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
-                // console.log(out);
+                 // console.log(out);
             }
 
         } catch (err) {
@@ -112,11 +176,19 @@ function get_sensor_data (token) {
 	});
 }
 
+// function make_requests() {
+//     for (var token of config.token) {
+//         // get_sensor_data(token);
+//         get_awair_devices(token);
+//     }
+// }
+// make_requests();
+
 var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client.on('connect', function () {
     function make_requests() {
         for (var token of config.token) {
-            get_sensor_data(token);
+            get_awair_devices(token);
         }
     }
 
