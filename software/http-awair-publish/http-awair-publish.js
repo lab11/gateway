@@ -120,7 +120,10 @@ function get_sensor_data (token, device_type, device_id, mac_address) {
             data = JSON.parse(body);
 // console.log(data);
 
-            for (let device of data.data) {
+            // Awair gives use the values in reverse.
+            datas = data.data.reverse();
+
+            for (let device of datas) {
 
                 var out = {};
 
