@@ -76,6 +76,11 @@ function get_awair_devices (token) {
 }
 
 function get_sensor_data (token, device_type, device_id, mac_address) {
+    now = new Date();
+    three_minutes_ago = new Date(new Date().setMinutes(now.getMinutes() - 3));
+
+
+
     var request_obj = {
         headers: {
             'Authorization': 'Bearer ' + token
@@ -87,7 +92,8 @@ function get_sensor_data (token, device_type, device_id, mac_address) {
         // uri: 'https://internal.awair.is/v1.1/users/self/devices/8532/air-data/latest'
         // uri: 'https://internal.awair.is/v1.1/users/self/devices/awair-glow/8532/score/latest'
         // uri: 'http://developer-apis.awair.is/v1/users/self/devices/awair-glow/8532/air-data/latest'
-        uri: 'http://developer-apis.awair.is/v1/users/self/devices/'+device_type+'/'+device_id+'/air-data/latest'
+        // uri: 'http://developer-apis.awair.is/v1/users/self/devices/'+device_type+'/'+device_id+'/air-data/latest'
+        uri: 'http://developer-apis.awair.is/v1/users/self/devices/'+device_type+'/'+device_id+'/air-data/raw?from='+three_minutes_ago.toISOString()+'&to='+now.toISOString()
         // uri: 'https://internal.awair.is/v1.1/users/self/devices/awair-r2/3301/air-data/latest'
 
         // uri: 'https://internal.awair.is/v1.1/devices/awair-glow/8532/events/score?desc=true&limit=1'
@@ -192,6 +198,7 @@ mqtt_client.on('connect', function () {
         }
     }
 
-    // Awair publishes every 10 seconds.
-    setInterval(make_requests, 10*1000);
+    // Awair publishes every 10 seconds, but we are request limited, so update
+    // every 3 minutes.
+    setInterval(make_requests, 3*60*1000);
 });
