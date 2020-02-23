@@ -3,6 +3,7 @@
 var events = require('events');
 var url    = require('url');
 var util   = require('util');
+var Long   = require('long');
 
 var coap                   = require('coap');
 var server                 = coap.createServer();
@@ -14,7 +15,8 @@ var watchout               = require('watchout');
 var async                  = require('async');
 var gatewayId              = require('lab11-gateway-id');
 var fs                     = require('fs');
-var bigInt                 = require('big-integer');
+var protobuf               = require('protobufjs');
+var tmp                    = require('tmp');
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
@@ -32,9 +34,8 @@ var watchdog = new watchout(30*60*1000, function(didCancelWatchdog) {
 // We expect this to normally be true.
 var am_submodule = (require.main !== module);
 
-// Hardcoded constant for the name of the JavaScript that has the functions
-// we care about for this gateway.
-var FILENAME_PARSE = 'parse_coap.js'
+// Hardcoded constant for the name of the parsing file
+var FILENAME_PARSE = 'parse.proto'
 
 // Hardcoded constant for the timeout window to check for a new parse.js
 var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
@@ -51,6 +52,13 @@ var CoapGateway = function () {
     // Keep track of shortened URLs to the full expanded URL so we don't
     // have to query each time we get a short URL
     this._cached_urls = {};
+
+    that = this;
+    let root = new protobuf.Root();
+    root.load(__dirname + '/header.proto', {keepCase: true}, function(err) {
+      if (err) throw err;
+      that._header_parser = root.lookupType("Message");
+    });
 
     server.on('request', this.on_request.bind(this));
     this._device_id_ages = {};
@@ -73,39 +81,37 @@ CoapGateway.prototype.start = function () {
 
 // Called on each request
 CoapGateway.prototype.on_request = function (req, res) {
+  var payload = req.payload;
+
   try {
-    var ptr = 0;
-    // Get device id
-    var id_len = req.payload.readUInt8(ptr);
-    ptr++;
-    var device_id = req.payload.slice(ptr, ptr+id_len).toString('hex');
-    debug(device_id);
-    ptr += id_len;
-    var version = req.payload.readUInt8(ptr);
-    ptr++;
-    var seq_no = 0;
-    debug("version " + version.toString())
-    if (version > 1) {
-      seq_no = req.payload.readUInt32LE(ptr);
-      ptr+=4;
-      debug("seq " + seq_no.toString())
-    }
-    var t_sec = bigInt(req.payload.readInt32LE(ptr)) + bigInt(req.payload.readInt32LE(ptr+32/8) << 32);
-    ptr += 64/8;
-    var t_usec = req.payload.readInt32LE(ptr);
-    ptr += 32/8;
-    var payload = req.payload.slice(ptr);
+    var err = this._header_parser.verify(payload);
+    if (err) throw Error(err);
+
+    var message = this._header_parser.toObject(this._header_parser.decode(payload));
+
+    var device_id = message.header.id.toString('hex');
+    var device_type = message.header.device_type;
+    var seq_no = message.header.seq_no;
+    var version = message.header.version;
+    var topic = req.url.split('/');
+    topic = topic[topic.length - 1];
 
     debug(req.url);
     if (req.url === "/discovery") {
-      var url_len = payload.readUInt8(0);
-      var parser_url = 'https://' + payload.toString('utf8', 1, url_len+1);
+      var parser_url = 'https://' + message.data.discovery
       this.get_parser(device_id, parser_url);
       return;
     }
 
     // Get the time
-    var sent_time = new Date(t_sec*1000 + t_usec/1000);
+    var usec;
+    if (!("tv_usec" in message.header)) {
+      usec = 0;
+    } else {
+      usec = message.header.tv_usec;
+    }
+    var sent_time = new Date(message.header.tv_sec.toNumber()*1000 + usec/1000.0);
+    debug(sent_time);
     var received_time = new Date();
     var timestamp = received_time.getTime();
     if (Math.abs(timestamp - sent_time.getTime())/1000.0 < 2 && timestamp - sent_time.getTime() > 0) {
@@ -116,34 +122,36 @@ CoapGateway.prototype.on_request = function (req, res) {
 
     // We have seen a discovery packet from the same address
     if (device_id in this._device_to_data) {
-
+      debug("seen device before");
       // Lookup the correct device to get its parser URL identifier
       var device = this._device_to_data[device_id];
 
       // Check to see if a parser is available
       if (device.request_url in this._cached_parsers) {
         var parser = this._cached_parsers[device.request_url];
+        debug("have parser already");
 
         // Unless told not to, we parse payloads
         if (am_submodule || !argv.noParsePayloads) {
 
           // Check if we have some way to parse the payload
-          if (parser.parser && parser.parser.parsePayload) {
-
-            var parse_payload_done = function (adv_obj, local_obj) {
+          if (parser.parser) {
+            var parse_payload_done = function (adv_obj) {
 
               // only continue if the result was valid
               if (adv_obj) {
-                adv_obj.id = device_id;
                 adv_obj.seq_no = seq_no;
+                adv_obj.device = device_type;
 
                 // Add a _meta key with some more information
                 adv_obj._meta = {
+                  topic: topic,
                   version: version,
                   timestamp: timestamp,
                   sent_time: sent_time,
                   received_time: received_time,
                   device_id:     device_id,
+                  device:        device_type,
                   receiver:      'coap-gateway',
                   gateway_id:    this._gateway_id
                 };
@@ -154,36 +162,18 @@ CoapGateway.prototype.on_request = function (req, res) {
                 // Tickle the watchdog now that we have successfully
                 // handled a pakcet.
                 watchdog.reset();
-
-                // Now check if the device wants to do something
-                // with the parsed payload.
-                if ((am_submodule || !argv.noPublish) && parser.parser.publishPayload) {
-                  parser.parser.publishPayload(adv_obj);
-                }
-              }
-
-              // Local data is optional
-              if (local_obj) {
-                // Add a _meta key with some more information
-                local_obj._meta = {
-                  received_time: received_time,
-                  device_id:     device_id,
-                  receiver:      'coap-gateway',
-                  gateway_id:    this._gateway_id,
-                  base_url:      device.url
-                };
-
-                // We broadcast on "local"
-                this.emit('local', local_obj);
               }
             };
 
             // Call the device specific payload parse function.
             // Give it the done callback.
             try {
-              // add the device ID for parsers to see
-              parser.parser.parsePayload(device_id, req.url, payload, parse_payload_done.bind(this));
+              var err = parser.parser.verify(payload);
+              if (err) throw err;
+              var message = parser.parser.toObject(parser.parser.decode(payload), {bytes: String});
+              parse_payload_done.bind(this)(message.data);
             } catch (e) {
+              debug(e);
               debug('Error calling parse function for ' + device_id + '\n' + e);
             }
           }
@@ -194,14 +184,6 @@ CoapGateway.prototype.on_request = function (req, res) {
     debug(e);
   }
 };
-
-// Load the downloaded code into a useable module
-CoapGateway.prototype.require_from_string = function (src, filename) {
-    var m = new module.constructor();
-    m.paths = module.paths;
-    m._compile(src, filename);
-    return m.exports;
-}
 
 // We want just the base URL.
 // So, something like "https://a.com/folder/page.html?q=1#here"
@@ -268,22 +250,30 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
         if (!err && response.statusCode == 200) {
           debug('Loading ' + FILENAME_PARSE + ' for ' + full_url + ' (' + device_id + ')');
 
-          // Store this in the known parsers object
-          this._cached_parsers[request_url] = {};
-          this._cached_parsers[request_url]['parse.js'] = response.body;
-          fs.writeFileSync('cached_parsers.json', JSON.stringify(this._cached_parsers));
-
-          // Make the downloaded JS an actual function
-          // TODO (2016/01/11): Somehow check if the parser is valid and discard if not.
+          // Create tmp file for parse.proto
+          var that = this;
           try {
-            var parser = this.require_from_string(response.body, request_url);
-            this._cached_parsers[request_url].parser = parser;
+            tmp.file({ mode: 0644, postfix: '.proto' }, function (err, path, fd) {
+              if (err) throw err;
 
-            //update the cache to indicate we actually have this parser
-            this._device_id_ages[device_id] = Date.now();
-            parser.parsePayload();
+              fs.write(fd, response.body, function (err, written, string) {
+                // Store this in the known parsers object
+                that._cached_parsers[request_url] = {};
+                that._cached_parsers[request_url].proto_file = path;
+                // fs.writeFileSync('cached_parsers.json', JSON.stringify(that._cached_parsers));
+
+                // Check the downloaded parse.proto is valid
+                let root = new protobuf.Root();
+                root.load(path, {keepCase: true}, function(err) {
+                  if (err) throw err;
+
+                  var parser = root.lookupType("Message");
+                  that._cached_parsers[request_url].parser = parser;
+                  that._device_id_ages[device_id] = Date.now();
+                });
+              });
+            });
           } catch (e) {
-            console.log(e);
             debug('Failed to parse payload after fetching parser');
           }
 
@@ -291,15 +281,16 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
           debug('Could not fetch parse.js after trying multiple times. (' + device_id + ')');
           try {
             debug('Trying to find cached parser. (' + device_id + ')');
-            cacheString = fs.readFileSync('cached_parsers.json', 'utf-8');
-            this._cached_parsers = JSON.parse(cacheString);
-            for (var r_url in this._cached_parsers) {
-              var parser = this.require_from_string(this._cached_parsers[r_url]['parse.js'], r_url);
-              this._cached_parsers[r_url].parser = parser;
-            }
+            // TODO figure this shit out:
+            //cacheString = fs.readFileSync('cached_parsers.json', 'utf-8');
+            //this._cached_parsers = JSON.parse(cacheString);
+            //for (var r_url in this._cached_parsers) {
+            //  var parser = this.require_from_string(this._cached_parsers[r_url]['parse.js'], r_url);
+            //  this._cached_parsers[r_url].parser = parser;
+            //}
 
-            //update the cache to indicate we actually have this parser
-            this._device_id_ages[device_id] = Date.now();
+            ////update the cache to indicate we actually have this parser
+            //this._device_id_ages[device_id] = Date.now();
           } catch (e) {
             debug('Failed to find cached parsers. (' + device_id + ')');
           }
@@ -371,10 +362,6 @@ if (require.main === module) {
 
     coapg.on('payload', function (adv_obj) {
         console.log(adv_obj);
-    });
-
-    coapg.on('local', function (local_obj) {
-        console.log(local_obj);
     });
 
     coapg.start();

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+message Header {
+  uint32 version = 1;
+  bytes  id = 2;
+  string device_type = 3;
+  uint32 seq_no = 4;
+  uint64 tv_sec = 5;
+  uint32 tv_usec = 6;
+}
+
+message Data {
+  // System data
+  string discovery = 1;
+  string version = 2;
+}
+
+message Message {
+  Header header = 1;
+  Data data = 2;
+}
