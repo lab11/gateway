@@ -90,7 +90,7 @@ function get_awair_devices (token, start) {
             console.log(body)
         }
 
-        next_start = new Date(start.setDate(start.getDate() + 1));
+        next_start = new Date(start.setHours(start.getHours() + 1));
     });
 }
 
@@ -224,7 +224,7 @@ function get_sensor_data (token, s, e, device_type, device_id, mac_address) {
 
 
 // var next_start = new Date('2020-03-24T00:00:00');
-var next_start = new Date('2020-01-01T00:00:00');
+var next_start = new Date('2020-01-01T01:00:00');
 // var next_start = new Date('2019-11-09T00:00:00');
 
 

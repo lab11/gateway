@@ -16,7 +16,7 @@ var TOPIC_MAIN_STREAM = 'gateway-data';
 var TOPIC_OCCUPANCY_STREAM = 'occupancy/+';
 
 // How long to batch data for before posting
-var DATA_LIMIT_LINES = 200000;
+var DATA_LIMIT_LINES = 1000;
 var DATA_LIMIT_TIME  = 15*1000;
 
 // Default config file path
