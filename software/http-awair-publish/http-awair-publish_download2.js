@@ -125,7 +125,7 @@ function get_sensor_data (token, s, e, device_type, device_id, mac_address) {
         // uri: 'https://internal.awair.is/v1.2/devices/awair-glow/8532/timeline'
     };
 
-    console.log(request_obj);
+    // console.log(request_obj);
 
 // http://developer-apis.awair.is/v1/users/self/devices/8532/air-data/latest"
 // data_url = "/air-data/latest"
@@ -198,7 +198,7 @@ function get_sensor_data (token, s, e, device_type, device_id, mac_address) {
                     awair_mac_address: mac_address,
                 }
 
-                // mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
                 // console.log(out);
                 count += 1;
             }
@@ -228,8 +228,8 @@ var next_start = new Date('2020-01-01T00:00:00');
 // var next_start = new Date('2019-11-09T00:00:00');
 
 
-// var mqtt_client = mqtt.connect('mqtt://localhost');
-// mqtt_client.on('connect', function () {
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
     function make_requests() {
         for (var token of config.token) {
             get_awair_devices(token, next_start);
@@ -237,8 +237,10 @@ var next_start = new Date('2020-01-01T00:00:00');
     }
 
     // Awair publishes every 10 seconds, but we are request limited, so update
-    // every 3 minutes.
-    setInterval(make_requests, 3*60*1000);
-// });
+    // every 5 minutes.
+    setInterval(make_requests, 5*60*1000);
 
-make_requests();
+    make_requests();
+});
+
+
