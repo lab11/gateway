@@ -73,10 +73,12 @@ function get_awair_devices (token, start) {
         try {
             data = JSON.parse(body);
             if ('devices' in data) {
+                console.log('found ' + data.devices.length + ' devices');
+
                 for (var device_index in data.devices) {
                     var device = data.devices[device_index];
-                    console.log('found device');
-                    console.log(device);
+                    // console.log('found device');
+                    // console.log(device);
 
                     var device_type = device.deviceType;
                     var device_id = device.deviceId;
