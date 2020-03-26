@@ -41,15 +41,11 @@ try {
 // Gets a list of devices for this awair account.
 function get_awair_devices (token, start) {
     var s = '' + start.toISOString();
-    // var e = '' + new Date(start.setDate(start.getDate() + 1)).toISOString();
-    var e = '' + new Date(start.setHours(start.getHours() + 1)).toISOString();
-    // var e = '' + new Date(start.setMinutes(start.getMinutes() + 5)).toISOString();
 
-    // var e = new Date();
-    // var e = new Date(new Date().setMinutes(start.getMinutes() + 3));
+    var end = new Date(start);
+    end.setHours(start.getHours() + 1);
 
-    // s = s.toISOString();
-    // e = e.toISOString();
+    var e = '' + end.toISOString();
 
     console.log('retrieving from ' + s + ' to ' + e + ' for token ' + token);
 
@@ -132,6 +128,8 @@ function get_sensor_data (token, s, e, device_type, device_id, mac_address) {
 // http://developer-apis.awair.is/v1/users/self/devices/8532/air-data/latest"
 // data_url = "/air-data/latest"
 
+    console.log('get data from ' + s + ' to ' + e + ' for device ' + device_id + ' (' + device_type + ')');
+
 	request(request_obj, function (error, response, body) {
         if (error) {
             console.log(error)
@@ -210,8 +208,8 @@ function get_sensor_data (token, s, e, device_type, device_id, mac_address) {
 
 
         } catch (err) {
-            console.log(err)
-            console.log(body)
+            // console.log(err)
+            console.log('ERROR for ' + device_id + ': ' + body)
         }
 	});
 }
@@ -226,7 +224,7 @@ function get_sensor_data (token, s, e, device_type, device_id, mac_address) {
 
 
 // var next_start = new Date('2020-03-24T00:00:00');
-var next_start = new Date('2020-02-15T00:00:00');
+var next_start = new Date('2020-02-15T01:00:00');
 // var next_start = new Date('2019-11-09T00:00:00');
 
 
@@ -237,7 +235,7 @@ mqtt_client.on('connect', function () {
             get_awair_devices(token, next_start);
         }
 
-        next_start = new Date(next_start.setHours(next_start.getHours() + 1));
+        next_start.setHours(next_start.getHours() + 1);
     }
 
     // Awair publishes every 10 seconds, but we are request limited, so update
