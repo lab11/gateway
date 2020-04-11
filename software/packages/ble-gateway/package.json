@@ -21,7 +21,7 @@
     "eddystone-beacon-scanner": "^3.0.0",
     "expand-url": "^0.1.3",
     "lab11-gateway-id": "^0.1.1",
-    "lodash": "^3.10.1",
+    "lodash": "^4.17.15",
     "noble": "^1.3.0",
     "request": "^2.67.0",
     "watchout": "0.0.5",
