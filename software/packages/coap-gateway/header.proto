@@ -12,7 +12,7 @@ message Header {
 message Data {
   // System data
   string discovery = 1;
-  string version = 2;
+  string git_version = 2;
 }
 
 message Message {

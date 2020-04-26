@@ -4,9 +4,8 @@ COAP Gateway
 This is designed to be a modular gateway for devices using COAP.  Its core
 principle is allowing devices to specify how to parse the data they provide and
 what to do with that data.  It does this by allowing devices to specify their
-own JavaScript functions that now how to take the data encoded in their packets
-and format it into a JavaScript object. The gateway further allows devices to
-provide JavaScript functions that know what to do with the parsed data.
+own protobuf specification that defines how to decode the data in their
+packets and format it into a JavaScript object.
 
 Quick Overview
 --------------
@@ -15,23 +14,25 @@ This script:
 
 1. Waits for a COAP message to `/discovery` with a URL.
 2. Upon receiving such a packet, it pulls out the embedded URL and uses
-it to fetch a `parse_coap.js` file at `<URL>/parse_coap.js`. If the URL already specifies
+it to fetch a `parse.proto` file at `<URL>/parse.proto`. If the URL already specifies
 a particular file, it removes the filename and uses just the base. For example,
 if the URL is:
 
         http://example.com/folder/index.html
 
-    the gateway will use just `http://example.com/folder/` and look for `parse_coap.js` at:
+    the gateway will use just `http://example.com/folder/` and look for `parse.proto` at:
 
-        http://example.com/folder/parse_coap.js
-3. If that `parse_coap.js` file exists, the gateway will use the contained JavaScript functions
-to parse other advertisements the device sends in the future.
+        http://example.com/folder/parse.proto
+3. If that `parse.proto` file exists, the gateway will use the protobuf definition
+to parse other messages the device sends in the future.
 
 
 To use this gateway with your COAP device
 ------------------------------------
 
-1. Configure your device to periodically send (at least) a COAP discovery URL packet.
+1. Configure your device to periodically send a COAP discovery URL packet, or
+   respond with one when presented with a 4.04 status (Not Found).
+
 This packet should be formed as follows:
 
 
@@ -41,76 +42,84 @@ This packet should be formed as follows:
 
 
 The URL should point to a webserver
-path where you can host the needed JavaScript code. For example, the
+path where you can host the needed protobuf file. For example, the
 URL should be a shortened version of something like:
 
-        https://rawgit.com/org/project/device/
+        https://org.github.io/project/device/
 
 Packets besides the discovery packet
 can be completely device specific. They can contain
-data or not. The `parse_coap.js` is what the gateway will use
+data or not. The `parse.proto` is what the gateway will use
 to parse data from these packets.
 
-2. Create a `parse_coap.js` file and host it in the directory pointed to by the
-Eddystone URL. For example:
+2. Create a `parse.proto` file and host it in the directory pointed to by the
+discovery packet URL. For example:
 
-        https://github.com/org/project/device/parse_coap.js
+        https://org.github.io/project/device/parse.proto
 
-    See below for how to create the `parse_coap.js` file.
+    See below for how to create the `parse.proto` file.
 
 
 
-`parse_coap.js`
+`parse.proto`
 ----------
 
-A `parse_coap.js` file contains one or several functions that process advertisements
-and devices that the gateway sees. When creating a `parse_coap.js` file, you only
-need to implement and export the functions you wish to support. The gateway
-will ignore missing functions.
+A `parse.proto` file contains the protobuf packet definition.
+The template of a `parse.proto` file looks like:
 
-The template of a `parse_coap.js` file looks like:
+```proto
+syntax = "proto3";
 
-```js
-// This function is called by the gateway when a non-Eddystone advertisement
-// is received. The function should take the noble formatted advertisement,
-// parse it into a JavaScript object, and call done() with that object.
-// done() can also be called with a second optional object will only be used
-// locally on the gateway. This can be used to store and share data that
-// may be useful for interacting with the device, but should not be stored
-// outside of the device.
-var parsePayload = function (device_id, resource_url, payload, done) {};
+message Header {
+  uint32 version = 1;
+  bytes  id = 2;
+  string device_type = 3;
+  uint32 seq_no = 4;
+  uint64 tv_sec = 5;
+  uint32 tv_usec = 6;
+}
+message Data {
+  string discovery = 1;
+  string git_version = 2;
 
-// Only include here the functions you support. The gateway will only
-// call the functions that are exported.
-module.exports = {
-    parsePayload: parsePayload,
-};
-```
-
-One simple example of a `parse_coap.js` file might look like:
-
-```js
-var parse_payload = function (device_id, resource_url, payload, cb) {
-    if(device_id != null) {
-      var out = {
-        device_id: device_id,
-      }
-
-      if (resource_url === '/resource') {
-        out.resource = payload.readUint8();
-      }
-
-      cb(out);
-      return;
-    }
-
-    cb(null);
+  // Add your custom definitions here
 }
 
+message Message {
+  Header header = 1;
+  Data data = 2;
+}
 
-module.exports = {
-parsePayload: parse_payload
-};
+```
+
+One simple example of a `parse.proto` file might look like:
+
+```proto
+syntax = "proto3";
+
+message Header {
+  uint32 version = 1;
+  bytes  id = 2;
+  string device_type = 3;
+  uint32 seq_no = 4;
+  uint64 tv_sec = 5;
+  uint32 tv_usec = 6;
+}
+message Data {
+  string discovery = 1;
+  string git_version = 2;
+
+  float temperature_c = 10;
+  float pressure_mbar = 11;
+  float humidity_percent = 12;
+  float light_lux = 13;
+  bool  motion = 14;
+}
+
+message Message {
+  Header header = 1;
+  Data data = 2;
+}
 ```
 
 Extending the Gateway
@@ -123,7 +132,7 @@ events.
 
 
 ```js
-var CoapGateway = require('ble-gateway');
+var CoapGateway = require('coap-gateway');
 
 // Receive formatted advertisement data objects.
 // adv_obj.id will be the peripheral id that it was captured from.
@@ -141,5 +150,5 @@ Gateway Usage
 
 ```
 npm install
-./ble-gateway.js
+./coap-gateway.js
 ```

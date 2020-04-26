@@ -53,6 +53,9 @@ var CoapGateway = function () {
     // have to query each time we get a short URL
     this._cached_urls = {};
 
+    // Keep track of in-progress block transfers
+    this._block_transfers = {};
+
     that = this;
     let root = new protobuf.Root();
     root.load(__dirname + '/header.proto', {keepCase: true}, function(err) {
@@ -66,6 +69,15 @@ var CoapGateway = function () {
 
 // We use the EventEmitter pattern to return parsed objects
 util.inherits(CoapGateway, events.EventEmitter);
+
+CoapGateway.prototype.blockTransferTimeout = function (tag) {
+    debug(tag);
+    debug(this);
+    debug(this._block_transfers);
+    clearTimeout(this._block_transfers[tag]["timer"]);
+    delete this._block_transfers[tag];
+    debug("Deleted", tag);
+}
 
 // Call .start() to run the gateway functionality
 CoapGateway.prototype.start = function () {
@@ -84,6 +96,56 @@ CoapGateway.prototype.on_request = function (req, res) {
   var payload = req.payload;
 
   try {
+    // if this is a block request, we can't parse until we have all the payload
+
+    var blockOption = undefined;
+    var etag        = undefined;
+    for(var i = 0; i < req.options.length; i++) {
+      if (req.options[i].name == 'Block1')
+      {
+        blockOption = req.options[i].value;
+      }
+      if (req.options[i].name == 'ETag')
+      {
+        etag = req.options[i].value;
+      }
+    }
+    if (etag !== undefined & blockOption !== undefined) {
+      let blockOptionInt = blockOption.readUIntBE(0, blockOption.length);
+      let num = blockOptionInt >> 4;
+      let more = (blockOptionInt & 8) >> 3;
+      let szx = blockOptionInt & 0x7;
+      debug("num/more/szx:", num.toString(10), more.toString(10), 1<<(4+szx));
+      debug(this._block_transfers);
+      let tag = etag + req.rsinfo.address;
+      if (!(tag in this._block_transfers)) {
+        this._block_transfers[tag] = {
+          "data": payload,
+          "timer": setTimeout(this.blockTransferTimeout.bind(this), 30000, tag),
+        }
+      } else {
+        // TODO verify with block number + size that we are placing in correct location
+        this._block_transfers[tag].data = Buffer.concat([this._block_transfers[tag].data, payload]);
+        clearTimeout(this._block_transfers[tag].timer);
+        this._block_transfers[tag].timer = setTimeout(this.blockTransferTimeout.bind(this), 30000, tag);
+
+      }
+
+      res.setOption('Block1', blockOption);
+      if (more) {
+        res.code = 231
+        res.end();
+        return;
+      } else {
+        res.code = 204;
+        res.end();
+        payload = this._block_transfers[tag].data;
+        // clear timer and get rid of reference
+        clearTimeout(this._block_transfers[tag]["timer"]);
+        delete this._block_transfers[tag];
+      }
+    }
+
     var err = this._header_parser.verify(payload);
     if (err) throw Error(err);
 
@@ -104,21 +166,26 @@ CoapGateway.prototype.on_request = function (req, res) {
     }
 
     // Get the time
+    var received_time = new Date();
+    var timestamp = received_time.getTime();
+
     var usec;
     if (!("tv_usec" in message.header)) {
       usec = 0;
     } else {
       usec = message.header.tv_usec;
     }
-    var sent_time = new Date(message.header.tv_sec.toNumber()*1000 + usec/1000.0);
-    debug(sent_time);
-    var received_time = new Date();
-    var timestamp = received_time.getTime();
-    if (Math.abs(timestamp - sent_time.getTime())/1000.0 < 2 && timestamp - sent_time.getTime() > 0) {
-      timestamp = sent_time.getTime();
+    var sent_time = undefined
+    if (message.header.tv_sec) {
+      sent_time = new Date(message.header.tv_sec.toNumber()*1000 + usec/1000.0);
+      debug(sent_time);
+      if (Math.abs(timestamp - sent_time.getTime())/1000.0 < 2 && timestamp - sent_time.getTime() > 0) {
+        timestamp = sent_time.getTime();
+      }
+      sent_time = sent_time.toISOString();
     }
+
     received_time = received_time.toISOString();
-    sent_time = sent_time.toISOString();
 
     // We have seen a discovery packet from the same address
     if (device_id in this._device_to_data) {

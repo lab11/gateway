@@ -1,6 +1,6 @@
 {
   "name": "coap-gateway",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "description": "COAP Gateway ====================",
   "main": "coap-gateway.js",
   "scripts": {
