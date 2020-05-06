@@ -110,7 +110,7 @@ CoapGateway.prototype.on_request = function (req, res) {
         etag = req.options[i].value;
       }
     }
-    if (etag !== undefined & blockOption !== undefined) {
+    if (etag !== undefined && blockOption !== undefined) {
       let blockOptionInt = blockOption.readUIntBE(0, blockOption.length);
       let num = blockOptionInt >> 4;
       let more = (blockOptionInt & 8) >> 3;
@@ -133,7 +133,7 @@ CoapGateway.prototype.on_request = function (req, res) {
 
       res.setOption('Block1', blockOption);
       if (more) {
-        res.code = 231
+        res.code = 231;
         res.end();
         return;
       } else {
@@ -239,13 +239,23 @@ CoapGateway.prototype.on_request = function (req, res) {
               if (err) throw err;
               var message = parser.parser.toObject(parser.parser.decode(payload), {bytes: String});
               parse_payload_done.bind(this)(message.data);
+
+              res.code = 201;
+              res.end();
             } catch (e) {
               debug(e);
               debug('Error calling parse function for ' + device_id + '\n' + e);
+              res.code = 415;
+              res.end('Error calling parse function for ' + device_id + '\n');
             }
           }
         }
       }
+    // If we don't have this device's parser, return 4.04 Not Found
+    } else {
+      debug("Could not find parser for " + device_id);
+      res.code = 404;
+      res.end("Could not find parser for " + device_id + "\n");
     }
   } catch(e) {
     debug(e);

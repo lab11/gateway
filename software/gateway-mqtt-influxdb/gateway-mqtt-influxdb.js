@@ -218,6 +218,10 @@ function mqtt_on_connect() {
                 // Only publish if there is some data
                 if (Object.keys(adv_obj).length > 0) {
                     for (var key in adv_obj) {
+                        // skip really big fields like images or other binaries
+                        if (typeof(adv_obj[key]) == "string" && adv_obj[key].length > 2048) {
+                          continue;
+                        }
                         var fields = fix_measurement(adv_obj[key]);
 
                         var point = [
