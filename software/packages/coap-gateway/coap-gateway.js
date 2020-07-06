@@ -6,7 +6,8 @@ var util   = require('util');
 var Long   = require('long');
 
 var coap                   = require('coap');
-var server                 = coap.createServer();
+var server4                = coap.createServer();
+var server6                = coap.createServer({type: 'udp6'});
 var request                = require('request');
 var urlExpander            = require('expand-url');
 var _                      = require('lodash');
@@ -63,7 +64,8 @@ var CoapGateway = function () {
       that._header_parser = root.lookupType("Message");
     });
 
-    server.on('request', this.on_request.bind(this));
+    server4.on('request', this.on_request.bind(this));
+    server6.on('request', this.on_request.bind(this));
     this._device_id_ages = {};
 };
 
@@ -86,16 +88,25 @@ CoapGateway.prototype.start = function () {
     gatewayId.id((id) => {
         this._gateway_id = id;
     });
-  server.listen(function() {
-    debug("Listening");
+  server4.listen(function() {
+    debug("Listening on IPv4");
+  });
+  server6.listen(function() {
+    debug("Listening on IPv6");
   });
 };
 
 // Called on each request
 CoapGateway.prototype.on_request = function (req, res) {
   var payload = req.payload;
-
   try {
+    console.log(req.url);
+    //TODO this should maybe be a protobuf message too
+    if (req.url === "/gateway_discover") {
+      res.end("Hello\n");
+      return;
+    }
+
     // if this is a block request, we can't parse until we have all the payload
 
     var blockOption = undefined;
