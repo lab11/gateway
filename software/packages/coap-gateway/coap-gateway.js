@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+/* 
+Super hacky gateway solution. 
+Must create the folder /home/pi/local_parsers 
+Must then put the parse.proto file in there and name it epa_mote.proto
+*/
+
 var events = require('events');
 var url    = require('url');
 var util   = require('util');
