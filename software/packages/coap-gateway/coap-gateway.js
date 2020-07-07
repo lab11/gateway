@@ -54,20 +54,22 @@ var CoapGateway = function () {
     // have to query each time we get a short URL
     this._cached_urls = {};
 
+    this._device_id_ages = {};
+
     // Lets do some hacky hacky shit
     request_url = 'https://blueirislabs.github.io/epa-mote/gateway/parse.proto'
-    path = "/home/pi/local_parsers/epa_mote.parse"
+    path = "/home/pi/local_parsers/epa_mote.proto"
     // Store this in the known parsers object
-    this._cached_urls[request_url] = {}
+    this._cached_parsers[request_url] = {}
     this._cached_parsers[request_url].proto_file = path;
 
     that = this
     // Check the downloaded parse.proto is valid
-    let root = new protobuf.Root();
-    root.load(path, {keepCase: true}, function(err) {
+    let hroot = new protobuf.Root();
+    hroot.load(path, {keepCase: true}, function(err) {
       if (err) throw err;
 
-      var parser = root.lookupType("Message");
+      var parser = hroot.lookupType("Message");
       that._cached_parsers[request_url].parser = parser;
       that._device_id_ages[device_id] = Date.now();
     });
@@ -85,7 +87,7 @@ var CoapGateway = function () {
 
     server4.on('request', this.on_request.bind(this));
     server6.on('request', this.on_request.bind(this));
-    this._device_id_ages = {};
+    
 };
 
 // We use the EventEmitter pattern to return parsed objects
