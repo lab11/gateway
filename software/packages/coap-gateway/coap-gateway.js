@@ -71,7 +71,6 @@ var CoapGateway = function () {
 
       var parser = hroot.lookupType("Message");
       that._cached_parsers[request_url].parser = parser;
-      that._device_id_ages[device_id] = Date.now();
     });
     
 
