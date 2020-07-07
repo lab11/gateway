@@ -54,6 +54,25 @@ var CoapGateway = function () {
     // have to query each time we get a short URL
     this._cached_urls = {};
 
+    // Lets do some hacky hacky shit
+    request_url = 'https://blueirislabs.github.io/epa-mote/gateway/parse.proto'
+    path = "/home/pi/local_parsers/epa_mote.parse"
+    // Store this in the known parsers object
+    this._cached_urls[request_url] = {}
+    this._cached_parsers[request_url].proto_file = path;
+
+    that = this
+    // Check the downloaded parse.proto is valid
+    let root = new protobuf.Root();
+    root.load(path, {keepCase: true}, function(err) {
+      if (err) throw err;
+
+      var parser = root.lookupType("Message");
+      that._cached_parsers[request_url].parser = parser;
+      that._device_id_ages[device_id] = Date.now();
+    });
+    
+
     // Keep track of in-progress block transfers
     this._block_transfers = {};
 
@@ -207,7 +226,7 @@ CoapGateway.prototype.on_request = function (req, res) {
       // Check to see if a parser is available
       if (device.request_url in this._cached_parsers) {
         var parser = this._cached_parsers[device.request_url];
-        debug("have parser already");
+        debug("have parser already for " + device.request_url);
 
         // Unless told not to, we parse payloads
         if (am_submodule || !argv.noParsePayloads) {
@@ -301,9 +320,10 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
   // We keep a list of the last time we updated for each device, this allows
   // the gateway to pull down new parse.js files when they update
   if (device_id in this._device_id_ages) {
-    if ((Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
-      return;
-    }
+    return;
+    //if ((Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
+    //  return;
+    //}
   }
 
   debug('Discovered device: ' + device_id + ' ' + parser_url);
