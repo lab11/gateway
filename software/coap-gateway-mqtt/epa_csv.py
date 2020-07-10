@@ -2,7 +2,7 @@ import paho.mqtt.client as mqtt
 import json
 import csv
 import os
-import os.path 
+import os.path
 import sys
 import traceback
 
@@ -26,11 +26,6 @@ keys = [
     'light_cs'
 ]
 
-fout = open('/media/usb/epa_test.csv', 'a')
-w = csv.writer(fout)
-w.writerow(keys)
-fout.close()
-
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -41,42 +36,44 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print("-------------")
-    print("Topic: " + msg.topic)
-    print(json.loads(msg.payload.decode('utf-8')))
-    print("-------------")
+    #print("-------------")
+    #print("Topic: " + msg.topic)
+    #print(json.loads(msg.payload.decode('utf-8')))
+    #print("-------------")
 
-    try: 
+    try:
         needHeader = False
         if not os.path.exists('/media/usb/epa_test.csv'):
             needHeader = True
-        
+
         fout = open('/media/usb/epa_test.csv', 'a')
         w = csv.writer(fout)
 
         if needHeader:
             print("Writing Header")
-            w.writerow(keys)
-        
+            w.writerow(['timestamp', 'device_id'] + keys)
+
         data = json.loads(msg.payload.decode('utf-8'))
         outrow = []
         valid_data = False
-        for k in keys: 
+        outrow.append(data['_meta']['sent_time'])
+        outrow.append(data['_meta']['device_id'])
+        for k in keys:
             if k in data:
                 outrow.append(data[k])
                 valid_data = True
             else:
                 outrow.append(-1)
 
-        if valid_data: 
-            print(outrow)
+        if valid_data:
+            #print(outrow)
             w.writerow(outrow)
             fout.flush()
 
         fout.close()
         print("wrote data")
-        print(data)
-    except: 
+        #print(data)
+    except:
         print("probably no usb drive")
         print(str(sys.exc_info()[0]))
         traceback.print_exc()
