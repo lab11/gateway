@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-/* 
-Super hacky gateway solution. 
-Must create the folder /home/pi/local_parsers 
+/*
+Super hacky gateway solution.
+Must create the folder /home/pi/local_parsers
 Must then put the parse.proto file in there and name it epa_mote.proto
 */
 
@@ -78,7 +78,7 @@ var CoapGateway = function () {
       var parser = hroot.lookupType("Message");
       that._cached_parsers[request_url].parser = parser;
     });
-    
+
 
     // Keep track of in-progress block transfers
     this._block_transfers = {};
@@ -92,7 +92,7 @@ var CoapGateway = function () {
 
     server4.on('request', this.on_request.bind(this));
     server6.on('request', this.on_request.bind(this));
-    
+
 };
 
 // We use the EventEmitter pattern to return parsed objects
@@ -126,7 +126,6 @@ CoapGateway.prototype.start = function () {
 CoapGateway.prototype.on_request = function (req, res) {
   var payload = req.payload;
   try {
-    console.log(req.url);
     //TODO this should maybe be a protobuf message too
     if (req.url === "/gateway_discover") {
       res.end("Hello\n");
