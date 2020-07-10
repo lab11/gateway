@@ -73,7 +73,7 @@ def on_message(client, userdata, msg):
             fout.flush()
 
         fout.close()
-        print("wrote data")
+        #print("wrote data")
         #print(data)
     except:
         print("probably no usb drive")
