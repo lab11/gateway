@@ -1,0 +1,13 @@
+[Unit]
+Description=Save MQTT data as CSV on USB drive
+After=mosquitto.service coap-gateway-mqtt.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/coap-gateway-mqtt/epa_csv.py
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gateway-mqtt-csv
+
+[Install]
+WantedBy=multi-user.target
