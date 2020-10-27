@@ -1,18 +1,27 @@
 COAP Gateway
 ====================
 
-This is designed to be a modular gateway for devices using COAP.  Its core
-principle is allowing devices to specify how to parse the data they provide and
-what to do with that data.  It does this by allowing devices to specify their
-own protobuf specification that defines how to decode the data in their
-packets and format it into a JavaScript object.
+This is designed to be a modular gateway for devices using COAP + protobufs.
+Its core principle is allowing devices to specify how to parse the data they
+provide. It does this by allowing devices to specify their own protobuf
+specification that defines how to decode the data in their packets and format
+it into a JSON object.
 
 Quick Overview
 --------------
 
 This script:
 
-1. Waits for a COAP message to `/discovery` with a URL.
+1. Waits for incoming CoAP packets.
+2. If a received packet is from a known client device, and the script has
+   already cached a parser, the protobuf payload is parsed and translated to a
+   JSON object. This JSON is emmitted as a nodejs event.
+3. Otherwise, the parser returns a 4.04 response code to the client, indicating
+   that the parser could not be found. It is expected that the client then
+   transmits a properly formatted protobuf message containing a "discovery_url" URL
+   to the `/discovery` resource.
+4. The script waits for a COAP message to the `/discovery` resource with a URL
+   that points to a protobuf \*.proto file.
 2. Upon receiving such a packet, it pulls out the embedded URL and uses
 it to fetch a `parse.proto` file at `<URL>/parse.proto`. If the URL already specifies
 a particular file, it removes the filename and uses just the base. For example,
@@ -23,34 +32,28 @@ if the URL is:
     the gateway will use just `http://example.com/folder/` and look for `parse.proto` at:
 
         http://example.com/folder/parse.proto
-3. If that `parse.proto` file exists, the gateway will use the protobuf definition
-to parse other messages the device sends in the future.
+3. If that `parse.proto` file exists, the gateway will cache the protobuf
+   definition to parse other messages the device sends in the future.
 
 
 To use this gateway with your COAP device
 ------------------------------------
 
-1. Configure your device to periodically send a COAP discovery URL packet, or
+1. Configure your device to periodically send a COAP `/discovery` URL packet, or
    respond with one when presented with a 4.04 status (Not Found).
 
-This packet should be formed as follows:
+   This packet should be formed as a protobuf payload adhering to the base
+   [`header.proto`](header.proto).
 
-
-| 1 byte               | N bytes   | 1 byte         | M bytes |
-| -------------------- | --------- | -------------- | ------- |
-| Device ID length (N) | Device ID | URL Length (M) | URL     |
-
-
-The URL should point to a webserver
-path where you can host the needed protobuf file. For example, the
-URL should be a shortened version of something like:
+   The URL should point to a webserver path where you can host the needed protobuf
+   file. For example, the URL could be hosted on github.io, and resemble:
 
         https://org.github.io/project/device/
 
-Packets besides the discovery packet
-can be completely device specific. They can contain
-data or not. The `parse.proto` is what the gateway will use
-to parse data from these packets.
+   Packets besides the discovery packet can be completely device specific, but
+   should extend the existing `header.proto`. Each field can contain data or
+   not.  The `parse.proto` is what the gateway will use to parse data from
+   these packets.
 
 2. Create a `parse.proto` file and host it in the directory pointed to by the
 discovery packet URL. For example:
@@ -64,7 +67,7 @@ discovery packet URL. For example:
 `parse.proto`
 ----------
 
-A `parse.proto` file contains the protobuf packet definition.
+A `parse.proto` file contains the protobuf packet definition, and is an extension of the `header.proto` used by this package.
 The template of a `parse.proto` file looks like:
 
 ```proto
@@ -79,7 +82,7 @@ message Header {
   uint32 tv_usec = 6;
 }
 message Data {
-  string discovery = 1;
+  string discovery_url = 1;
   string git_version = 2;
 
   // Add your custom definitions here
@@ -92,7 +95,8 @@ message Message {
 
 ```
 
-One simple example of a `parse.proto` file might look like:
+One simple example of a `parse.proto` for an environmental sensor might look
+like:
 
 ```proto
 syntax = "proto3";
@@ -106,7 +110,7 @@ message Header {
   uint32 tv_usec = 6;
 }
 message Data {
-  string discovery = 1;
+  string discovery_url = 1;
   string git_version = 2;
 
   float temperature_c = 10;
