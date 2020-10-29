@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 
+/*
+Super hacky gateway solution.
+Must create the folder /home/pi/local_parsers
+Must then put the parse.proto file in there and name it epa_mote.proto
+*/
+
 var events = require('events');
 var url    = require('url');
 var util   = require('util');
 var Long   = require('long');
 
 var coap                   = require('coap');
-var server                 = coap.createServer();
+var server4                = coap.createServer();
+var server6                = coap.createServer({type: 'udp6'});
 var request                = require('request');
 var urlExpander            = require('expand-url');
 var _                      = require('lodash');
@@ -53,6 +60,26 @@ var CoapGateway = function () {
     // have to query each time we get a short URL
     this._cached_urls = {};
 
+    this._device_id_ages = {};
+
+    // Lets do some hacky hacky shit
+    request_url = 'https://blueirislabs.github.io/epa-mote/gateway/parse.proto'
+    path = "/home/pi/local_parsers/epa_mote.proto"
+    // Store this in the known parsers object
+    this._cached_parsers[request_url] = {}
+    this._cached_parsers[request_url].proto_file = path;
+
+    that = this
+    // Check the downloaded parse.proto is valid
+    let hroot = new protobuf.Root();
+    hroot.load(path, {keepCase: true}, function(err) {
+      if (err) throw err;
+
+      var parser = hroot.lookupType("Message");
+      that._cached_parsers[request_url].parser = parser;
+    });
+
+
     // Keep track of in-progress block transfers
     this._block_transfers = {};
 
@@ -63,8 +90,9 @@ var CoapGateway = function () {
       that._header_parser = root.lookupType("Message");
     });
 
-    server.on('request', this.on_request.bind(this));
-    this._device_id_ages = {};
+    server4.on('request', this.on_request.bind(this));
+    server6.on('request', this.on_request.bind(this));
+
 };
 
 // We use the EventEmitter pattern to return parsed objects
@@ -86,16 +114,24 @@ CoapGateway.prototype.start = function () {
     gatewayId.id((id) => {
         this._gateway_id = id;
     });
-  server.listen(function() {
-    debug("Listening");
+  server4.listen(function() {
+    debug("Listening on IPv4");
+  });
+  server6.listen(function() {
+    debug("Listening on IPv6");
   });
 };
 
 // Called on each request
 CoapGateway.prototype.on_request = function (req, res) {
   var payload = req.payload;
-
   try {
+    //TODO this should maybe be a protobuf message too
+    if (req.url === "/gateway_discover") {
+      res.end("Hello\n");
+      return;
+    }
+
     // if this is a block request, we can't parse until we have all the payload
 
     var blockOption = undefined;
@@ -196,7 +232,7 @@ CoapGateway.prototype.on_request = function (req, res) {
       // Check to see if a parser is available
       if (device.request_url in this._cached_parsers) {
         var parser = this._cached_parsers[device.request_url];
-        debug("have parser already");
+        debug("have parser already for " + device.request_url);
 
         // Unless told not to, we parse payloads
         if (am_submodule || !argv.noParsePayloads) {
@@ -290,9 +326,10 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
   // We keep a list of the last time we updated for each device, this allows
   // the gateway to pull down new parse.js files when they update
   if (device_id in this._device_id_ages) {
-    if ((Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
-      return;
-    }
+    return;
+    //if ((Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
+    //  return;
+    //}
   }
 
   debug('Discovered device: ' + device_id + ' ' + parser_url);
