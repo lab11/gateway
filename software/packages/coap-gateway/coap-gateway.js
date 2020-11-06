@@ -6,7 +6,8 @@ var util   = require('util');
 var Long   = require('long');
 
 var coap                   = require('coap');
-var server                 = coap.createServer();
+var server4                = coap.createServer();
+var server6                = coap.createServer({type: 'udp6'});
 var request                = require('request');
 var urlExpander            = require('expand-url');
 var _                      = require('lodash');
@@ -53,6 +54,8 @@ var CoapGateway = function () {
     // have to query each time we get a short URL
     this._cached_urls = {};
 
+    this._device_id_ages = {};
+
     // Keep track of in-progress block transfers
     this._block_transfers = {};
 
@@ -63,8 +66,8 @@ var CoapGateway = function () {
       that._header_parser = root.lookupType("Message");
     });
 
-    server.on('request', this.on_request.bind(this));
-    this._device_id_ages = {};
+    server4.on('request', this.on_request.bind(this));
+    server6.on('request', this.on_request.bind(this));
 };
 
 // We use the EventEmitter pattern to return parsed objects
@@ -80,13 +83,34 @@ CoapGateway.prototype.blockTransferTimeout = function (tag) {
 }
 
 // Call .start() to run the gateway functionality
-CoapGateway.prototype.start = function () {
-    // Get the gateway ID for the running gateway to include in the data packets.
-    this._gateway_id = '';
-    gatewayId.id((id) => {
-        this._gateway_id = id;
-    });
-  server.listen(function() {
+CoapGateway.prototype.start = function (local_parsers = []) {
+  // Get the gateway ID for the running gateway to include in the data packets.
+  this._gateway_id = '';
+  gatewayId.id((id) => {
+    this._gateway_id = id;
+  });
+
+  for(var i = 0; i < local_parsers.length; i++) {
+      debug(local_parsers[i])
+      var parse_info = local_parsers[i];
+      this._cached_urls[parse_info.url] = {};
+      this._cached_parsers[parse_info.url] = {};
+      this._cached_parsers[parse_info.url].proto_file = parse_info.parser_path;
+      this._cached_parsers[parse_info.url].local = true;
+      var that = this;
+      let hroot = new protobuf.Root();
+      hroot.load(parse_info.parser_path, {keepCase:true}, function(err) {
+        if(err) throw err;
+
+        var parser = hroot.lookupType("Message");
+        that._cached_parsers[parse_info.url].parser = parser
+      });
+  }
+
+  server4.listen(function() {
+    debug("Listening");
+  });
+  server6.listen(function() {
     debug("Listening");
   });
 };
@@ -290,7 +314,7 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
   // We keep a list of the last time we updated for each device, this allows
   // the gateway to pull down new parse.js files when they update
   if (device_id in this._device_id_ages) {
-    if ((Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
+    if (this._cached_parsers[parser_url].local || (Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
       return;
     }
   }
