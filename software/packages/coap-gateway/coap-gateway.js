@@ -93,17 +93,19 @@ CoapGateway.prototype.start = function (local_parsers = []) {
   for(var i = 0; i < local_parsers.length; i++) {
       debug(local_parsers[i])
       var parse_info = local_parsers[i];
-      this._cached_urls[parse_info.url] = {};
-      this._cached_parsers[parse_info.url] = {};
-      this._cached_parsers[parse_info.url].proto_file = parse_info.parser_path;
-      this._cached_parsers[parse_info.url].local = true;
+      var parser_url = 'https://' + parse_info.url
+      this._cached_urls[parser_url] = parser_url;
+      var request_url = url.format(parser_url) + FILENAME_PARSE;
+      this._cached_parsers[request_url] = {};
+      this._cached_parsers[request_url].proto_file = parse_info.parser_path;
+      this._cached_parsers[request_url].local = true;
       var that = this;
       let hroot = new protobuf.Root();
       hroot.load(parse_info.parser_path, {keepCase:true}, function(err) {
         if(err) throw err;
 
         var parser = hroot.lookupType("Message");
-        that._cached_parsers[parse_info.url].parser = parser
+        that._cached_parsers[request_url].parser = parser
       });
   }
 
@@ -379,7 +381,7 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
           }
 
         } else {
-          debug('Could not fetch parse.js after trying multiple times. (' + device_id + ')');
+          debug('Could not fetch parser after trying multiple times. (' + device_id + ')');
           try {
             debug('Trying to find cached parser. (' + device_id + ')');
             // TODO figure this shit out:
