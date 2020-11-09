@@ -126,6 +126,18 @@ message Message {
 }
 ```
 
+Local parse.proto files
+-----------------------
+
+This gateway can be configured to prepopulate its cache of parsers by providing
+a list of objects that specify a URL and a path to a protobuf definition file
+to the gateway `start` method.
+
+```javascript
+var local_parsers = [{"url": "someurl.com", "parser_path": "path/to/parse.proto"}];
+CoapGateway.start(local_parsers);
+```
+
 Extending the Gateway
 ---------------------
 
