@@ -11,7 +11,7 @@ message Header {
 
 message Data {
   // System data
-  string discovery_url = 1;
+  string discovery = 1;
   string git_version = 2;
 }
 
