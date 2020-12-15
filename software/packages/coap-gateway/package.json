@@ -14,14 +14,14 @@
   "license": "MIT",
   "dependencies": {
     "async": "^1.5.2",
-    "coap": "^0.22.0",
+    "circular-buffer": "^1.0.3",
+    "coap": "^0.24.0",
     "debug": "^2.2.0",
     "expand-url": "^0.1.3",
     "lab11-gateway-id": "^0.1.1",
     "lodash": "^4.17.15",
     "long": "^4.0.0",
     "protobufjs": "^6.8.8",
-    "request": "^2.67.0",
     "tmp": "^0.1.0",
     "watchout": "0.0.5",
     "yargs": "^3.31.0"
@@ -32,6 +32,5 @@
   "homepage": "https://github.com/lab11/gateway/software/packages/coap-gateway/",
   "directories": {
     "example": "examples"
-  },
-  "devDependencies": {}
+  }
 }

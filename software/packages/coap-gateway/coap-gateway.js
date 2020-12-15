@@ -18,6 +18,7 @@ var gatewayId              = require('lab11-gateway-id');
 var fs                     = require('fs');
 var protobuf               = require('protobufjs');
 var tmp                    = require('tmp');
+var CircularBuffer         = require("circular-buffer");
 
 // There is a currently unknown issue where this script will hang sometimes,
 // for the moment, we work around it with the venerage watchdog timer
@@ -39,7 +40,11 @@ var am_submodule = (require.main !== module);
 var FILENAME_PARSE = 'parse.proto'
 
 // Hardcoded constant for the timeout window to check for a new parse.js
-var PARSE_JS_CACHE_TIME_IN_MS = 5*60*1000;
+var CACHE_TIME_IN_MS = 5*60*1000;
+
+var BLOCK_TIMEOUT = 30*1000;
+
+var MESSAGE_DEDUP_SIZE = 10;
 
 // Main object for the CoapGateway
 var CoapGateway = function () {
@@ -54,7 +59,12 @@ var CoapGateway = function () {
     // have to query each time we get a short URL
     this._cached_urls = {};
 
+
+    // Keep track of last time device seen
     this._device_id_ages = {};
+
+    // Keep track of recent message ids to avoid duplicate packets
+    this._ip_to_message_id = {};
 
     // Keep track of in-progress block transfers
     this._block_transfers = {};
@@ -73,13 +83,18 @@ var CoapGateway = function () {
 // We use the EventEmitter pattern to return parsed objects
 util.inherits(CoapGateway, events.EventEmitter);
 
+CoapGateway.prototype.duplicateTimeout = function (tag) {
+    debug(this._ip_to_message_id);
+    clearTimeout(this._ip_to_message_id[tag]["timer"]);
+    delete this._ip_to_message_id[tag];
+    debug("Dup Deleted", tag);
+}
+
 CoapGateway.prototype.blockTransferTimeout = function (tag) {
-    debug(tag);
-    debug(this);
     debug(this._block_transfers);
     clearTimeout(this._block_transfers[tag]["timer"]);
     delete this._block_transfers[tag];
-    debug("Deleted", tag);
+    debug("Block Deleted", tag);
 }
 
 // Call .start() to run the gateway functionality
@@ -120,6 +135,27 @@ CoapGateway.prototype.start = function (local_parsers = []) {
 // Called on each request
 CoapGateway.prototype.on_request = function (req, res) {
   var payload = req.payload;
+  var address = req.rsinfo.address;
+  var port = req.rsinfo.port;
+  var addr_port = address.toString() + ':' + port.toString();
+  var message_id = req._packet.messageId;
+  // Check if duplicate message
+  if (addr_port in this._ip_to_message_id) {
+    if (message_id in this._ip_to_message_id[addr_port].toarray()) {
+      // we've already seen this message, so just send ack but ignore message
+      res.end();
+      return;
+    }
+    clearTimeout(this._ip_to_message_id[addr_port].timer);
+    this._ip_to_message_id[addr_port].timer = setTimeout(this.duplicateTimeout.bind(this), BLOCK_TIMEOUT, addr_port);
+  } else {
+    this._ip_to_message_id[addr_port] = {
+      "buf": new CircularBuffer(MESSAGE_DEDUP_SIZE),
+      "timer": setTimeout(this.duplicateTimeout.bind(this), BLOCK_TIMEOUT, addr_port)
+    }
+  }
+  this._ip_to_message_id[addr_port]["buf"].enq(message_id);
+  debug(this._ip_to_message_id);
 
   try {
     // if this is a block request, we can't parse until we have all the payload
@@ -147,13 +183,13 @@ CoapGateway.prototype.on_request = function (req, res) {
       if (!(tag in this._block_transfers)) {
         this._block_transfers[tag] = {
           "data": payload,
-          "timer": setTimeout(this.blockTransferTimeout.bind(this), 30000, tag),
+          "timer": setTimeout(this.blockTransferTimeout.bind(this), BLOCK_TIMEOUT, tag),
         }
       } else {
         // TODO verify with block number + size that we are placing in correct location
         this._block_transfers[tag].data = Buffer.concat([this._block_transfers[tag].data, payload]);
         clearTimeout(this._block_transfers[tag].timer);
-        this._block_transfers[tag].timer = setTimeout(this.blockTransferTimeout.bind(this), 30000, tag);
+        this._block_transfers[tag].timer = setTimeout(this.blockTransferTimeout.bind(this), BLOCK_TIMEOUT, tag);
 
       }
 
@@ -316,7 +352,7 @@ CoapGateway.prototype.get_parser = function (device_id, parser_url) {
   // We keep a list of the last time we updated for each device, this allows
   // the gateway to pull down new parse.js files when they update
   if (device_id in this._device_id_ages) {
-    if (this._cached_parsers[parser_url].local || (Date.now() - this._device_id_ages[device_id]) < PARSE_JS_CACHE_TIME_IN_MS) {
+    if (this._cached_parsers[parser_url].local || (Date.now() - this._device_id_ages[device_id]) < CACHE_TIME_IN_MS) {
       return;
     }
   }
