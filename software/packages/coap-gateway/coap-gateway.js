@@ -139,23 +139,32 @@ CoapGateway.prototype.on_request = function (req, res) {
   var port = req.rsinfo.port;
   var addr_port = address.toString() + ':' + port.toString();
   var message_id = req._packet.messageId;
-  // Check if duplicate message
-  if (addr_port in this._ip_to_message_id) {
-    if (message_id in this._ip_to_message_id[addr_port].toarray()) {
-      // we've already seen this message, so just send ack but ignore message
-      res.end();
-      return;
+  debug(message_id);
+  debug(addr_port);
+  try {
+    // Check if duplicate message
+    if (addr_port in this._ip_to_message_id) {
+      if (message_id in this._ip_to_message_id[addr_port].buf.toarray()) {
+        // we've already seen this message, so just send ack but ignore message
+        debug("already seen");
+        res.end();
+        return;
+      }
+      debug("new message");
+      clearTimeout(this._ip_to_message_id[addr_port].timer);
+      this._ip_to_message_id[addr_port].timer = setTimeout(this.duplicateTimeout.bind(this), BLOCK_TIMEOUT, addr_port);
+    } else {
+      debug("new client");
+      this._ip_to_message_id[addr_port] = {
+        "buf": new CircularBuffer(MESSAGE_DEDUP_SIZE),
+        "timer": setTimeout(this.duplicateTimeout.bind(this), BLOCK_TIMEOUT, addr_port)
+      }
     }
-    clearTimeout(this._ip_to_message_id[addr_port].timer);
-    this._ip_to_message_id[addr_port].timer = setTimeout(this.duplicateTimeout.bind(this), BLOCK_TIMEOUT, addr_port);
-  } else {
-    this._ip_to_message_id[addr_port] = {
-      "buf": new CircularBuffer(MESSAGE_DEDUP_SIZE),
-      "timer": setTimeout(this.duplicateTimeout.bind(this), BLOCK_TIMEOUT, addr_port)
-    }
+    this._ip_to_message_id[addr_port]["buf"].enq(message_id);
+    debug(this._ip_to_message_id[addr_port].buf.toarray());
+  } catch(e) {
+    debug(e);
   }
-  this._ip_to_message_id[addr_port]["buf"].enq(message_id);
-  debug(this._ip_to_message_id);
 
   try {
     // if this is a block request, we can't parse until we have all the payload
