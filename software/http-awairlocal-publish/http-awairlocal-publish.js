@@ -196,9 +196,9 @@ function get_awair_data (ipaddress) {
             var out = {};
 
             // Save the measured data with correctly mapped names.
-            for (const [mname, mval] of Object.entries(data)) {
+            for (const mname in data) {
                 if (mname in mapping) {
-                    out[mapping[mname]] = mval;
+                    out[mapping[mname]] = data[mname];
                 }
             }
 

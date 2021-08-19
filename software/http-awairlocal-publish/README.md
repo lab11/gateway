@@ -26,7 +26,7 @@ Description=Runs arp-scan
 Wants=one-hour-timer.timer
 
 [Service]
-ExecStart=/bin/sh -c 'arp-scan -l > /opt/arpscan_172.27.0.0-16.txt'
+ExecStart=/bin/sh -c 'arp-scan 172.27.0.0/16 > /opt/arpscan_172.27.0.0-16.txt'
 Type=simple
 
 [Install]
