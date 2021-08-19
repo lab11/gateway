@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Data from Local Awair Devices
+After=mosquitto.service
+
+[Service]
+ExecStart=/home/debian/gateway/software/http-awairlocal-publish/http-awairlocal-publish.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=http-awairlocal-publish
+
+[Install]
+WantedBy=multi-user.target
