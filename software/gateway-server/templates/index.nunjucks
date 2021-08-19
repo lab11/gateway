@@ -20,7 +20,7 @@ SwarmGateway
       <div class="panel-body">
         <ul>
           {% for device in devices %}
-          <li><a href="device/{{ device.name }}">{{ device.device_type }} ({{ device.device_id }})</a></li>
+          <li><a href="device/{{ device.name | urlencode }}">{{ device.device_type }} ({{ device.device_id }})</a></li>
           {% endfor %}
         </ul>
       </div>
