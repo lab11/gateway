@@ -59,86 +59,79 @@ function ConvertDMSToDD(degrees, minutes, seconds, direction) {
     return dd;
 }
 
+var mqtt_client = mqtt.connect('mqtt://localhost');
+mqtt_client.on('connect', function () {
 
-console.log(config.appID)
-console.log( config.accessKey)
+    var client  = mqtt.connect('mqtt://nam1.cloud.thethings.network:1883', {'username':config.appID, 'password':config.accessKey})
+    client.on('connect', function () {
+        debug('Connected to TTN');
 
-var client  = mqtt.connect('mqtt://nam1.cloud.thethings.network:1883', {'username':config.appID, 'password':config.accessKey})
+        client.subscribe('#');
 
-// var mqtt_client = mqtt.connect('mqtt://localhost');
-// mqtt_client.on('connect', function () {
-client.on('connect', function () {
-    // var client = new ttn.DataClient(config.appID, config.accessKey, 'nam1.cloud.thethings.network:1883');
-    debug('Connected to TTN');
+        client.on("message", function (topic, message, packet) {
+            var payload = JSON.parse(message);
 
-    console.log('connected')
+            var out = {};
 
-    client.subscribe('#');
-
-    client.on("message", function (topic, message, packet) {
-        var payload = JSON.parse(message);
-
-        var out = {};
-
-        // We definitely want the extracted data if it exists.
-        if ('uplink_message' in payload) {
-            if ('decoded_payload' in payload.uplink_message) {
-                out = payload.uplink_message.decoded_payload;
+            // We definitely want the extracted data if it exists.
+            if ('uplink_message' in payload) {
+                if ('decoded_payload' in payload.uplink_message) {
+                    out = payload.uplink_message.decoded_payload;
+                }
             }
-        }
 
-        // Other fields to plot as data
-        out.counter = payload.uplink_message.f_cnt;
-        out.confirmed = payload.uplink_message.confirmed;
-        out.lorawan_frequency = payload.uplink_message.settings.frequency;
-        out.lorawan_bandwidth = payload.uplink_message.settings.data_rate.lora.bandwidth;
-        out.lorawan_spreading_factor = payload.uplink_message.settings.data_rate.lora.spreading_factor;
-        out.lorawan_airtime = payload.uplink_message.consumed_airtime;
-        out.lorawan_coding_rate = payload.uplink_message.settings.coding_rate;
-        out.number_receiving_gateways = payload.uplink_message.rx_metadata.length;
+            // Other fields to plot as data
+            out.counter = payload.uplink_message.f_cnt;
+            out.confirmed = payload.uplink_message.confirmed;
+            out.lorawan_frequency = payload.uplink_message.settings.frequency;
+            out.lorawan_bandwidth = payload.uplink_message.settings.data_rate.lora.bandwidth;
+            out.lorawan_spreading_factor = payload.uplink_message.settings.data_rate.lora.spreading_factor;
+            out.lorawan_airtime = payload.uplink_message.consumed_airtime;
+            out.lorawan_coding_rate = payload.uplink_message.settings.coding_rate;
+            out.number_receiving_gateways = payload.uplink_message.rx_metadata.length;
 
-        // Find the best RSSI gateway
-        var best_rssi = -1000;
-        var best_rssi_index = 0;
-        for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
-            if (payload.uplink_message.rx_metadata[i].rssi > best_rssi) {
-                best_rssi_index = i;
+            // Find the best RSSI gateway
+            var best_rssi = -1000;
+            var best_rssi_index = 0;
+            for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
+                if (payload.uplink_message.rx_metadata[i].rssi > best_rssi) {
+                    best_rssi_index = i;
+                }
             }
-        }
 
-        // Extract gateway parameters
-        out.rssi = payload.uplink_message.rx_metadata[best_rssi_index].rssi;
-        out.snr = payload.uplink_message.rx_metadata[best_rssi_index].snr;
+            // Extract gateway parameters
+            out.rssi = payload.uplink_message.rx_metadata[best_rssi_index].rssi;
+            out.snr = payload.uplink_message.rx_metadata[best_rssi_index].snr;
 
-        // Rest is metadata
-        out._meta = {
-            received_time: payload.uplink_message.received_at,
-            device_id: payload.end_device_ids.dev_eui,
-            receiver: 'http-ttn-mqtt'
-        }
-
-        out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
-
-        // Convert lat/lon to geohash if it exists
-        if ('lat' in out && 'lon' in out) {
-            let ghash = '';
-            if (out.lat.indexOf('°') >= 0) {
-                let lat = ParseDMS(out.lat);
-                let lon = ParseDMS(out.lon);
-                ghash = Geohash.encode(lat, lon);
-            } else {
-                ghash = Geohash.encode(out.lat, out.lon);
+            // Rest is metadata
+            out._meta = {
+                received_time: payload.uplink_message.received_at,
+                device_id: payload.end_device_ids.dev_eui,
+                receiver: 'http-ttn-mqtt'
             }
-            out.geohash = ghash;
-        }
 
-        // Make special measurement for mapping purposes.
-        if ('geohash' in out && 'rssi' in out) {
-            out.rssimap = {rssi: out.rssi, geohash: out.geohash};
-        }
+            out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
 
-        // mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
-        console.log(JSON.stringify(out))
+            // Convert lat/lon to geohash if it exists
+            if ('lat' in out && 'lon' in out) {
+                let ghash = '';
+                if (out.lat.indexOf('°') >= 0) {
+                    let lat = ParseDMS(out.lat);
+                    let lon = ParseDMS(out.lon);
+                    ghash = Geohash.encode(lat, lon);
+                } else {
+                    ghash = Geohash.encode(out.lat, out.lon);
+                }
+                out.geohash = ghash;
+            }
+
+            // Make special measurement for mapping purposes.
+            if ('geohash' in out && 'rssi' in out) {
+                out.rssimap = {rssi: out.rssi, geohash: out.geohash};
+            }
+
+            mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+            // console.log(JSON.stringify(out))
+        });
     });
 });
-
