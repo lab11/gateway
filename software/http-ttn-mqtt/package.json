@@ -11,8 +11,6 @@
   "dependencies": {
     "debug": "^4.1.1",
     "ini": "^1.3.5",
-    "latlon-geohash": "^1.1.0",
-    "minimist": "^1.2.0",
-    "ttn": "^2.3.1"
+    "minimist": "^1.2.0"
   }
 }

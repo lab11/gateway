@@ -5,8 +5,6 @@ var fs        = require('fs');
 var argv      = require('minimist')(process.argv.slice(2));
 var debug     = require('debug')('http-ttn-mqtt');
 var ini       = require('ini');
-var ttn       = require('ttn');
-var Geohash   = require('latlon-geohash');
 var mqtt      = require('mqtt');
 
 
@@ -37,28 +35,6 @@ try {
     process.exit(1);
 }
 
-
-function ParseDMS(input) {
-    var parts = input.split(/[^\d\w]+/);
-
-    // Check if we got decimal minutes or seconds
-    if (input.indexOf('.') >= 0) {
-        return ConvertDMSToDD(parseInt(parts[0]), parseFloat(parts[1]+'.'+parts[2]), 0.0, parts[3]);
-    } else {
-        // Got minutes and seconds
-        return ConvertDMSToDD(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]), parts[3]);
-    }
-}
-
-function ConvertDMSToDD(degrees, minutes, seconds, direction) {
-    var dd = degrees + minutes/60 + seconds/(60*60);
-
-    if (direction == "S" || direction == "W") {
-        dd = dd * -1;
-    } // Don't do anything for N or E
-    return dd;
-}
-
 var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client.on('connect', function () {
 
@@ -79,6 +55,12 @@ mqtt_client.on('connect', function () {
                     out = payload.uplink_message.decoded_payload;
                 }
             }
+
+            Object.keys(out).forEach(function (key) {
+                if (out[key] === null) {
+                    delete out[key];
+                }
+            });
 
             // Other fields to plot as data
             out.counter = payload.uplink_message.f_cnt;
@@ -109,21 +91,7 @@ mqtt_client.on('connect', function () {
                 device_id: payload.end_device_ids.dev_eui,
                 receiver: 'http-ttn-mqtt'
             }
-
             out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
-
-            // Convert lat/lon to geohash if it exists
-            if ('lat' in out && 'lon' in out) {
-                let ghash = '';
-                if (out.lat.indexOf('°') >= 0) {
-                    let lat = ParseDMS(out.lat);
-                    let lon = ParseDMS(out.lon);
-                    ghash = Geohash.encode(lat, lon);
-                } else {
-                    ghash = Geohash.encode(out.lat, out.lon);
-                }
-                out.geohash = ghash;
-            }
 
             // Make special measurement for mapping purposes.
             if ('geohash' in out && 'rssi' in out) {
