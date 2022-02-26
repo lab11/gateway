@@ -75,6 +75,11 @@ function update_data (mqtt_client, user, pass) {
 
     // Login to get a cookie
     request(req_login, function callback(error, response, body) {
+        console.log('login request done');
+        // console.log(error)
+        // console.log(response)
+        // console.log(body)
+
         // Iterate all returned cookies to get the one we need.
         let cookies = response.caseless.get('Set-Cookie');
         var cookie = '';
@@ -104,6 +109,10 @@ function update_data (mqtt_client, user, pass) {
 
         // Request the user page to get the links to the actual interval data.
         request(req_mainpage, function callback(error, response, body) {
+            console.log('got main meter data page')
+            // console.log(error)
+            // console.log(response)
+            // console.log(body)
 
             // Find first link in the HTML. Happens to be the TXT one we want.
             var link_location_sta = body.indexOf('href="/usage/ViewDailyIntervalData') + 6;
@@ -129,6 +138,7 @@ function update_data (mqtt_client, user, pass) {
 
             // Get the actual TXT power data.
             request(req_txtdata, function callback(error, response, body) {
+                console.log('got actual txt power data');
 
                 // Get the last day we have processed.
                 var last_day = '01/01/2019';
@@ -184,6 +194,7 @@ function update_data (mqtt_client, user, pass) {
                                 gateway_id: _gateway_id
                             }
                             mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                            // console.log(JSON.stringify(out));
                         }
 
                         // Publish daily energy too.
@@ -199,6 +210,7 @@ function update_data (mqtt_client, user, pass) {
                             gateway_id: _gateway_id
                         }
                         mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                        // console.log(JSON.stringify(out));
 
                         console.log('Published for ' + day);
                     }
@@ -218,6 +230,7 @@ function update_data (mqtt_client, user, pass) {
 function update_all_data () {
     console.log('Running fetch for all power data.');
 
+    // var mqtt_client = '';
     var mqtt_client = mqtt.connect('mqtt://localhost');
     mqtt_client.on('connect', function () {
         console.log('MQTT connected');
