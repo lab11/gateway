@@ -65,7 +65,7 @@ function get_host_ip_addresses () {
 
             // Now, don't collect all, just mac addresses that look like awair
             // devices.
-            if (!macaddr.startsWith(AWAIR_MAC_PREFIX) continue;
+            if (!macaddr.startsWith(AWAIR_MAC_PREFIX)) continue;
 
             var out = {"ipv4_address": ipaddr};
 
