@@ -48,6 +48,8 @@ function get_host_ip_addresses () {
     var ipaddrcheck = /^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/;
     var macaddrcheck = /^[0-9a-f]{1,2}([\.:-])(?:[0-9a-f]{1,2}\1){4}[0-9a-f]{1,2}$/;
 
+    const AWAIR_MAC_PREFIX = '70:88:6b';
+
     for (var line of lines) {
         var fields = line.split(/\s+/);
 
@@ -61,6 +63,10 @@ function get_host_ip_addresses () {
             // Check valid MAC address.
             if (!macaddrcheck.test(macaddr)) continue;
 
+            // Now, don't collect all, just mac addresses that look like awair
+            // devices.
+            if (!macaddr.startsWith(AWAIR_MAC_PREFIX) continue;
+
             var out = {"ipv4_address": ipaddr};
 
             // Add the _meta metadata to complete the standard lab11-gateway
@@ -71,8 +77,8 @@ function get_host_ip_addresses () {
                 gateway_id: _gateway_id,
             }
 
-            console.log(out)
-            // mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+            // console.log(out)
+            mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
         }
     }
 }
@@ -87,6 +93,8 @@ mqtt_client.on('connect', function () {
             clearInterval(wait_for_gatway_id);
             // Now do work;
             get_host_ip_addresses();
+            // And close mqtt so that this program ends.
+            mqtt_client.end();
         }
     }, 500);
 
