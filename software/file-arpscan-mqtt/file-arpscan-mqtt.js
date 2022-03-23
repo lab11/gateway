@@ -42,14 +42,13 @@ var hosts = [];
 
 // Parse a file from the arp-scan tool to list hosts on network.
 function get_host_ip_addresses () {
-    var lineReader = require('readline').createInterface({
-        input: require('fs').createReadStream(config.arpscan_file)
-    });
+    var contents = fs.readFileSync(config.arpscan_file, 'utf-8');
+    var lines = contents.split(/\n/);
 
     var ipaddrcheck = /^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/;
     var macaddrcheck = /^[0-9a-f]{1,2}([\.:-])(?:[0-9a-f]{1,2}\1){4}[0-9a-f]{1,2}$/;
 
-    lineReader.on('line', function (line) {
+    for (var line of lines) {
         var fields = line.split(/\s+/);
 
         // Valid lines of found devices are at least 3 fields.
@@ -58,9 +57,9 @@ function get_host_ip_addresses () {
             var macaddr = fields[1];
 
             // Check valid IPv4 address.
-            if (!ipaddrcheck.test(ipaddr)) return;
+            if (!ipaddrcheck.test(ipaddr)) continue;
             // Check valid MAC address.
-            if (!macaddrcheck.test(macaddr)) return;
+            if (!macaddrcheck.test(macaddr)) continue;
 
             var out = {"ipv4_address": ipaddr};
 
@@ -75,7 +74,7 @@ function get_host_ip_addresses () {
             console.log(out)
             // mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
         }
-    });
+    }
 }
 
 var mqtt_client = mqtt.connect('mqtt://localhost');
