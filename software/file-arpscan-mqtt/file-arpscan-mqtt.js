@@ -88,9 +88,11 @@ mqtt_client.on('connect', function () {
 
     // Wait until we have the gateway id.
     var wait_for_gatway_id = setInterval(function () {
-        console.log('check')
         if (_gateway_id != '') {
             clearInterval(wait_for_gatway_id);
+
+            console.log('Parsing arpscan results...');
+
             // Now do work;
             get_host_ip_addresses();
             // And close mqtt so that this program ends.
