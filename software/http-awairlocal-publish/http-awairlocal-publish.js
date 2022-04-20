@@ -121,8 +121,20 @@ function get_awair_metadata (ipaddress) {
 
             var metadata = {
                 'device_uuid': data.device_uuid,
-                'device_id': device_id,
+                'device_id': device_id
             };
+
+            // If power data is available from the device, store it
+            if(data['power-status'] !== undefined) {
+                if(data['power-status'].battery !== undefined) {
+                    metadata.battery = data['power-status'].battery;
+                }
+                // Manually convert to a "true"/"false" string
+                // to avoid any unexpected input scenarios
+                if(data['power-status'].plugged !== undefined) {
+                    metadata.plugged = data['power-status'].plugged === true ? "true" : "false";
+                }
+            }
 
             // Save metadata to the global table.
             awair_metadata_byip[ipaddress] = metadata;
