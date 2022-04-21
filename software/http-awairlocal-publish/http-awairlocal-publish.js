@@ -50,6 +50,9 @@ var awair_ip_addresses = [];
 // Saved metadata for awair devices keyed by IP address.
 var awair_metadata_byip = {};
 
+// Saved measurements for awair devices keyed by IP address.
+var awair_measurements_byip = {};
+
 
 // Parse a file from the arp-scan tool to determine possible awair devices
 // on the network.
@@ -124,20 +127,26 @@ function get_awair_metadata (ipaddress) {
                 'device_id': device_id
             };
 
+            // We keep power status from this request to send as data.
+            var measurements = {};
+
             // If power data is available from the device, store it
-            if(data['power-status'] !== undefined) {
-                if(data['power-status'].battery !== undefined) {
-                    metadata.battery = data['power-status'].battery;
+            if (data['power-status'] !== undefined) {
+                if (data['power-status'].battery !== undefined) {
+                    measurements['battery_%'] = data['power-status'].battery;
                 }
-                // Manually convert to a "true"/"false" string
-                // to avoid any unexpected input scenarios
-                if(data['power-status'].plugged !== undefined) {
-                    metadata.plugged = data['power-status'].plugged === true ? "true" : "false";
+                if (data['power-status'].plugged !== undefined) {
+                    measurements.plugged = data['power-status'].plugged;
                 }
             }
 
             // Save metadata to the global table.
             awair_metadata_byip[ipaddress] = metadata;
+
+            // Save measurements to the global table. We do this unconditionally
+            // so we remove stale data if we don't get updated battery and
+            // plugged information.
+            awair_measurements_byip[ipaddress] = measurements;
 
             // And since we were able to get metadata, add to known ip address
             // list.
@@ -205,7 +214,8 @@ function get_awair_data (ipaddress) {
 
             var timestamp = data.timestamp;
 
-            var out = {};
+            // Start with any saved data.
+            var out = awair_measurements_byip[ipaddress];;
 
             // Save the measured data with correctly mapped names.
             for (const mname in data) {
