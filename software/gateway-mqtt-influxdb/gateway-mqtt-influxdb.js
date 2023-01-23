@@ -46,6 +46,7 @@ try {
 if (! ('port'     in config) ) config.port     = 8086;
 if (! ('protocol' in config) ) config.protocol = 'http';
 if (! ('prefix'   in config) ) config.prefix   = '';
+if (! ('mqtt_password' in config) ) config.mqtt_password   = '';
 
 
 // Let the command line override conf file settings
@@ -56,6 +57,8 @@ if ('database' in argv) config.database = argv.database;
 if ('username' in argv) config.username = argv.username;
 if ('password' in argv) config.password = argv.password;
 if ('prefix'   in argv) config.prefix   = argv.prefix;
+if ('mqtt_username' in argv) config.mqtt_username = argv.mqtt_username;
+if ('mqtt_password' in argv) config.mqtt_password = argv.mqtt_password;
 
 var influx_poster = new InfluxPoster({
     host: config.host,
@@ -278,5 +281,13 @@ if ('remote' in argv) {
 }
 console.log("Connecting to " + mqtt_url);
 
-mqtt_client = mqtt.connect(mqtt_url);
+var mqtt_options = {}
+if ('mqtt_username' in config) {
+    mqtt_options = {
+        username: config.mqtt_username,
+        password: config.mqtt_password,
+    }
+}
+
+mqtt_client = mqtt.connect(mqtt_url, mqtt_options);
 mqtt_client.on('connect', mqtt_on_connect, mqtt_client);
