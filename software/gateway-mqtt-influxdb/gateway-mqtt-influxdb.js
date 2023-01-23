@@ -176,7 +176,13 @@ function mqtt_on_connect() {
     mqtt_client.on('message', function (topic, message) {
         if (topic == TOPIC_MAIN_STREAM) {
             // message is Buffer
-            var adv_obj = JSON.parse(message.toString());
+            try {
+                var adv_obj = JSON.parse(message.toString());
+            } catch (e) {
+                console.log(e)
+                console.log('Could not parse JSON.');
+                return;
+            }
 
             // Get device id
             var device_id = undefined;
