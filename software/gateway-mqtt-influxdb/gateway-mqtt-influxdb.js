@@ -208,7 +208,7 @@ function mqtt_on_connect() {
             // Otherwise, the database will insert a timestamp, but since we do
             // batching there could be many datapoints with the same timestamp.
             if (isNaN(timestamp)) {
-                timestamp = new Date().toISOString();
+                timestamp = new Date().getTime();
             }
 
             // Continue on to post to influxdb
