@@ -184,6 +184,10 @@ function mqtt_on_connect() {
                 return;
             }
 
+            if (typeof adv_obj !== 'object') {
+                return;
+            }
+
             // Get device id
             var device_id = undefined;
             if ('_meta' in adv_obj) {
