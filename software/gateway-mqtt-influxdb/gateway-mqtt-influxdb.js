@@ -202,7 +202,14 @@ function mqtt_on_connect() {
             var device_class = adv_obj['device'];
             delete adv_obj.device;
 
-            var timestamp  = new Date(adv_obj['_meta']['received_time']).getTime();
+            var timestamp = new Date(adv_obj['_meta']['received_time']).getTime();
+
+            // If the device didn't send us a timestamp insert our own.
+            // Otherwise, the database will insert a timestamp, but since we do
+            // batching there could be many datapoints with the same timestamp.
+            if (isNaN(timestamp)) {
+                timestamp = new Date().toISOString();
+            }
 
             // Continue on to post to influxdb
             if (device_id) {
