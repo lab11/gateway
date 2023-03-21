@@ -94,7 +94,7 @@ mqtt_client.on('connect', function () {
             out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
 
             // Make special measurement for mapping purposes.
-            if ('geohash' in out && 'rssi' in out) {
+            if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
                 out.rssimap = {rssi: out.rssi, geohash: out.geohash};
             }
 
