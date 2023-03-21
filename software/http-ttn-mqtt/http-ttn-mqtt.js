@@ -95,7 +95,7 @@ mqtt_client.on('connect', function () {
 
             // Make special measurement for mapping purposes.
             if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
-                out.rssimap = {rssi: out.rssi, geohash: out.geohash};
+                out.rssimap = {rssi: out.rssi, geohash: out.payload.geohash};
             }
 
             mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
