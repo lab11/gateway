@@ -37,10 +37,10 @@ try {
 
 var mqtt_client = mqtt.connect('mqtt://localhost');
 mqtt_client.on('connect', function () {
-
-    var client  = mqtt.connect('mqtt://nam1.cloud.thethings.network:1883', {'username':config.appID, 'password':config.accessKey})
+    console.log('Connected to local MQTT');
+    var client  = mqtt.connect('mqtts://nam1.cloud.thethings.network:8883', {'username':config.appID, 'password':config.accessKey})
     client.on('connect', function () {
-        debug('Connected to TTN');
+        console.log('Connected to TTN');
 
         client.subscribe('#');
 
