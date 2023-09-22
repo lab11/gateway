@@ -92,6 +92,7 @@ mqtt_client.on('connect', function () {
                 receiver: 'http-ttn-mqtt'
             }
             out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
+            out._meta.ttn_application_id = payload.end_device_ids.application_ids.application_id;
 
             // Make special measurement for mapping purposes.
             if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
