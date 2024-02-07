@@ -72,26 +72,13 @@ mqtt_client.on('connect', function () {
             out.lorawan_coding_rate = payload.uplink_message.settings.coding_rate;
             out.number_receiving_gateways = payload.uplink_message.rx_metadata.length;
 
-            // Find the best RSSI gateway
-            var best_rssi = -1000;
-            var best_rssi_index = 0;
-            for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
-                if (payload.uplink_message.rx_metadata[i].rssi > best_rssi) {
-                    best_rssi_index = i;
-                }
-            }
-
-            // Extract gateway parameters
-            out.rssi = payload.uplink_message.rx_metadata[best_rssi_index].rssi;
-            out.snr = payload.uplink_message.rx_metadata[best_rssi_index].snr;
-
             // Rest is metadata
             out._meta = {
                 received_time: payload.uplink_message.received_at,
                 device_id: payload.end_device_ids.dev_eui,
                 receiver: 'http-ttn-mqtt'
             }
-            out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
+            
             out._meta.ttn_application_id = payload.end_device_ids.application_ids.application_id;
 
             // Make special measurement for mapping purposes.
@@ -99,8 +86,20 @@ mqtt_client.on('connect', function () {
                 out.rssimap = {rssi: out.rssi, geohash: out.payload.geohash};
             }
 
-            mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
-            // console.log(JSON.stringify(out))
+            // Create one mqtt data point for each available gateway id with respective rssi and snr values 
+            for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
+                // Extract gateway specific parameters
+                out._meta.gateway_id = payload.uplink_message.rx_metadata[i].gateway_ids.gateway_id;
+                out.snr = payload.uplink_message.rx_metadata[i].snr;
+                out.rssi = payload.uplink_message.rx_metadata[i].rssi;
+
+                // publish data to mqtt
+                mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                // console.log(JSON.stringify(out))
+                
+            }
+
+            
         });
     });
 });
