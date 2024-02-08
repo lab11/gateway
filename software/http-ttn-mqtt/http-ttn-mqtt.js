@@ -81,7 +81,8 @@ mqtt_client.on('connect', function () {
             out._meta = {
                 received_time: payload.uplink_message.received_at,
                 device_id: payload.end_device_ids.dev_eui,
-                receiver: 'http-ttn-mqtt'
+                receiver: 'http-ttn-mqtt',
+                ttn_application_id: payload.end_device_ids.application_ids.application_id
             }
 
             if (!config.recordAllReceptions) {
@@ -101,7 +102,6 @@ mqtt_client.on('connect', function () {
                 out.snr = payload.uplink_message.rx_metadata[best_rssi_index].snr;
 
                 out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
-                out._meta.ttn_application_id = payload.end_device_ids.application_ids.application_id;
 
                 // Make special measurement for mapping purposes.
                 if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
@@ -121,6 +121,7 @@ mqtt_client.on('connect', function () {
                     out.rssi = payload.uplink_message.rx_metadata[i].rssi;
 
                     out._meta.gateway_id = payload.uplink_message.rx_metadata[i].gateway_ids.gateway_id;
+
 
                     // Make special measurement for mapping purposes.
                     if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
