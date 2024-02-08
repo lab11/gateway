@@ -57,6 +57,8 @@ mqtt_client.on('connect', function () {
                 if ('decoded_payload' in payload.uplink_message) {
                     out = payload.uplink_message.decoded_payload;
                 }
+            } else {
+                return;
             }
 
             Object.keys(out).forEach(function (key) {
@@ -128,7 +130,6 @@ mqtt_client.on('connect', function () {
                     // publish data to mqtt
                     mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
                     // console.log(JSON.stringify(out))
-
                 }
             }
 
