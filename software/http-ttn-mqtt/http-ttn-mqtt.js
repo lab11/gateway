@@ -30,6 +30,9 @@ try {
     if (config.accessKey == undefined || config.accessKey == '') {
         throw new Exception('no settings');
     }
+    if (config.recordAllReceptions == undefined || config.recordAllReceptions == '') {
+        config.recordAllReceptions = false;
+    }
 } catch (e) {console.log(e)
     console.log('Could not find ' + config_file + ' or ttn not configured.');
     process.exit(1);
@@ -78,28 +81,58 @@ mqtt_client.on('connect', function () {
                 device_id: payload.end_device_ids.dev_eui,
                 receiver: 'http-ttn-mqtt'
             }
-            
-            out._meta.ttn_application_id = payload.end_device_ids.application_ids.application_id;
 
-            // Make special measurement for mapping purposes.
-            if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
-                out.rssimap = {rssi: out.rssi, geohash: out.payload.geohash};
-            }
+            if (!config.recordAllReceptions) {
 
-            // Create one mqtt data point for each available gateway id with respective rssi and snr values 
-            for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
-                // Extract gateway specific parameters
-                out._meta.gateway_id = payload.uplink_message.rx_metadata[i].gateway_ids.gateway_id;
-                out.snr = payload.uplink_message.rx_metadata[i].snr;
-                out.rssi = payload.uplink_message.rx_metadata[i].rssi;
+                // Find the best RSSI gateway
+                var best_rssi = -1000;
+                var best_rssi_index = 0;
+                for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
+                    if (payload.uplink_message.rx_metadata[i].rssi > best_rssi) {
+                        best_rssi = payload.uplink_message.rx_metadata[i].rssi;
+                        best_rssi_index = i;
+                    }
+                }
 
-                // publish data to mqtt
+                // Extract gateway parameters
+                out.rssi = payload.uplink_message.rx_metadata[best_rssi_index].rssi;
+                out.snr = payload.uplink_message.rx_metadata[best_rssi_index].snr;
+
+                out._meta.gateway_id = payload.uplink_message.rx_metadata[best_rssi_index].gateway_ids.gateway_id;
+                out._meta.ttn_application_id = payload.end_device_ids.application_ids.application_id;
+
+                // Make special measurement for mapping purposes.
+                if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
+                    out.rssimap = {rssi: out.rssi, geohash: out.payload.geohash};
+                }
+
                 mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
                 // console.log(JSON.stringify(out))
-                
+
+            } else {
+
+                // Create one mqtt data point for each available gateway id with
+                // respective rssi and snr values.
+                for (var i=0; i<payload.uplink_message.rx_metadata.length; i++) {
+                    // Extract gateway specific parameters
+                    out.snr = payload.uplink_message.rx_metadata[i].snr;
+                    out.rssi = payload.uplink_message.rx_metadata[i].rssi;
+
+                    out._meta.gateway_id = payload.uplink_message.rx_metadata[i].gateway_ids.gateway_id;
+
+                    // Make special measurement for mapping purposes.
+                    if ('payload' in out && 'geohash' in out.payload && 'rssi' in out) {
+                        out.rssimap = {rssi: out.rssi, geohash: out.payload.geohash};
+                    }
+
+                    // publish data to mqtt
+                    mqtt_client.publish(MQTT_TOPIC_NAME, JSON.stringify(out));
+                    // console.log(JSON.stringify(out))
+
+                }
             }
 
-            
+
         });
     });
 });
